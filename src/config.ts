@@ -6,6 +6,7 @@ export interface PlaywrightConfig {
   testCommand: string;
   reporter: string;
   env: Record<string, string>;
+  captureResults: boolean;
 }
 
 function getWorkspaceRoot(): string {
@@ -24,19 +25,31 @@ export function getConfig(): PlaywrightConfig {
     testCommand: cfg().get<string>('testCommand', 'npx playwright test'),
     reporter: cfg().get<string>('reporter', ''),
     env: cfg().get<Record<string, string>>('env', {}),
+    captureResults: cfg().get<boolean>('captureResults', false),
   };
 }
 
+export function getCaptureEnv(): Record<string, string> {
+  if (!cfg().get<boolean>('captureResults', false)) return {};
+  return { PLAYWRIGHT_JSON_OUTPUT_NAME: 'playwright-studio-results.json' };
+}
+
 export function buildRunArgs(testFile: string, testName?: string): string[] {
-  const { testCommand, reporter } = getConfig();
+  const { testCommand, reporter, captureResults } = getConfig();
   const args = testCommand.split(/\s+/);
   args.push(JSON.stringify(testFile));
   if (testName) {
     args.push('--grep', JSON.stringify(testName));
   }
-  if (reporter) {
-    args.push('--reporter', reporter);
+
+  let effectiveReporter = reporter;
+  if (captureResults) {
+    effectiveReporter = reporter ? `${reporter},json` : 'list,json';
   }
+  if (effectiveReporter) {
+    args.push('--reporter', effectiveReporter);
+  }
+
   return args;
 }
 

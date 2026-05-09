@@ -1,11 +1,13 @@
 import { buildInspectArgs } from '../config';
 import { runInTerminal } from '../terminal';
 
-export function inspectTest(testFile: string, testName?: string): void {
+export function inspectTest(testFile: string, testName: string): void {
   const args = buildInspectArgs(testFile, testName);
-  runInTerminal(args.join(' '), { PWDEBUG: '1' });
+  args.push('--debug');
+  runInTerminal(args.join(' '));
 }
 
 export function inspectFile(testFile: string): void {
-  inspectTest(testFile);
+  const args = buildInspectArgs(testFile);
+  runInTerminal(args.join(' '), { PWDEBUG: '1' });
 }
