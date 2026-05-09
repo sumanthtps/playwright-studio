@@ -11,6 +11,7 @@ import { StatusBarManager } from './statusBar';
 import { CoverageHeatmap } from './coverageHeatmap';
 import { FixtureNavigationProvider } from './fixtureNavigation';
 import { setResultsBaseDir } from './resultsPath';
+import { checkAndPromptForJsonReporter } from './setupHelpers';
 
 export function activate(context: vscode.ExtensionContext): void {
   // Store run results outside the user's repo, in VS Code-managed extension storage.
@@ -83,6 +84,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidSaveTextDocument(() => codeLens.refresh()),
     vscode.workspace.onDidOpenTextDocument(() => codeLens.refresh())
   );
+
+  void checkAndPromptForJsonReporter(context);
 }
 
 export function deactivate(): void {
