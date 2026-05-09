@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "Sumanth T P",
   "publisher": "sumanthtps",
-  "description": "338 Playwright snippets plus Run, Debug, Inspect, Codegen, Trace Viewer, and HTML Report inside VS Code",
+  "description": "Playwright IDE for VS Code — inline tag/project filters, environment profiles, coverage heatmap, fixture navigation, save-as-snippet, plus 338 typed snippets.",
   "homepage": "https://github.com/sumanthtps/playwright-studio",
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
     "color": "#0f6b44",
     "theme": "dark"
   },
-  "version": "1.1.0",
+  "version": "1.1.1",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -31,6 +31,8 @@
     "playwright-test",
     "playwright snippets",
     "playwright studio",
+    "playwright ide",
+    "playwright tools",
     "e2e",
     "end-to-end",
     "testing",
@@ -38,9 +40,19 @@
     "test automation",
     "codelens",
     "test runner",
+    "test explorer",
     "trace viewer",
     "codegen",
     "html report",
+    "fixtures",
+    "fixture navigation",
+    "tag filter",
+    "grep",
+    "env profile",
+    "coverage heatmap",
+    "untested code",
+    "qa",
+    "browser testing",
     "typescript",
     "javascript"
   ],
@@ -166,6 +178,11 @@
       {
         "command": "playwrightSnippets.saveAsSnippet",
         "title": "Save Selection as Snippet",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.setupCaptureResults",
+        "title": "Set Up Result Capture (Add JSON Reporter)",
         "category": "Playwright Studio"
       }
     ],
@@ -307,8 +324,8 @@
         },
         "playwrightSnippets.captureResults": {
           "type": "boolean",
-          "default": false,
-          "description": "When enabled, Playwright Studio injects the JSON reporter to capture test results. Results power gutter icons, the sidebar panel, status bar summary, and trace failure links. The output file is 'playwright-studio-results.json' (add it to .gitignore)."
+          "default": true,
+          "description": "When enabled, Playwright Studio sets PLAYWRIGHT_JSON_OUTPUT_NAME so the JSON reporter writes results to the extension's storage. Results power the sidebar panel, gutter icons, status bar summary, and trace failure links. Requires the 'json' reporter to be present in your playwright.config — Playwright Studio offers to add it automatically the first time it's missing."
         },
         "playwrightSnippets.envProfiles": {
           "type": "object",

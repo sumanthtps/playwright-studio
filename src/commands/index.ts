@@ -6,6 +6,7 @@ import { runInTerminal } from '../terminal';
 import { EnvProfileManager } from '../envProfile';
 import { getPlaywrightProjects } from '../playwrightProjects';
 import { saveAsSnippet } from '../snippetGenerator';
+import { runJsonReporterSetup } from '../setupHelpers';
 import { codeGen } from './codeGen';
 import { debugInspectFile, debugInspectTest } from './debugInspectTest';
 import { debugFile, debugTest } from './debugTest';
@@ -214,4 +215,5 @@ export function registerCommands(
   register('playwrightSnippets.runWithProject', (file: unknown) => runWithProject(file));
   register('playwrightSnippets.switchEnvProfile', () => profiles.switchProfile());
   register('playwrightSnippets.saveAsSnippet', () => saveAsSnippet());
+  register('playwrightSnippets.setupCaptureResults', () => runJsonReporterSetup(context));
 }

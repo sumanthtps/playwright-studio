@@ -11,16 +11,39 @@
 </p>
 
 <p align="center">
-  <strong>The complete Playwright toolkit for VS Code.</strong>
+  <strong>The Playwright IDE that actually feels like an IDE.</strong>
 </p>
 
 <p align="center">
-  338 snippets · inline CodeLens · live test results · gutter icons · tag filtering · multi-project runs · env profiles · fixture navigation · and more — all without leaving the editor.
+  Inline tag filters · multi-project picker · environment profiles · coverage heatmap ·<br>
+  fixture Go-to-Definition · save-as-snippet · 338 typed snippets — and the rest of what you'd expect.
 </p>
 
 <p align="center">
   <img src="images/preview.gif" alt="Preview of Playwright Studio inside VS Code" width="920" />
 </p>
+
+---
+
+## Why Playwright Studio?
+
+If you already use Microsoft's official **Playwright Test for VS Code**, you have run / debug / inspect / codegen / trace. Playwright Studio adds the layer on top — the things you *also* want every day.
+
+|                                                  | Playwright Test for VS Code (Microsoft) | **Playwright Studio**       |
+| ------------------------------------------------ | --------------------------------------- | --------------------------- |
+| Run / Debug / Inspect from CodeLens              | ✅                                       | ✅                           |
+| Codegen launcher                                 | ✅                                       | ✅                           |
+| Trace Viewer & HTML Report shortcuts             | ✅                                       | ✅                           |
+| Inline `@tag` filter lenses on each test         | ❌                                       | ✅                           |
+| Multi-project picker (chromium, firefox, …)      | ❌                                       | ✅                           |
+| Environment profile switcher (status bar)        | ❌                                       | ✅                           |
+| Coverage heatmap — find untested code            | ❌                                       | ✅                           |
+| Fixture Go-to-Definition + Hover                 | ❌                                       | ✅                           |
+| Save selected code as a reusable snippet         | ❌                                       | ✅                           |
+| 338 typed snippets (page, locator, assert, …)    | ❌                                       | ✅                           |
+| Live results panel + gutter icons + diagnostics  | ✅                                       | ✅                           |
+
+You can run both extensions side-by-side — they don't conflict.
 
 ---
 
@@ -53,7 +76,9 @@ After each run a **Playwright Results** tree appears in the Explorer sidebar:
 - Failed tests show their error message as a tooltip.
 - Tests with an attached trace file show an "Open Trace" action.
 
-To enable: set `playwrightSnippets.captureResults` to `true` and add `['json']` to the `reporter` array in your `playwright.config.ts`. Then run tests via the extension (CodeLens, right-click menu, or Command Palette) — see [Troubleshooting](#troubleshooting) if the panel stays empty.
+Result capture is **on by default**. The first time the extension activates against a workspace whose `playwright.config.*` is missing the `json` reporter, it offers a one-click **"Add JSON reporter"** button — the config is patched safely and the panel starts working. You can re-run the prompt any time via **Command Palette → Playwright Studio: Set Up Result Capture (Add JSON Reporter)**.
+
+Then just run tests through the extension (CodeLens, right-click menu, or Command Palette). See [Troubleshooting](#troubleshooting) if the panel stays empty.
 
 ---
 
@@ -165,6 +190,7 @@ Capture any code block as a personal snippet:
 | `Playwright Studio: Show Trace Viewer`                | Open a trace `.zip` file                      |
 | `Playwright Studio: Show HTML Report`                 | Open the Playwright HTML report               |
 | `Playwright Studio: Save Selection as Snippet`        | Save selected code as a reusable snippet      |
+| `Playwright Studio: Set Up Result Capture (Add JSON Reporter)` | One-click patch to add `['json']` to your `playwright.config` reporter array |
 
 ### Keyboard Shortcuts
 
@@ -221,7 +247,7 @@ All settings live under `playwrightSnippets.*`:
 | `playwrightSnippets.testCommand`          | `"npx playwright test"` | Base command used to run tests                                                                                 |
 | `playwrightSnippets.reporter`             | `""`                    | Currently unused. The extension does not pass `--reporter` to Playwright; configure reporters in `playwright.config.ts` |
 | `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
-| `playwrightSnippets.captureResults`       | `false`                 | Sets `PLAYWRIGHT_JSON_OUTPUT_NAME` so the JSON reporter (which you must declare in `playwright.config.ts`) writes results powering the gutter icons, sidebar panel, status bar, and trace links |
+| `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_NAME` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your `playwright.config` reporter array — Playwright Studio will offer to add it automatically the first time it's missing |
 | `playwrightSnippets.envProfiles`          | `{}`                    | Named env profiles — each key is a profile name, value is a map of env vars                                    |
 | `playwrightSnippets.heatmapThresholdDays` | `7`                     | Days after which a test is highlighted as never/rarely run                                                     |
 
