@@ -5,24 +5,26 @@
   "author": "Sumanth T P",
   "publisher": "sumanthtps",
   "description": "338 Playwright snippets plus Run, Debug, Inspect, Codegen, Trace Viewer, and HTML Report inside VS Code",
-  "homepage": "https://github.com/sumanthtps/New-Playwright-snippets",
+  "homepage": "https://github.com/sumanthtps/playwright-studio",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sumanthtps/New-Playwright-snippets.git"
+    "url": "https://github.com/sumanthtps/playwright-studio.git"
   },
-  "bugs": "https://github.com/sumanthtps/New-Playwright-snippets/issues",
+  "bugs": "https://github.com/sumanthtps/playwright-studio/issues",
   "icon": "images/playwright-logo.png",
   "galleryBanner": {
     "color": "#0f6b44",
     "theme": "dark"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Snippets",
-    "Testing"
+    "Testing",
+    "Debuggers",
+    "Other"
   ],
   "keywords": [
     "playwright",
@@ -70,54 +72,111 @@
         "path": "./snippets/playwright.json"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "playwrightStudio.resultsView",
+          "name": "Playwright Results",
+          "icon": "images/playwright-logo.png",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "playwrightSnippets.runTest",
-        "title": "Playwright Studio: Run Test"
+        "title": "Run Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runFile",
-        "title": "Playwright Studio: Run All Tests in File"
+        "title": "Run All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugTest",
-        "title": "Playwright Studio: Debug Test"
+        "title": "Debug Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugFile",
-        "title": "Playwright Studio: Debug All Tests in File"
+        "title": "Debug All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.inspectTest",
-        "title": "Playwright Studio: Inspect Test (PWDEBUG=1)"
+        "title": "Inspect Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.inspectFile",
-        "title": "Playwright Studio: Inspect All Tests in File"
+        "title": "Inspect All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugInspectTest",
-        "title": "Playwright Studio: Debug Test with Inspector"
+        "title": "Debug Test with Inspector",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugInspectFile",
-        "title": "Playwright Studio: Debug All Tests with Inspector"
+        "title": "Debug All Tests with Inspector",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runTestAtCursor",
-        "title": "Playwright Studio: Run Test at Cursor"
+        "title": "Run Test at Cursor",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.inspectTestAtCursor",
+        "title": "Inspect Test at Cursor",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.codeGen",
-        "title": "Playwright Studio: Open Codegen"
+        "title": "Open Codegen",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.showTrace",
-        "title": "Playwright Studio: Show Trace Viewer"
+        "title": "Show Trace Viewer",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.showReport",
-        "title": "Playwright Studio: Show HTML Report"
+        "title": "Show HTML Report",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runWithTag",
+        "title": "Run Tests with Tag / Grep Filter",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runWithProject",
+        "title": "Run Tests with Project Selection",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.switchEnvProfile",
+        "title": "Switch Environment Profile",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.saveAsSnippet",
+        "title": "Save Selection as Snippet",
+        "category": "Playwright Studio"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "playwrightStudio.editorContext",
+        "label": "Playwright Studio"
+      },
+      {
+        "id": "playwrightStudio.explorerContext",
+        "label": "Playwright Studio"
       }
     ],
     "menus": {
@@ -128,26 +187,41 @@
           "group": "playwright@1"
         },
         {
-          "command": "playwrightSnippets.codeGen",
-          "when": "editorTextFocus",
+          "command": "playwrightSnippets.inspectTestAtCursor",
+          "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@2"
+        },
+        {
+          "submenu": "playwrightStudio.editorContext",
+          "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
+          "group": "playwright@3"
         }
       ],
-      "editor/title": [
+      "playwrightStudio.editorContext": [
         {
-          "command": "playwrightSnippets.runFile",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
-          "group": "navigation@1"
+          "command": "playwrightSnippets.runWithTag",
+          "group": "1_run@1"
         },
         {
-          "command": "playwrightSnippets.debugFile",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
-          "group": "navigation@2"
+          "command": "playwrightSnippets.runWithProject",
+          "group": "1_run@2"
         },
         {
-          "command": "playwrightSnippets.debugInspectFile",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
-          "group": "navigation@3"
+          "command": "playwrightSnippets.codeGen",
+          "group": "2_tools@1"
+        },
+        {
+          "command": "playwrightSnippets.showReport",
+          "group": "2_tools@2"
+        },
+        {
+          "command": "playwrightSnippets.showTrace",
+          "group": "2_tools@3"
+        },
+        {
+          "command": "playwrightSnippets.saveAsSnippet",
+          "when": "editorHasSelection",
+          "group": "3_snippet@1"
         }
       ],
       "explorer/context": [
@@ -157,14 +231,39 @@
           "group": "playwright@1"
         },
         {
-          "command": "playwrightSnippets.debugFile",
+          "command": "playwrightSnippets.inspectFile",
           "when": "resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@2"
         },
         {
-          "command": "playwrightSnippets.debugInspectFile",
+          "submenu": "playwrightStudio.explorerContext",
           "when": "resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@3"
+        }
+      ],
+      "playwrightStudio.explorerContext": [
+        {
+          "command": "playwrightSnippets.debugFile",
+          "group": "1_run@1"
+        },
+        {
+          "command": "playwrightSnippets.debugInspectFile",
+          "group": "1_run@2"
+        },
+        {
+          "command": "playwrightSnippets.runWithProject",
+          "group": "1_run@3"
+        },
+        {
+          "command": "playwrightSnippets.showReport",
+          "group": "2_tools@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "playwrightSnippets.showReport",
+          "when": "view == playwrightStudio.resultsView",
+          "group": "navigation"
         }
       ]
     },
@@ -173,10 +272,15 @@
         "command": "playwrightSnippets.runTestAtCursor",
         "key": "ctrl+shift+p ctrl+shift+r",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "playwrightSnippets.runWithTag",
+        "key": "ctrl+shift+p ctrl+shift+t",
+        "when": "editorTextFocus"
       }
     ],
     "configuration": {
-      "title": "Playwright Snippets",
+      "title": "Playwright Studio",
       "properties": {
         "playwrightSnippets.workingDirectory": {
           "type": "string",
@@ -191,7 +295,7 @@
         "playwrightSnippets.reporter": {
           "type": "string",
           "default": "",
-          "description": "Playwright reporter to use (e.g. list, dot, html). Leave empty to use playwright.config.ts default."
+          "description": "Playwright reporter to use (e.g. list, dot, html). Leave empty to use playwright.config.ts default. When captureResults is enabled, 'json' is automatically appended."
         },
         "playwrightSnippets.env": {
           "type": "object",
@@ -200,6 +304,38 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "playwrightSnippets.captureResults": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, Playwright Studio injects the JSON reporter to capture test results. Results power gutter icons, the sidebar panel, status bar summary, and trace failure links. The output file is 'playwright-studio-results.json' (add it to .gitignore)."
+        },
+        "playwrightSnippets.envProfiles": {
+          "type": "object",
+          "default": {},
+          "description": "Named environment profiles. Each key is a profile name and its value is a map of env vars applied when that profile is active. Switch profiles via the status bar or 'Playwright Studio: Switch Environment Profile'.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "examples": [
+            {
+              "staging": {
+                "BASE_URL": "https://staging.example.com"
+              },
+              "production": {
+                "BASE_URL": "https://example.com"
+              }
+            }
+          ]
+        },
+        "playwrightSnippets.heatmapThresholdDays": {
+          "type": "number",
+          "default": 7,
+          "minimum": 1,
+          "description": "Number of days after which a test is highlighted as 'cold' (never or rarely run) in the coverage heatmap."
         }
       }
     },

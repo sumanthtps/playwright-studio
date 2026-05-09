@@ -13,3 +13,5 @@ tsconfig.json
 esbuild.js
 *.vsix
 images/preview.gif
+playwright-studio-results.json
+test-results/**

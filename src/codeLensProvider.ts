@@ -17,22 +17,39 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
     const lenses: vscode.CodeLens[] = [];
     const items = parseTests(document);
     const fileRange = new vscode.Range(0, 0, 0, 0);
+    const filePath = document.uri.fsPath;
 
+    // File-level lenses
     lenses.push(
       new vscode.CodeLens(fileRange, {
-        title: 'Run All',
+        title: '$(play) Run All',
         command: 'playwrightSnippets.runFile',
-        arguments: [document.uri.fsPath],
+        arguments: [filePath],
+        tooltip: 'Run All Tests in File',
       }),
       new vscode.CodeLens(fileRange, {
-        title: 'Debug All',
+        title: '$(debug) Debug All',
         command: 'playwrightSnippets.debugFile',
-        arguments: [document.uri.fsPath],
+        arguments: [filePath],
+        tooltip: 'Debug All Tests in File',
       }),
       new vscode.CodeLens(fileRange, {
-        title: 'Inspect All',
+        title: '$(eye) Inspect All',
         command: 'playwrightSnippets.inspectFile',
-        arguments: [document.uri.fsPath],
+        arguments: [filePath],
+        tooltip: 'Inspect All Tests in File',
+      }),
+      new vscode.CodeLens(fileRange, {
+        title: '$(tag) Tag',
+        command: 'playwrightSnippets.runWithTag',
+        arguments: [filePath],
+        tooltip: 'Run with Tag / Grep Filter',
+      }),
+      new vscode.CodeLens(fileRange, {
+        title: '$(layers) Project',
+        command: 'playwrightSnippets.runWithProject',
+        arguments: [filePath],
+        tooltip: 'Run with Project Selection',
       })
     );
 
@@ -42,39 +59,57 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
       if (item.kind === 'test') {
         lenses.push(
           new vscode.CodeLens(range, {
-            title: 'Run',
+            title: '$(play) Run',
             command: 'playwrightSnippets.runTest',
-            arguments: [document.uri.fsPath, item.name],
+            arguments: [filePath, item.name],
+            tooltip: 'Run Test',
           }),
           new vscode.CodeLens(range, {
-            title: 'Debug',
+            title: '$(debug) Debug',
             command: 'playwrightSnippets.debugTest',
-            arguments: [document.uri.fsPath, item.name],
+            arguments: [filePath, item.name],
+            tooltip: 'Debug Test',
           }),
           new vscode.CodeLens(range, {
-            title: 'Inspect',
+            title: '$(eye) Inspect',
             command: 'playwrightSnippets.inspectTest',
-            arguments: [document.uri.fsPath, item.name],
+            arguments: [filePath, item.name],
+            tooltip: 'Inspect Test',
           })
         );
+
+        // Per-test tag lenses
+        for (const tag of item.tags) {
+          lenses.push(
+            new vscode.CodeLens(range, {
+              title: tag,
+              command: 'playwrightSnippets.runWithTag',
+              arguments: [filePath, tag],
+              tooltip: `Run all tests tagged ${tag}`,
+            })
+          );
+        }
         continue;
       }
 
       lenses.push(
         new vscode.CodeLens(range, {
-          title: 'Run Suite',
+          title: '$(play) Run Suite',
           command: 'playwrightSnippets.runTest',
-          arguments: [document.uri.fsPath, item.name],
+          arguments: [filePath, item.name],
+          tooltip: 'Run Suite',
         }),
         new vscode.CodeLens(range, {
-          title: 'Debug Suite',
+          title: '$(debug) Debug Suite',
           command: 'playwrightSnippets.debugTest',
-          arguments: [document.uri.fsPath, item.name],
+          arguments: [filePath, item.name],
+          tooltip: 'Debug Suite',
         }),
         new vscode.CodeLens(range, {
-          title: 'Inspect Suite',
+          title: '$(eye) Inspect Suite',
           command: 'playwrightSnippets.inspectTest',
-          arguments: [document.uri.fsPath, item.name],
+          arguments: [filePath, item.name],
+          tooltip: 'Inspect Suite',
         })
       );
     }

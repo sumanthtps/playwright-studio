@@ -5,118 +5,297 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/visual-studio-marketplace/v/sumanthtps.playwright-test-code-snippets?label=version&color=0f6b44" alt="Version"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/visual-studio-marketplace/i/sumanthtps.playwright-test-code-snippets?label=installs&color=1b9c5a" alt="Installs"></a>
-  <a href="https://github.com/sumanthtps/New-Playwright-snippets/actions"><img src="https://github.com/sumanthtps/New-Playwright-snippets/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/sumanthtps/New-Playwright-snippets/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgray.svg" alt="License"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/badge/version-1.1.0-0f6b44?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/sumanthtps/playwright-studio/actions"><img src="https://github.com/sumanthtps/playwright-studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/sumanthtps/playwright-studio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgray.svg" alt="License"></a>
 </p>
 
 <p align="center">
-  <strong>Write Playwright faster. Run tests without leaving VS Code.</strong>
+  <strong>The complete Playwright toolkit for VS Code.</strong>
 </p>
 
 <p align="center">
-  338 snippets, inline Run / Debug / Inspect CodeLens, Codegen, Trace Viewer, and HTML Report in one lightweight extension.
+  338 snippets · inline CodeLens · live test results · gutter icons · tag filtering · multi-project runs · env profiles · fixture navigation · and more — all without leaving the editor.
 </p>
 
 <p align="center">
   <img src="images/preview.gif" alt="Preview of Playwright Studio inside VS Code" width="920" />
 </p>
 
-## Why Install Playwright Studio?
+---
 
-- Move faster with 338 ready-to-use Playwright snippets.
-- Run, debug, and inspect tests directly from the editor.
-- Launch `playwright codegen`, open trace archives, and show HTML reports without context switching.
-- Works across TypeScript, JavaScript, TSX, and JSX.
-
-## What You Get
+## Features
 
 ### CodeLens Test Runner
 
-Open a Playwright spec file and get inline actions instantly:
+Open any Playwright spec file and get inline actions on every test and suite:
 
-```text
-Run All   Debug All   Inspect All
-Run       Debug       Inspect
+```
+Run All   Debug All   Inspect All   $(tag) Run with Tag   $(layers) Run with Project
+──────────────────────────────────────────────────────────────────────────────────────
+Run       Debug       Inspect       @smoke  @regression
 Run Suite Debug Suite Inspect Suite
 ```
 
-### Command Palette Actions
+- **Run / Debug / Inspect** at the file, suite, and individual test level.
+- **Run with Tag** — filter by `@tag` found in test names, or enter a custom regex grep pattern.
+- **Run with Project** — pick one or more projects from your `playwright.config.ts` (e.g. `chromium`, `firefox`, `webkit`).
+- Per-test tag lenses appear automatically when your test name contains `@tags`.
 
-Use `Ctrl+Shift+P` and run:
+---
 
-- `Playwright Studio: Run Test`
-- `Playwright Studio: Run All Tests in File`
-- `Playwright Studio: Debug Test`
-- `Playwright Studio: Debug All Tests in File`
-- `Playwright Studio: Inspect Test (PWDEBUG=1)`
-- `Playwright Studio: Run Test at Cursor`
-- `Playwright Studio: Open Codegen`
-- `Playwright Studio: Show Trace Viewer`
-- `Playwright Studio: Show HTML Report`
+### Live Test Results Panel
 
-### Better Test Workflow
+After each run a **Playwright Results** tree appears in the Explorer sidebar:
 
-- Right-click in the editor for `Run Test at Cursor` and `Open Codegen`.
-- Use the editor tab `...` menu for file-level run/debug/inspect actions.
-- Right-click a file in the Explorer for file-level run/debug/inspect actions.
+- Tests grouped by file with pass / fail counts.
+- Click any test node to jump directly to its source line.
+- Failed tests show their error message as a tooltip.
+- Tests with an attached trace file show an "Open Trace" action.
 
-### Snippets That Save Time
+To enable: set `playwrightSnippets.captureResults` to `true` and add `['json']` to the `reporter` array in your `playwright.config.ts`. Then run tests via the extension (CodeLens, right-click menu, or Command Palette) — see [Troubleshooting](#troubleshooting) if the panel stays empty.
 
-The snippet library covers the Playwright workflows people actually use every day:
+---
 
-- Test structure and fixtures
-- Locators and assertions
-- Routing, API testing, and WebSockets
-- Tracing, downloads, file chooser, and HAR patterns
-- POM templates and Playwright config templates
+### Gutter Decorations & Failure Diagnostics
 
-For the full snippet source, see [`snippets/playwright.json`](snippets/playwright.json).
+Pass/fail status is shown inline after every test run:
+
+| Icon            | Meaning                 |
+| --------------- | ----------------------- |
+| 🟢 Green circle  | Test passed             |
+| 🔴 Red circle    | Test failed / timed out |
+| ⚫ Grey circle   | Test skipped            |
+| 🟠 Orange circle | Test flaky              |
+
+- **Overview ruler** in the scrollbar highlights failures and flaky tests at a glance.
+- **Diagnostics** (squiggles) appear on failed tests with the first line of the error message.
+- When a trace file is attached to the failure, the diagnostic code link opens the **Trace Viewer** directly.
+
+---
+
+### Status Bar — Last Run Summary & Env Profile
+
+**Last run summary** appears in the status bar after each run:
+
+```
+$(pass) 24 passed      ← click to open HTML report
+$(error) 21 passed  3 failed
+```
+
+**Environment profile switcher** shows the active profile next to it:
+
+```
+$(server-environment) staging    ← click to switch profile
+```
+
+Configure profiles in settings:
+
+```json
+"playwrightSnippets.envProfiles": {
+  "staging":    { "BASE_URL": "https://staging.example.com" },
+  "production": { "BASE_URL": "https://example.com" }
+}
+```
+
+Switch profiles via the status bar or `Playwright Studio: Switch Environment Profile` from the Command Palette. The Playwright terminal is automatically recreated with the new environment.
+
+---
+
+### Coverage Heatmap — Find Untested Code
+
+Tests that have **never been run** (or not run within the configured threshold) are highlighted with a subtle amber background and an inline `never run` label.
+
+- Threshold is configurable via `playwrightSnippets.heatmapThresholdDays` (default: 7 days).
+- Hover over a highlighted test to see when it was last run.
+- Decorations update automatically after each test run.
+
+---
+
+### Fixture Navigation — Go to Definition & Hover
+
+Playwright fixtures are first-class citizens:
+
+- **Ctrl+Click** (Go to Definition) on any fixture name in a test callback jumps to where it is defined in your fixture file.
+- **Hover** over a fixture name shows which file and line it is defined on.
+- The fixture index is built automatically by scanning workspace files that use `.extend(`.
+
+---
+
+### Save Selection as Snippet
+
+Capture any code block as a personal snippet:
+
+1. Select code in the editor.
+2. Right-click → **Playwright Studio: Save Selection as Snippet**.
+3. Enter a prefix (the shortcut you'll type) and a name.
+4. The snippet is saved to `playwright-custom.code-snippets` in your VS Code user folder and is immediately available in all projects.
+
+---
+
+### Trace Viewer & HTML Report
+
+- **Show Trace Viewer** — pick a `.zip` trace file via file dialog, or click the trace link from a failure diagnostic.
+- **Show HTML Report** — opens the Playwright HTML report, also clickable from the status bar summary.
+
+---
+
+### Code Generation
+
+- **Open Codegen** — launches `playwright codegen` with an optional start URL. Record browser interactions and paste generated selectors straight into your test.
+
+---
+
+## Command Palette Reference
+
+| Command                                               | Description                                   |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `Playwright Studio: Run Test`                         | Run a single test (prompts if none selected)  |
+| `Playwright Studio: Run All Tests in File`            | Run every test in the active file             |
+| `Playwright Studio: Debug Test`                       | Run a test in debug mode                      |
+| `Playwright Studio: Debug All Tests in File`          | Debug all tests in the active file            |
+| `Playwright Studio: Inspect Test (PWDEBUG=1)`         | Open Playwright Inspector for a test          |
+| `Playwright Studio: Inspect All Tests in File`        | Inspect all tests in the active file          |
+| `Playwright Studio: Debug Test with Inspector`        | Combined debug + inspector                    |
+| `Playwright Studio: Run Test at Cursor`               | Run the test surrounding the cursor           |
+| `Playwright Studio: Run Tests with Tag / Grep Filter` | Filter by `@tag` or regex pattern             |
+| `Playwright Studio: Run Tests with Project Selection` | Pick Playwright browser projects              |
+| `Playwright Studio: Switch Environment Profile`       | Switch active env profile from the status bar |
+| `Playwright Studio: Open Codegen`                     | Launch `playwright codegen`                   |
+| `Playwright Studio: Show Trace Viewer`                | Open a trace `.zip` file                      |
+| `Playwright Studio: Show HTML Report`                 | Open the Playwright HTML report               |
+| `Playwright Studio: Save Selection as Snippet`        | Save selected code as a reusable snippet      |
+
+### Keyboard Shortcuts
+
+| Shortcut                        | Command                          |
+| ------------------------------- | -------------------------------- |
+| `Ctrl+Shift+P` → `Ctrl+Shift+R` | Run Test at Cursor               |
+| `Ctrl+Shift+P` → `Ctrl+Shift+T` | Run Tests with Tag / Grep Filter |
+
+---
+
+## Right-Click Context Menu
+
+Right-click anywhere in a test file for quick access to:
+
+- Run Test at Cursor
+- Run Tests with Tag / Grep Filter
+- Run Tests with Project Selection
+- Open Codegen
+- Save Selection as Snippet *(only when code is selected)*
+
+Right-click a file in the **Explorer** sidebar for:
+
+- Run All Tests in File
+- Debug All Tests in File
+- Debug All Tests with Inspector
+- Run Tests with Project Selection
+
+---
 
 ## Quick Start
 
 1. Install the extension from the VS Code Marketplace.
-2. Install Playwright in your project with `npm i -D @playwright/test`.
+2. Install Playwright in your project: `npm i -D @playwright/test`.
 3. Open any `.spec.ts`, `.test.ts`, `.spec.js`, or `.test.js` file.
-4. Use CodeLens or the Command Palette to run your first test.
+4. Use the CodeLens above your first test to run it.
 
-Or install from the command line:
+Or install from the terminal:
 
 ```bash
 code --install-extension sumanthtps.playwright-test-code-snippets
 ```
 
+> **Note:** The extension writes its results JSON to per-workspace VS Code storage (`%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\` on Windows; `~/Library/Application Support/Code/User/workspaceStorage/<hash>/...` on macOS), so nothing lands in your repo and there's nothing to gitignore.
+
+---
+
 ## Configuration
 
 All settings live under `playwrightSnippets.*`:
 
-| Setting                               | Default                 | Description                                         |
-| ------------------------------------- | ----------------------- | --------------------------------------------------- |
-| `playwrightSnippets.workingDirectory` | `""`                    | Working directory for running Playwright tests      |
-| `playwrightSnippets.testCommand`      | `"npx playwright test"` | Base command used to run Playwright tests           |
-| `playwrightSnippets.reporter`         | `""`                    | Reporter to use, such as `list`, `dot`, or `html`   |
-| `playwrightSnippets.env`              | `{}`                    | Extra environment variables passed to each test run |
+| Setting                                   | Default                 | Description                                                                                                    |
+| ----------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
+| `playwrightSnippets.testCommand`          | `"npx playwright test"` | Base command used to run tests                                                                                 |
+| `playwrightSnippets.reporter`             | `""`                    | Currently unused. The extension does not pass `--reporter` to Playwright; configure reporters in `playwright.config.ts` |
+| `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
+| `playwrightSnippets.captureResults`       | `false`                 | Sets `PLAYWRIGHT_JSON_OUTPUT_NAME` so the JSON reporter (which you must declare in `playwright.config.ts`) writes results powering the gutter icons, sidebar panel, status bar, and trace links |
+| `playwrightSnippets.envProfiles`          | `{}`                    | Named env profiles — each key is a profile name, value is a map of env vars                                    |
+| `playwrightSnippets.heatmapThresholdDays` | `7`                     | Days after which a test is highlighted as never/rarely run                                                     |
 
-Example:
+### Example `settings.json`
 
 ```json
 {
   "playwrightSnippets.workingDirectory": "e2e",
   "playwrightSnippets.testCommand": "npx playwright test",
   "playwrightSnippets.reporter": "list",
+  "playwrightSnippets.captureResults": true,
+  "playwrightSnippets.heatmapThresholdDays": 7,
   "playwrightSnippets.env": {
-    "BASE_URL": "https://staging.example.com"
+    "CI": "false"
+  },
+  "playwrightSnippets.envProfiles": {
+    "staging": {
+      "BASE_URL": "https://staging.example.com",
+      "AUTH_TOKEN": "staging-token"
+    },
+    "production": {
+      "BASE_URL": "https://example.com"
+    }
   }
 }
 ```
 
-## Why Teams Keep It Installed
+---
 
-- It removes repetitive Playwright typing.
-- It makes common debug flows easier to discover.
-- It keeps the terminal, trace viewer, and codegen close to where you write tests.
-- It is useful on day one, even before any project-specific setup.
+## Troubleshooting
+
+### Playwright Results panel stays empty
+
+The panel only populates when a Playwright run writes a JSON report to the extension's per-workspace storage directory. Walk this checklist top to bottom — each step depends on the previous one.
+
+1. **Enable result capture.** In your workspace `.vscode/settings.json` (or User settings):
+   ```json
+   { "playwrightSnippets.captureResults": true }
+   ```
+   This makes the extension export `PLAYWRIGHT_JSON_OUTPUT_NAME` into the terminals it spawns.
+
+2. **Add the `json` reporter to `playwright.config.ts`.** The extension does not pass `--reporter` on the command line, so the JSON reporter must be present in your config:
+   ```ts
+   reporter: [
+     ['list'],
+     ['html', { open: 'never' }],
+     ['json'], // required for the results panel
+   ],
+   ```
+   Without this, no JSON file is ever written, no matter what env vars are set.
+
+3. **Set `workingDirectory` if your `playwright.config.ts` is not at the workspace root.** Common in monorepos. Example for a config at `<workspace>/tests/playwright.config.ts`:
+   ```json
+   { "playwrightSnippets.workingDirectory": "tests" }
+   ```
+
+4. **Run tests via the extension, not a manual terminal.** Use CodeLens (`▶ Run Test`), the editor right-click menu (**Playwright Studio → Run Test at Cursor**), or the Command Palette (**Playwright Studio: Run Test**). The terminal that opens must be named **"Playwright"** in the dropdown. A terminal you opened yourself with `Ctrl+\`` will not have `PLAYWRIGHT_JSON_OUTPUT_NAME` set, so capture won't happen.
+
+5. **After changing settings, reload the window** (`Ctrl+Shift+P` → `Developer: Reload Window`) and **kill any pre-existing "Playwright" terminal** — its env vars were fixed at creation time.
+
+6. **Verify the JSON file is being written.** It lives at:
+   - **Windows:** `%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\playwright-studio-results.json`
+   - **macOS:** `~/Library/Application Support/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
+   - **Linux:** `~/.config/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
+
+   If the file is **missing** after a run, the json reporter or env var isn't reaching the test process — go back to steps 1–4. If the file **exists** but the panel is still empty, it's a refresh issue — the panel polls mtime every 1.5s, so toggling focus or running the test once more will pick it up.
+
+### Test run launches but reports "no tests found"
+
+`playwrightSnippets.workingDirectory` is wrong. Playwright doesn't search up the directory tree for `playwright.config.ts` — set `workingDirectory` to the folder that actually contains it.
+
+### Wrong reporter ends up on the command line
+
+The extension no longer passes `--reporter` at all. If you still see one in the spawned command, your installed extension version is older than 1.0.8 — reinstall the latest VSIX.
 
 ---
 
@@ -183,7 +362,7 @@ Example:
 | `p-tslow`      | `test.slow()`                       |
 | `p-t-timeout`  | `test.setTimeout()`                 |
 | `p-tinfo`      | `test.info()`                       |
-| `p-textend`    | `test.extend()` - custom fixtures   |
+| `p-textend`    | `test.extend()` — custom fixtures   |
 | `p-tdo`        | `test.describe.only()`              |
 | `p-tdp`        | `test.describe.parallel()`          |
 | `p-tds`        | `test.describe.serial()`            |
@@ -230,8 +409,8 @@ Example:
 | `p-bc-cookies`      | `context.cookies()`                         |
 | `p-bc-addcookies`   | `context.addCookies()`                      |
 | `p-bc-clrcookies`   | `context.clearCookies()`                    |
-| `p-bc-storage`      | `context.storageState()` - save auth        |
-| `p-bc-auth`         | `newContext({ storageState })` - reuse auth |
+| `p-bc-storage`      | `context.storageState()` — save auth        |
+| `p-bc-auth`         | `newContext({ storageState })` — reuse auth |
 | `p-bc-route`        | `context.route()`                           |
 | `p-bc-routehar`     | `context.routeFromHAR()`                    |
 | `p-bc-ws-route`     | `context.routeWebSocket()` (v1.48+)         |
@@ -255,7 +434,7 @@ Example:
 
 ---
 
-### Page - Navigation & Interaction
+### Page — Navigation & Interaction
 
 | Prefix           | Description            |
 | ---------------- | ---------------------- |
@@ -267,14 +446,14 @@ Example:
 | `p-url`          | `page.url()`           |
 | `p-title`        | `page.title()`         |
 | `p-content`      | `page.content()`       |
-| `p-pause`        | `page.pause()` - debug |
+| `p-pause`        | `page.pause()` — debug |
 | `p-iclosed`      | `page.isClosed()`      |
 | `p-ctx`          | `page.context()`       |
 | `p-opener`       | `page.opener()`        |
 | `p-close`        | `page.close()`         |
 | `p-bringToFront` | `page.bringToFront()`  |
 
-### Page - Locating Elements
+### Page — Locating Elements
 
 | Prefix        | Description               |
 | ------------- | ------------------------- |
@@ -295,7 +474,7 @@ Example:
 | `p-$eval`     | `page.$eval()`            |
 | `p-$$eval`    | `page.$$eval()`           |
 
-### Page - Actions
+### Page — Actions
 
 | Prefix     | Description              |
 | ---------- | ------------------------ |
@@ -315,7 +494,7 @@ Example:
 | `p-svp`    | `page.setViewportSize()` |
 | `p-emedia` | `page.emulateMedia()`    |
 
-### Page - State & Evaluation
+### Page — State & Evaluation
 
 | Prefix        | Description                  |
 | ------------- | ---------------------------- |
@@ -339,7 +518,7 @@ Example:
 | `p-sethdrs`   | `page.setExtraHTTPHeaders()` |
 | `p-reqgc`     | `page.requestGC()` (v1.48+)  |
 
-### Page - Capture & Output
+### Page — Capture & Output
 
 | Prefix                 | Description          |
 | ---------------------- | -------------------- |
@@ -347,7 +526,7 @@ Example:
 | `p-screenshot-element` | Element screenshot   |
 | `p-pdf`                | `page.pdf()`         |
 
-### Page - Debug & Inspection (v1.56+)
+### Page — Debug & Inspection (v1.56+)
 
 | Prefix           | Description              |
 | ---------------- | ------------------------ |
@@ -355,16 +534,16 @@ Example:
 | `p-page-errors`  | `page.pageErrors()`      |
 | `p-page-reqs`    | `page.requests()`        |
 
-### Page - Routing
+### Page — Routing
 
 | Prefix          | Description                                  |
 | --------------- | -------------------------------------------- |
 | `p-route`       | `page.route()`                               |
 | `p-routehar`    | `page.routeFromHAR()`                        |
 | `p-unroute`     | `page.unrouteAll()`                          |
-| `p-unroute-url` | `page.unroute()` - specific URL              |
+| `p-unroute-url` | `page.unroute()` — specific URL              |
 | `p-ws-route`    | `page.routeWebSocket()` (v1.48+)             |
-| `p-alh`         | `page.addLocatorHandler()` - overlay handler |
+| `p-alh`         | `page.addLocatorHandler()` — overlay handler |
 | `p-rlh`         | `page.removeLocatorHandler()`                |
 | `p-ral`         | `page.removeAllListeners()`                  |
 
@@ -377,12 +556,12 @@ Example:
 | `p-loc-all`        | `locator.all()`                              |
 | `p-loc-ait`        | `locator.allInnerTexts()`                    |
 | `p-loc-atc`        | `locator.allTextContents()`                  |
-| `p-loc-and`        | `locator.and()` - AND match                  |
-| `p-loc-or`         | `locator.or()` - OR match                    |
+| `p-loc-and`        | `locator.and()` — AND match                  |
+| `p-loc-or`         | `locator.or()` — OR match                    |
 | `p-loc-first`      | `locator.first()`                            |
 | `p-loc-last`       | `locator.last()`                             |
 | `p-loc-nth`        | `locator.nth()`                              |
-| `p-loc-sub`        | `locator.locator()` - sub-locator            |
+| `p-loc-sub`        | `locator.locator()` — sub-locator            |
 | `p-loc-clear`      | `locator.clear()`                            |
 | `p-loc-blur`       | `locator.blur()`                             |
 | `p-loc-tap`        | `locator.tap()`                              |
@@ -396,15 +575,15 @@ Example:
 | `p-loc-ival`       | `locator.inputValue()`                       |
 | `p-loc-ihtml`      | `locator.innerHTML()`                        |
 | `p-loc-tc`         | `locator.textContent()`                      |
-| `p-loc-wf`         | `locator.waitFor()` - with state             |
+| `p-loc-wf`         | `locator.waitFor()` — with state             |
 | `p-loc-eval`       | `locator.evaluate()`                         |
 | `p-loc-evalall`    | `locator.evaluateAll()`                      |
 | `p-loc-de`         | `locator.dispatchEvent()`                    |
 | `p-loc-cf`         | `locator.contentFrame()`                     |
 | `p-loc-filter-vis` | `locator.filter({ visible: true })` (v1.51+) |
-| `p-locator-filter` | `locator.filter()` - text/not                |
+| `p-locator-filter` | `locator.filter()` — text/not                |
 | `p-loc-describe`   | `locator.describe()` (v1.53+)                |
-| `p-loc-hl`         | `locator.highlight()` - debug                |
+| `p-loc-hl`         | `locator.highlight()` — debug                |
 | `p-loc-aria`       | `locator.ariaSnapshot()`                     |
 | `p-loc-ss`         | `locator.screenshot()`                       |
 
@@ -470,7 +649,7 @@ Example:
 | `p-e-focused`  | `toBeFocused()`              |
 | `p-e-viewport` | `toBeInViewport()`           |
 | `p-e-editable` | `toBeEditable()`             |
-| `p-e-ok`       | `toBeOK()` - response status |
+| `p-e-ok`       | `toBeOK()` — response status |
 
 #### Content Assertions
 
@@ -485,7 +664,7 @@ Example:
 | `p-ethc`        | `toHaveCount()`                 |
 | `p-ethss`       | `toHaveScreenshot()`            |
 | `p-e-val`       | `toHaveValue()`                 |
-| `p-e-vals`      | `toHaveValues()` - multi-select |
+| `p-e-vals`      | `toHaveValues()` — multi-select |
 | `p-e-class`     | `toHaveClass()`                 |
 | `p-e-contclass` | `toContainClass()` (v1.52+)     |
 | `p-e-css`       | `toHaveCSS()`                   |
@@ -506,9 +685,9 @@ Example:
 
 | Prefix            | Description                         |
 | ----------------- | ----------------------------------- |
-| `p-config-expect` | `expect.configure()` - soft/timeout |
-| `p-e-poll`        | `expect.poll()` - polling           |
-| `p-e-pass`        | `expect.toPass()` - retry block     |
+| `p-config-expect` | `expect.configure()` — soft/timeout |
+| `p-e-poll`        | `expect.poll()` — polling           |
+| `p-e-pass`        | `expect.toPass()` — retry block     |
 | `p-soft-assert`   | Soft assertions block pattern       |
 
 ---
@@ -517,11 +696,11 @@ Example:
 
 | Prefix             | Description                                  |
 | ------------------ | -------------------------------------------- |
-| `p-route-fulfill`  | `route.fulfill()` - mock response            |
-| `p-route-abort`    | `route.abort()` - block request              |
-| `p-route-continue` | `route.continue()` - pass through with edits |
-| `p-route-fallback` | `route.fallback()` - next handler            |
-| `p-route-fetch`    | `route.fetch()` - fetch + modify             |
+| `p-route-fulfill`  | `route.fulfill()` — mock response            |
+| `p-route-abort`    | `route.abort()` — block request              |
+| `p-route-continue` | `route.continue()` — pass through with edits |
+| `p-route-fallback` | `route.fallback()` — next handler            |
+| `p-route-fetch`    | `route.fetch()` — fetch + modify             |
 | `p-route-modify`   | Intercept and modify JSON response pattern   |
 | `p-net-req`        | Inspect request (method, url, headers, body) |
 | `p-net-res`        | Inspect response (status, url, json)         |
@@ -544,7 +723,7 @@ Example:
 
 | Prefix            | Description                         |
 | ----------------- | ----------------------------------- |
-| `p-clock-install` | `page.clock.install()` - fake clock |
+| `p-clock-install` | `page.clock.install()` — fake clock |
 | `p-clock-fixed`   | `page.clock.setFixedTime()`         |
 | `p-clock-systime` | `page.clock.setSystemTime()`        |
 | `p-clock-ff`      | `page.clock.fastForward()`          |
@@ -602,11 +781,11 @@ Example:
 | `p-api-patch`   | `request.patch()`                   |
 | `p-api-del`     | `request.delete()`                  |
 | `p-api-head`    | `request.head()`                    |
-| `p-api-fetch`   | `request.fetch()` - custom method   |
+| `p-api-fetch`   | `request.fetch()` — custom method   |
 | `p-api-storage` | `request.storageState()`            |
 | `p-api-dispose` | `request.dispose()`                 |
-| `p-req-get`     | `page.request.get()` - shares auth  |
-| `p-req-post`    | `page.request.post()` - shares auth |
+| `p-req-get`     | `page.request.get()` — shares auth  |
+| `p-req-post`    | `page.request.post()` — shares auth |
 
 ---
 
@@ -698,8 +877,8 @@ Example:
 ## Links
 
 - Marketplace: https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets
-- Repository: https://github.com/sumanthtps/New-Playwright-snippets
-- Issues and feature requests: https://github.com/sumanthtps/New-Playwright-snippets/issues
+- Repository: https://github.com/sumanthtps/playwright-studio
+- Issues & feature requests: https://github.com/sumanthtps/playwright-studio/issues
 
 ---
 

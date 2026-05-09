@@ -1,10 +1,17 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
+import { getConfig, getCaptureEnv } from './config';
 
 let terminal: vscode.Terminal | undefined;
+let extraEnvProvider: (() => Record<string, string>) | undefined;
 
 function isAlive(t: vscode.Terminal): boolean {
   return vscode.window.terminals.includes(t);
+}
+
+export function setExtraEnvProvider(fn: () => Record<string, string>): void {
+  extraEnvProvider = fn;
+  // Dispose so the next run recreates it with updated env
+  disposeTerminal();
 }
 
 export function getTerminal(): vscode.Terminal {
@@ -12,10 +19,12 @@ export function getTerminal(): vscode.Terminal {
     return terminal;
   }
   const { workingDirectory, env } = getConfig();
+  const profileEnv = extraEnvProvider?.() ?? {};
+  const captureEnv = getCaptureEnv();
   terminal = vscode.window.createTerminal({
     name: 'Playwright',
     cwd: workingDirectory,
-    env,
+    env: { ...env, ...profileEnv, ...captureEnv },
   });
   return terminal;
 }
@@ -24,7 +33,6 @@ export function runInTerminal(command: string, extraEnv?: Record<string, string>
   const term = getTerminal();
 
   if (extraEnv && Object.keys(extraEnv).length > 0) {
-    // Inline env vars prepended to the command
     const envStr = Object.entries(extraEnv)
       .map(([k, v]) => `${k}=${v}`)
       .join(' ');

@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { getResultsFilePath } from './resultsPath';
 
 export interface PlaywrightConfig {
   workingDirectory: string;
   testCommand: string;
   reporter: string;
   env: Record<string, string>;
+  captureResults: boolean;
 }
 
 function getWorkspaceRoot(): string {
@@ -24,18 +26,21 @@ export function getConfig(): PlaywrightConfig {
     testCommand: cfg().get<string>('testCommand', 'npx playwright test'),
     reporter: cfg().get<string>('reporter', ''),
     env: cfg().get<Record<string, string>>('env', {}),
+    captureResults: cfg().get<boolean>('captureResults', false),
   };
 }
 
+export function getCaptureEnv(): Record<string, string> {
+  if (!cfg().get<boolean>('captureResults', false)) return {};
+  return { PLAYWRIGHT_JSON_OUTPUT_NAME: getResultsFilePath() };
+}
+
 export function buildRunArgs(testFile: string, testName?: string): string[] {
-  const { testCommand, reporter } = getConfig();
+  const { testCommand } = getConfig();
   const args = testCommand.split(/\s+/);
-  args.push(JSON.stringify(testFile));
+  args.push(JSON.stringify(path.basename(testFile)));
   if (testName) {
     args.push('--grep', JSON.stringify(testName));
-  }
-  if (reporter) {
-    args.push('--reporter', reporter);
   }
   return args;
 }

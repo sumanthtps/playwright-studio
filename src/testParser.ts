@@ -4,6 +4,11 @@ export interface TestItem {
   name: string;
   line: number;
   kind: 'test' | 'describe';
+  tags: string[];
+}
+
+export function extractTags(testName: string): string[] {
+  return testName.match(/@[\w-]+/g) ?? [];
 }
 
 // Matches: test('name', ...) | test.only('name', ...) | test.skip('name', ...)
@@ -28,7 +33,7 @@ export function parseTests(document: vscode.TextDocument): TestItem[] {
 
     const testMatch = TEST_RE.exec(lineText);
     if (testMatch) {
-      items.push({ name: testMatch[2], line: i, kind: 'test' });
+      items.push({ name: testMatch[2], line: i, kind: 'test', tags: extractTags(testMatch[2]) });
       continue;
     }
 
@@ -37,14 +42,14 @@ export function parseTests(document: vscode.TextDocument): TestItem[] {
       const nextLine = document.lineAt(i + 1).text;
       const nameMatch = STRING_RE.exec(nextLine);
       if (nameMatch) {
-        items.push({ name: nameMatch[2], line: i, kind: 'test' });
+        items.push({ name: nameMatch[2], line: i, kind: 'test', tags: extractTags(nameMatch[2]) });
         continue;
       }
     }
 
     const describeMatch = DESCRIBE_RE.exec(lineText);
     if (describeMatch) {
-      items.push({ name: describeMatch[2], line: i, kind: 'describe' });
+      items.push({ name: describeMatch[2], line: i, kind: 'describe', tags: extractTags(describeMatch[2]) });
       continue;
     }
 
@@ -53,7 +58,7 @@ export function parseTests(document: vscode.TextDocument): TestItem[] {
       const nextLine = document.lineAt(i + 1).text;
       const nameMatch = STRING_RE.exec(nextLine);
       if (nameMatch) {
-        items.push({ name: nameMatch[2], line: i, kind: 'describe' });
+        items.push({ name: nameMatch[2], line: i, kind: 'describe', tags: extractTags(nameMatch[2]) });
       }
     }
   }
