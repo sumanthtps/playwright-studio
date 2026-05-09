@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/visual-studio-marketplace/v/sumanthtps.playwright-test-code-snippets?label=version&color=0f6b44" alt="Version"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/visual-studio-marketplace/i/sumanthtps.playwright-test-code-snippets?label=installs&color=1b9c5a" alt="Installs"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://vsmarketplacebadges.dev/version-short/sumanthtps.playwright-test-code-snippets.svg?label=version&color=0f6b44&style=flat-square" alt="Version"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://vsmarketplacebadges.dev/installs-short/sumanthtps.playwright-test-code-snippets.svg?label=installs&color=1b9c5a&style=flat-square" alt="Installs"></a>
   <a href="https://github.com/sumanthtps/playwright-studio/actions"><img src="https://github.com/sumanthtps/playwright-studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/sumanthtps/playwright-studio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgray.svg" alt="License"></a>
 </p>
