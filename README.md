@@ -54,7 +54,7 @@ After each run a **Playwright Results** tree appears in the Explorer sidebar:
 - Failed tests show their error message as a tooltip.
 - Tests with an attached trace file show an "Open Trace" action.
 
-Results are populated automatically — no extra setup needed when `captureResults` is enabled (default).
+To enable: set `playwrightSnippets.captureResults` to `true` and add `['json']` to the `reporter` array in your `playwright.config.ts`. Then run tests via the extension (CodeLens, right-click menu, or Command Palette) — see [Troubleshooting](#troubleshooting) if the panel stays empty.
 
 ---
 
@@ -208,7 +208,7 @@ Or install from the terminal:
 code --install-extension sumanthtps.playwright-test-code-snippets
 ```
 
-> **Tip:** Add `playwright-studio-results.json` to your `.gitignore` — this file is written by the extension after each run to power live result features.
+> **Note:** The extension writes its results JSON to per-workspace VS Code storage (`%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\` on Windows; `~/Library/Application Support/Code/User/workspaceStorage/<hash>/...` on macOS), so nothing lands in your repo and there's nothing to gitignore.
 
 ---
 
@@ -220,9 +220,9 @@ All settings live under `playwrightSnippets.*`:
 | ----------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
 | `playwrightSnippets.testCommand`          | `"npx playwright test"` | Base command used to run tests                                                                                 |
-| `playwrightSnippets.reporter`             | `""`                    | Reporter to use (`list`, `dot`, `html`, etc.). `json` is appended automatically when `captureResults` is on    |
+| `playwrightSnippets.reporter`             | `""`                    | Currently unused. The extension does not pass `--reporter` to Playwright; configure reporters in `playwright.config.ts` |
 | `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
-| `playwrightSnippets.captureResults`       | `true`                  | Inject the JSON reporter to capture results and power gutter icons, sidebar panel, status bar, and trace links |
+| `playwrightSnippets.captureResults`       | `false`                 | Sets `PLAYWRIGHT_JSON_OUTPUT_NAME` so the JSON reporter (which you must declare in `playwright.config.ts`) writes results powering the gutter icons, sidebar panel, status bar, and trace links |
 | `playwrightSnippets.envProfiles`          | `{}`                    | Named env profiles — each key is a profile name, value is a map of env vars                                    |
 | `playwrightSnippets.heatmapThresholdDays` | `7`                     | Days after which a test is highlighted as never/rarely run                                                     |
 
@@ -249,6 +249,54 @@ All settings live under `playwrightSnippets.*`:
   }
 }
 ```
+
+---
+
+## Troubleshooting
+
+### Playwright Results panel stays empty
+
+The panel only populates when a Playwright run writes a JSON report to the extension's per-workspace storage directory. Walk this checklist top to bottom — each step depends on the previous one.
+
+1. **Enable result capture.** In your workspace `.vscode/settings.json` (or User settings):
+   ```json
+   { "playwrightSnippets.captureResults": true }
+   ```
+   This makes the extension export `PLAYWRIGHT_JSON_OUTPUT_NAME` into the terminals it spawns.
+
+2. **Add the `json` reporter to `playwright.config.ts`.** The extension does not pass `--reporter` on the command line, so the JSON reporter must be present in your config:
+   ```ts
+   reporter: [
+     ['list'],
+     ['html', { open: 'never' }],
+     ['json'], // required for the results panel
+   ],
+   ```
+   Without this, no JSON file is ever written, no matter what env vars are set.
+
+3. **Set `workingDirectory` if your `playwright.config.ts` is not at the workspace root.** Common in monorepos. Example for a config at `<workspace>/tests/playwright.config.ts`:
+   ```json
+   { "playwrightSnippets.workingDirectory": "tests" }
+   ```
+
+4. **Run tests via the extension, not a manual terminal.** Use CodeLens (`▶ Run Test`), the editor right-click menu (**Playwright Studio → Run Test at Cursor**), or the Command Palette (**Playwright Studio: Run Test**). The terminal that opens must be named **"Playwright"** in the dropdown. A terminal you opened yourself with `Ctrl+\`` will not have `PLAYWRIGHT_JSON_OUTPUT_NAME` set, so capture won't happen.
+
+5. **After changing settings, reload the window** (`Ctrl+Shift+P` → `Developer: Reload Window`) and **kill any pre-existing "Playwright" terminal** — its env vars were fixed at creation time.
+
+6. **Verify the JSON file is being written.** It lives at:
+   - **Windows:** `%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\playwright-studio-results.json`
+   - **macOS:** `~/Library/Application Support/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
+   - **Linux:** `~/.config/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
+
+   If the file is **missing** after a run, the json reporter or env var isn't reaching the test process — go back to steps 1–4. If the file **exists** but the panel is still empty, it's a refresh issue — the panel polls mtime every 1.5s, so toggling focus or running the test once more will pick it up.
+
+### Test run launches but reports "no tests found"
+
+`playwrightSnippets.workingDirectory` is wrong. Playwright doesn't search up the directory tree for `playwright.config.ts` — set `workingDirectory` to the folder that actually contains it.
+
+### Wrong reporter ends up on the command line
+
+The extension no longer passes `--reporter` at all. If you still see one in the spawned command, your installed extension version is older than 1.0.8 — reinstall the latest VSIX.
 
 ---
 

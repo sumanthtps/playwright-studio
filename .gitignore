@@ -5,3 +5,5 @@ vsc-extension-quickstart.md
 *.vsix
 dist/
 out/
+playwright-studio-results.json
+test-results/

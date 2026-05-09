@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { getResultsFilePath } from './resultsPath';
 
 export interface PlaywrightConfig {
   workingDirectory: string;
@@ -31,25 +32,16 @@ export function getConfig(): PlaywrightConfig {
 
 export function getCaptureEnv(): Record<string, string> {
   if (!cfg().get<boolean>('captureResults', false)) return {};
-  return { PLAYWRIGHT_JSON_OUTPUT_NAME: 'playwright-studio-results.json' };
+  return { PLAYWRIGHT_JSON_OUTPUT_NAME: getResultsFilePath() };
 }
 
 export function buildRunArgs(testFile: string, testName?: string): string[] {
-  const { testCommand, reporter, captureResults } = getConfig();
+  const { testCommand } = getConfig();
   const args = testCommand.split(/\s+/);
-  args.push(JSON.stringify(testFile));
+  args.push(JSON.stringify(path.basename(testFile)));
   if (testName) {
     args.push('--grep', JSON.stringify(testName));
   }
-
-  let effectiveReporter = reporter;
-  if (captureResults) {
-    effectiveReporter = reporter ? `${reporter},json` : 'list,json';
-  }
-  if (effectiveReporter) {
-    args.push('--reporter', effectiveReporter);
-  }
-
   return args;
 }
 

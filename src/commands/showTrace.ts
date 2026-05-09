@@ -3,13 +3,12 @@ import { getConfig } from '../config';
 import { runInTerminal } from '../terminal';
 
 export async function showTrace(traceFilePath?: string): Promise<void> {
-  const { workingDirectory } = getConfig();
-
   let tracePath: string;
 
   if (traceFilePath) {
     tracePath = traceFilePath;
   } else {
+    const { workingDirectory } = getConfig();
     const uris = await vscode.window.showOpenDialog({
       canSelectMany: false,
       openLabel: 'Open Trace',
@@ -21,5 +20,5 @@ export async function showTrace(traceFilePath?: string): Promise<void> {
     tracePath = uris[0].fsPath;
   }
 
-  runInTerminal(`cd "${workingDirectory}" && npx playwright show-trace "${tracePath}"`);
+  runInTerminal(`npx playwright show-trace "${tracePath}"`);
 }

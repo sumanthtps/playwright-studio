@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { PlaywrightCodeLensProvider } from './codeLensProvider';
 import { registerCommands } from './commands/index';
 import { disposeTerminal, setExtraEnvProvider } from './terminal';
@@ -9,8 +10,14 @@ import { EnvProfileManager } from './envProfile';
 import { StatusBarManager } from './statusBar';
 import { CoverageHeatmap } from './coverageHeatmap';
 import { FixtureNavigationProvider } from './fixtureNavigation';
+import { setResultsBaseDir } from './resultsPath';
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Store run results outside the user's repo, in VS Code-managed extension storage.
+  const storageUri = context.storageUri ?? context.globalStorageUri;
+  fs.mkdirSync(storageUri.fsPath, { recursive: true });
+  setResultsBaseDir(storageUri.fsPath);
+
   // Core providers
   const codeLens = new PlaywrightCodeLensProvider();
   const store = new ResultStore(context);

@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getConfig } from './config';
+import { getResultsBaseDir, getResultsFileName, getResultsFilePath } from './resultsPath';
 
 export type SpecStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'flaky';
 
@@ -91,6 +93,8 @@ export class ResultStore implements vscode.Disposable {
   private readonly _onDidChange = new vscode.EventEmitter<TestResults>();
   readonly onDidChange = this._onDidChange.event;
   private _results: TestResults | null = null;
+  private _lastMtimeMs = 0;
+  private _pollTimer: NodeJS.Timeout | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -98,27 +102,35 @@ export class ResultStore implements vscode.Disposable {
     return this._results;
   }
 
-  getResultsFilePath(): string {
-    const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
-    return path.join(root, 'playwright-studio-results.json');
-  }
-
   start(): void {
     this.tryLoad();
-    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootUri) return;
     const watcher = vscode.workspace.createFileSystemWatcher(
-      new vscode.RelativePattern(rootUri, 'playwright-studio-results.json')
+      new vscode.RelativePattern(vscode.Uri.file(getResultsBaseDir()), getResultsFileName())
     );
     const reload = () => setTimeout(() => this.tryLoad(), 300);
     watcher.onDidCreate(reload);
     watcher.onDidChange(reload);
     this.context.subscriptions.push(watcher);
+
+    // FileSystemWatcher is unreliable for paths outside workspace folders on
+    // Windows. Poll mtime as a backup so the panel still refreshes.
+    this._pollTimer = setInterval(() => this.pollMtime(), 1500);
+  }
+
+  private pollMtime(): void {
+    try {
+      const stat = fs.statSync(getResultsFilePath());
+      if (stat.mtimeMs !== this._lastMtimeMs) {
+        this._lastMtimeMs = stat.mtimeMs;
+        this.tryLoad();
+      }
+    } catch {
+      // file doesn't exist yet — nothing to do
+    }
   }
 
   private tryLoad(): void {
-    const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
-    const parsed = parseReport(this.getResultsFilePath(), root);
+    const parsed = parseReport(getResultsFilePath(), getConfig().workingDirectory);
     if (parsed) {
       this._results = parsed;
       this._onDidChange.fire(parsed);
@@ -126,6 +138,7 @@ export class ResultStore implements vscode.Disposable {
   }
 
   dispose(): void {
+    if (this._pollTimer) clearInterval(this._pollTimer);
     this._onDidChange.dispose();
   }
 }

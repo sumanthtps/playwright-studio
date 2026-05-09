@@ -16,7 +16,7 @@
     "color": "#0f6b44",
     "theme": "dark"
   },
-  "version": "1.0.4",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -85,67 +85,98 @@
     "commands": [
       {
         "command": "playwrightSnippets.runTest",
-        "title": "Playwright Studio: Run Test"
+        "title": "Run Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runFile",
-        "title": "Playwright Studio: Run All Tests in File"
+        "title": "Run All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugTest",
-        "title": "Playwright Studio: Debug Test"
+        "title": "Debug Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugFile",
-        "title": "Playwright Studio: Debug All Tests in File"
+        "title": "Debug All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.inspectTest",
-        "title": "Playwright Studio: Inspect Test (PWDEBUG=1)"
+        "title": "Inspect Test",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.inspectFile",
-        "title": "Playwright Studio: Inspect All Tests in File"
+        "title": "Inspect All Tests in File",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugInspectTest",
-        "title": "Playwright Studio: Debug Test with Inspector"
+        "title": "Debug Test with Inspector",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.debugInspectFile",
-        "title": "Playwright Studio: Debug All Tests with Inspector"
+        "title": "Debug All Tests with Inspector",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runTestAtCursor",
-        "title": "Playwright Studio: Run Test"
+        "title": "Run Test at Cursor",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.inspectTestAtCursor",
+        "title": "Inspect Test at Cursor",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.codeGen",
-        "title": "Playwright Studio: Open Codegen"
+        "title": "Open Codegen",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.showTrace",
-        "title": "Playwright Studio: Show Trace Viewer"
+        "title": "Show Trace Viewer",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.showReport",
-        "title": "Playwright Studio: Show HTML Report"
+        "title": "Show HTML Report",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runWithTag",
-        "title": "Playwright Studio: Run Tests with Tag / Grep Filter"
+        "title": "Run Tests with Tag / Grep Filter",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.runWithProject",
-        "title": "Playwright Studio: Run Tests with Project Selection"
+        "title": "Run Tests with Project Selection",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.switchEnvProfile",
-        "title": "Playwright Studio: Switch Environment Profile"
+        "title": "Switch Environment Profile",
+        "category": "Playwright Studio"
       },
       {
         "command": "playwrightSnippets.saveAsSnippet",
-        "title": "Playwright Studio: Save Selection as Snippet"
+        "title": "Save Selection as Snippet",
+        "category": "Playwright Studio"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "playwrightStudio.editorContext",
+        "label": "Playwright Studio"
+      },
+      {
+        "id": "playwrightStudio.explorerContext",
+        "label": "Playwright Studio"
       }
     ],
     "menus": {
@@ -156,24 +187,41 @@
           "group": "playwright@1"
         },
         {
-          "command": "playwrightSnippets.runWithTag",
+          "command": "playwrightSnippets.inspectTestAtCursor",
           "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@2"
         },
         {
-          "command": "playwrightSnippets.runWithProject",
+          "submenu": "playwrightStudio.editorContext",
           "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@3"
+        }
+      ],
+      "playwrightStudio.editorContext": [
+        {
+          "command": "playwrightSnippets.runWithTag",
+          "group": "1_run@1"
+        },
+        {
+          "command": "playwrightSnippets.runWithProject",
+          "group": "1_run@2"
         },
         {
           "command": "playwrightSnippets.codeGen",
-          "when": "editorTextFocus",
-          "group": "playwright@4"
+          "group": "2_tools@1"
+        },
+        {
+          "command": "playwrightSnippets.showReport",
+          "group": "2_tools@2"
+        },
+        {
+          "command": "playwrightSnippets.showTrace",
+          "group": "2_tools@3"
         },
         {
           "command": "playwrightSnippets.saveAsSnippet",
-          "when": "editorHasSelection && resourceExtname =~ /\\.[jt]sx?$/",
-          "group": "playwright@5"
+          "when": "editorHasSelection",
+          "group": "3_snippet@1"
         }
       ],
       "explorer/context": [
@@ -183,19 +231,32 @@
           "group": "playwright@1"
         },
         {
-          "command": "playwrightSnippets.debugFile",
+          "command": "playwrightSnippets.inspectFile",
           "when": "resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@2"
         },
         {
-          "command": "playwrightSnippets.debugInspectFile",
+          "submenu": "playwrightStudio.explorerContext",
           "when": "resourceExtname =~ /\\.[jt]sx?$/",
           "group": "playwright@3"
+        }
+      ],
+      "playwrightStudio.explorerContext": [
+        {
+          "command": "playwrightSnippets.debugFile",
+          "group": "1_run@1"
+        },
+        {
+          "command": "playwrightSnippets.debugInspectFile",
+          "group": "1_run@2"
         },
         {
           "command": "playwrightSnippets.runWithProject",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
-          "group": "playwright@4"
+          "group": "1_run@3"
+        },
+        {
+          "command": "playwrightSnippets.showReport",
+          "group": "2_tools@1"
         }
       ],
       "view/title": [

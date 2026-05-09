@@ -195,6 +195,17 @@ export function registerCommands(
     else runFile(file);
   });
 
+  register('playwrightSnippets.inspectTestAtCursor', () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) return;
+    const file = editor.document.uri.fsPath;
+    const line = editor.selection.active.line;
+    const items = parseTests(editor.document);
+    const test = [...items].reverse().find(item => item.line <= line && item.kind === 'test');
+    if (test) inspectTest(file, test.name);
+    else inspectFile(file);
+  });
+
   register('playwrightSnippets.refreshCodeLens', () => codeLens.refresh());
 
   register('playwrightSnippets.runWithTag', (file: unknown, tag: unknown) =>
