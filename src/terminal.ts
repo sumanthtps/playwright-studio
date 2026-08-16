@@ -1,52 +1,114 @@
 import * as vscode from 'vscode';
 import { getConfig, getCaptureEnv } from './config';
+import { CommandInvocation } from './commandLine';
 
-let terminal: vscode.Terminal | undefined;
 let extraEnvProvider: (() => Record<string, string>) | undefined;
-
-function isAlive(t: vscode.Terminal): boolean {
-  return vscode.window.terminals.includes(t);
-}
 
 export function setExtraEnvProvider(fn: () => Record<string, string>): void {
   extraEnvProvider = fn;
-  // Dispose so the next run recreates it with updated env
-  disposeTerminal();
 }
 
-export function getTerminal(): vscode.Terminal {
-  if (terminal && isAlive(terminal)) {
-    return terminal;
+function executionEnv(resource?: vscode.Uri | string, extraEnv: Record<string, string> = {}): Record<string, string> {
+  const { env } = getConfig(resource);
+  const inherited = Object.fromEntries(
+    Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
+  );
+  return {
+    ...inherited,
+    ...env,
+    ...(extraEnvProvider?.() ?? {}),
+    ...getCaptureEnv(resource),
+    ...extraEnv,
+  };
+}
+
+function taskScope(resource?: vscode.Uri | string): vscode.WorkspaceFolder | vscode.TaskScope {
+  const uri = resource instanceof vscode.Uri
+    ? resource
+    : typeof resource === 'string'
+      ? vscode.Uri.file(resource)
+      : undefined;
+  return (
+    (uri ? vscode.workspace.getWorkspaceFolder(uri) : undefined) ??
+    vscode.workspace.workspaceFolders?.[0] ??
+    vscode.TaskScope.Workspace
+  );
+}
+
+function platformExecutable(executable: string): string {
+  if (
+    process.platform === 'win32' &&
+    !/\.[A-Za-z0-9]+$/.test(executable) &&
+    ['npm', 'npx', 'pnpm', 'yarn'].includes(executable.toLowerCase())
+  ) {
+    return `${executable}.cmd`;
   }
-  const { workingDirectory, env } = getConfig();
-  const profileEnv = extraEnvProvider?.() ?? {};
-  const captureEnv = getCaptureEnv();
-  terminal = vscode.window.createTerminal({
-    name: 'Playwright',
+  return executable;
+}
+
+export async function runCommand(
+  command: CommandInvocation,
+  options: {
+    resource?: vscode.Uri | string;
+    extraEnv?: Record<string, string>;
+    name?: string;
+  } = {}
+): Promise<void> {
+  const { workingDirectory } = getConfig(options.resource);
+  const executable = platformExecutable(command.executable);
+  const definition = {
+    type: 'playwrightStudio',
+    executable,
+  };
+  const execution = new vscode.ProcessExecution(executable, command.args, {
     cwd: workingDirectory,
-    env: { ...env, ...profileEnv, ...captureEnv },
+    env: executionEnv(options.resource, options.extraEnv),
   });
-  return terminal;
+  const task = new vscode.Task(
+    definition,
+    taskScope(options.resource),
+    options.name ?? 'Playwright',
+    'Playwright Studio',
+    execution,
+    []
+  );
+  task.presentationOptions = {
+    reveal: vscode.TaskRevealKind.Always,
+    panel: vscode.TaskPanelKind.Shared,
+    clear: false,
+  };
+  await vscode.tasks.executeTask(task);
 }
 
-export function runInTerminal(command: string, extraEnv?: Record<string, string>): void {
-  const term = getTerminal();
-
-  if (extraEnv && Object.keys(extraEnv).length > 0) {
-    const envStr = Object.entries(extraEnv)
-      .map(([k, v]) => `${k}=${v}`)
-      .join(' ');
-    term.sendText(`${envStr} ${command}`);
-  } else {
-    term.sendText(command);
-  }
-
-  term.show(true);
+export async function debugCommand(
+  command: CommandInvocation,
+  options: { resource?: vscode.Uri | string; name?: string } = {}
+): Promise<boolean> {
+  const { workingDirectory } = getConfig(options.resource);
+  const executable = platformExecutable(command.executable);
+  const uri = options.resource instanceof vscode.Uri
+    ? options.resource
+    : typeof options.resource === 'string'
+      ? vscode.Uri.file(options.resource)
+      : undefined;
+  const folder = uri ? vscode.workspace.getWorkspaceFolder(uri) : vscode.workspace.workspaceFolders?.[0];
+  const configuration: vscode.DebugConfiguration = {
+    type: 'node',
+    request: 'launch',
+    name: options.name ?? 'Debug Playwright',
+    runtimeExecutable: executable,
+    runtimeArgs: command.args,
+    cwd: workingDirectory,
+    env: executionEnv(options.resource),
+    console: 'integratedTerminal',
+    internalConsoleOptions: 'neverOpen',
+    autoAttachChildProcesses: true,
+    skipFiles: ['<node_internals>/**'],
+  };
+  return vscode.debug.startDebugging(folder, configuration);
 }
 
 export function disposeTerminal(): void {
-  if (terminal && isAlive(terminal)) {
-    terminal.dispose();
-  }
-  terminal = undefined;
+  // Commands now use isolated ProcessExecution tasks/debug sessions, so there
+  // is no cached shell terminal to dispose.
 }

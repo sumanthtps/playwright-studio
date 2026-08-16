@@ -15,3 +15,4 @@ esbuild.js
 images/preview.gif
 playwright-studio-results.json
 test-results/**
+.test-dist/**

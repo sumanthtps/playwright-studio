@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { ResultStore } from './resultStore';
+import { parseTests } from './testParser';
 
 const STATE_KEY = 'playwright.testLastRun';
-const TEST_LINE_RE = /^\s*(?:test|it)(?:\.only|\.skip|\.fixme|\.fail)?\s*\(\s*(['"`])((?:[^\\]|\\.)*?)\1/;
 
 type LastRunMap = Record<string, number>;
 
-function testKey(filePath: string, title: string): string {
-  return `${filePath}::${title}`;
+function testKey(filePath: string, line: number, title: string): string {
+  return `${filePath}::${line}::${title}`;
 }
 
 export class CoverageHeatmap implements vscode.Disposable {
@@ -24,7 +24,6 @@ export class CoverageHeatmap implements vscode.Disposable {
       overviewRulerColor: 'rgba(255, 180, 0, 0.5)',
       overviewRulerLane: vscode.OverviewRulerLane.Right,
       after: {
-        contentText: ' never run',
         color: 'rgba(255, 180, 0, 0.5)',
         fontStyle: 'italic',
         margin: '0 0 0 12px',
@@ -34,17 +33,25 @@ export class CoverageHeatmap implements vscode.Disposable {
     this.disposables.push(
       store.onDidChange(results => {
         const lastRun = this.context.workspaceState.get<LastRunMap>(STATE_KEY, {});
-        const now = Date.now();
+        const runAt = results.summary.startTime.getTime();
+        if (runAt <= 0) return;
         for (const spec of results.specs) {
           if (spec.status !== 'skipped') {
-            lastRun[testKey(spec.file, spec.title)] = now;
+            const key = testKey(spec.file, spec.line, spec.title);
+            lastRun[key] = Math.max(lastRun[key] ?? 0, runAt);
           }
         }
         void this.context.workspaceState.update(STATE_KEY, lastRun);
         this.updateEditors();
       }),
       vscode.window.onDidChangeVisibleTextEditors(() => this.updateEditors()),
-      vscode.workspace.onDidOpenTextDocument(() => this.updateEditors())
+      vscode.workspace.onDidOpenTextDocument(() => this.updateEditors()),
+      vscode.workspace.onDidChangeTextDocument(() => this.updateEditors()),
+      vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration('playwrightSnippets.heatmapThresholdDays')) {
+          this.updateEditors();
+        }
+      })
     );
 
     this.updateEditors();
@@ -62,12 +69,8 @@ export class CoverageHeatmap implements vscode.Disposable {
       const filePath = editor.document.uri.fsPath;
       const cold: vscode.DecorationOptions[] = [];
 
-      for (let i = 0; i < editor.document.lineCount; i++) {
-        const text = editor.document.lineAt(i).text;
-        const match = TEST_LINE_RE.exec(text);
-        if (!match) continue;
-
-        const key = testKey(filePath, match[2]);
+      for (const test of parseTests(editor.document).filter(item => item.kind === 'test')) {
+        const key = testKey(filePath, test.line, test.name);
         const lastRunTime = lastRun[key];
         const isCold = !lastRunTime || now - lastRunTime > thresholdMs;
 
@@ -76,8 +79,11 @@ export class CoverageHeatmap implements vscode.Disposable {
             ? `Last run: ${new Date(lastRunTime).toLocaleDateString()} (${Math.floor((now - lastRunTime) / 86400000)}d ago)`
             : 'This test has never been run via Playwright Studio';
           cold.push({
-            range: editor.document.lineAt(i).range,
+            range: editor.document.lineAt(test.line).range,
             hoverMessage: hoverMsg,
+            renderOptions: {
+              after: { contentText: lastRunTime ? ' stale' : ' never run' },
+            },
           });
         }
       }

@@ -12,6 +12,10 @@ export class EnvProfileManager implements vscode.Disposable {
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('playwrightSnippets.envProfiles')) {
+          if (this._active && !this.profileNames.includes(this._active)) {
+            this._active = undefined;
+            void this.context.workspaceState.update('activeEnvProfile', undefined);
+          }
           this._onDidChange.fire(this._active);
         }
       })

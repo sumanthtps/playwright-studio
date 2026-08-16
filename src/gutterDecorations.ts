@@ -74,7 +74,22 @@ export class GutterDecorationManager implements vscode.Disposable {
       const flaky: vscode.DecorationOptions[] = [];
       const diagnosticList: vscode.Diagnostic[] = [];
 
+      const byLine = new Map<number, SpecResult[]>();
       for (const spec of fileSpecs) {
+        const lineSpecs = byLine.get(spec.line) ?? [];
+        lineSpecs.push(spec);
+        byLine.set(spec.line, lineSpecs);
+      }
+
+      const severity = (spec: SpecResult): number => {
+        if (spec.status === 'failed' || spec.status === 'timedOut') return 4;
+        if (spec.status === 'flaky') return 3;
+        if (spec.status === 'passed') return 2;
+        return 1;
+      };
+
+      for (const lineSpecs of byLine.values()) {
+        const spec = [...lineSpecs].sort((left, right) => severity(right) - severity(left))[0];
         const lineIdx = Math.max(0, Math.min(spec.line, editor.document.lineCount - 1));
         const range = editor.document.lineAt(lineIdx).range;
 
@@ -83,17 +98,24 @@ export class GutterDecorationManager implements vscode.Disposable {
         } else if (spec.status === 'failed' || spec.status === 'timedOut') {
           failed.push({ range });
 
-          const message = spec.error
-            ? spec.error.split('\n')[0]
-            : `Test "${spec.title}" failed`;
+          const failures = lineSpecs.filter(
+            item => item.status === 'failed' || item.status === 'timedOut'
+          );
+          const message = failures
+            .map(item => {
+              const prefix = item.projectName ? `[${item.projectName}] ` : '';
+              return `${prefix}${item.error?.split('\n')[0] ?? `Test "${item.title}" failed`}`;
+            })
+            .join('\n');
           const diag = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
           diag.source = 'Playwright Studio';
 
-          if (spec.traceFile) {
+          const traceFile = failures.find(item => item.traceFile)?.traceFile;
+          if (traceFile) {
             diag.code = {
               value: 'Open Trace',
               target: vscode.Uri.parse(
-                `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([spec.traceFile]))}`
+                `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([traceFile]))}`
               ),
             };
           }

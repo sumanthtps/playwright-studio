@@ -153,7 +153,8 @@
       {
         "command": "playwrightSnippets.showTrace",
         "title": "Show Trace Viewer",
-        "category": "Playwright Studio"
+        "category": "Playwright Studio",
+        "icon": "$(open-preview)"
       },
       {
         "command": "playwrightSnippets.showReport",
@@ -200,17 +201,17 @@
       "editor/context": [
         {
           "command": "playwrightSnippets.runTestAtCursor",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@1"
         },
         {
           "command": "playwrightSnippets.inspectTestAtCursor",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@2"
         },
         {
           "submenu": "playwrightStudio.editorContext",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@3"
         }
       ],
@@ -244,17 +245,17 @@
       "explorer/context": [
         {
           "command": "playwrightSnippets.runFile",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@1"
         },
         {
           "command": "playwrightSnippets.inspectFile",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@2"
         },
         {
           "submenu": "playwrightStudio.explorerContext",
-          "when": "resourceExtname =~ /\\.[jt]sx?$/",
+          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
           "group": "playwright@3"
         }
       ],
@@ -282,17 +283,26 @@
           "when": "view == playwrightStudio.resultsView",
           "group": "navigation"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "playwrightSnippets.showTrace",
+          "when": "view == playwrightStudio.resultsView && viewItem == playwrightSpecWithTrace",
+          "group": "inline"
+        }
       ]
     },
     "keybindings": [
       {
         "command": "playwrightSnippets.runTestAtCursor",
-        "key": "ctrl+shift+p ctrl+shift+r",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
         "when": "editorTextFocus"
       },
       {
         "command": "playwrightSnippets.runWithTag",
-        "key": "ctrl+shift+p ctrl+shift+t",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
         "when": "editorTextFocus"
       }
     ],
@@ -307,12 +317,12 @@
         "playwrightSnippets.testCommand": {
           "type": "string",
           "default": "npx playwright test",
-          "description": "Base command used to run Playwright tests."
+          "description": "Executable and arguments used to run Playwright tests. Quotes are supported; shell operators and expansion are intentionally not executed."
         },
         "playwrightSnippets.reporter": {
           "type": "string",
           "default": "",
-          "description": "Playwright reporter to use (e.g. list, dot, html). Leave empty to use playwright.config.ts default. When captureResults is enabled, 'json' is automatically appended."
+          "description": "Optional comma-separated Playwright reporters to pass on the command line (e.g. list,html). Leave empty to use the Playwright config. When result capture is enabled, json is appended to this list."
         },
         "playwrightSnippets.env": {
           "type": "object",
@@ -325,7 +335,7 @@
         "playwrightSnippets.captureResults": {
           "type": "boolean",
           "default": true,
-          "description": "When enabled, Playwright Studio sets PLAYWRIGHT_JSON_OUTPUT_NAME so the JSON reporter writes results to the extension's storage. Results power the sidebar panel, gutter icons, status bar summary, and trace failure links. Requires the 'json' reporter to be present in your playwright.config — Playwright Studio offers to add it automatically the first time it's missing."
+          "description": "When enabled, Playwright Studio sets PLAYWRIGHT_JSON_OUTPUT_FILE so the JSON reporter writes results to extension storage. JSON is appended to a non-empty reporter setting; otherwise it must be present in playwright.config and Playwright Studio offers to add it."
         },
         "playwrightSnippets.envProfiles": {
           "type": "object",
@@ -408,7 +418,10 @@
   "scripts": {
     "compile": "node esbuild.js",
     "compile:prod": "node esbuild.js --production",
-    "test": "node --test test/snippets.test.js",
+    "typecheck": "tsc --noEmit",
+    "test:snippets": "node --test test/snippets.test.js",
+    "test:runtime": "esbuild test/runtime.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/runtime.test.js && node --test .test-dist/runtime.test.js",
+    "test": "npm run test:snippets && npm run test:runtime",
     "package": "npm run compile:prod && vsce package",
     "build": "npm run package"
   },

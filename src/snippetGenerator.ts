@@ -45,6 +45,7 @@ export async function saveAsSnippet(): Promise<void> {
     prompt: 'Snippet name — a short human-readable description',
     placeHolder: 'e.g. My login flow snippet',
     value: prefix,
+    validateInput: value => (value?.trim() ? undefined : 'Name is required'),
   });
   if (!name) return;
 
@@ -54,25 +55,51 @@ export async function saveAsSnippet(): Promise<void> {
   let existing: Record<string, unknown> = {};
   if (fs.existsSync(snippetsFile)) {
     try {
-      existing = JSON.parse(fs.readFileSync(snippetsFile, 'utf8'));
-    } catch {
-      /* start fresh */
+      const parsed: unknown = JSON.parse(fs.readFileSync(snippetsFile, 'utf8'));
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('The top-level value must be an object.');
+      }
+      existing = parsed as Record<string, unknown>;
+    } catch (error) {
+      await vscode.window.showErrorMessage(
+        `Cannot save the snippet because ${path.basename(snippetsFile)} is not valid JSON. ` +
+        `Fix the file first; its existing contents were left unchanged. (${String(error)})`
+      );
+      return;
     }
+  }
+
+  const snippetName = name.trim();
+  if (Object.prototype.hasOwnProperty.call(existing, snippetName)) {
+    const choice = await vscode.window.showWarningMessage(
+      `A snippet named "${snippetName}" already exists. Replace it?`,
+      { modal: true },
+      'Replace'
+    );
+    if (choice !== 'Replace') return;
   }
 
   // Split into lines and escape $ signs
   const body = selectedText.split('\n').map(line => line.replace(/\$/g, '\\$'));
 
-  existing[name] = {
+  existing[snippetName] = {
     prefix: prefix.trim(),
     body,
-    description: name,
+    description: snippetName,
     scope: 'javascript,typescript,javascriptreact,typescriptreact',
   };
 
   try {
     fs.mkdirSync(snippetsDir, { recursive: true });
-    fs.writeFileSync(snippetsFile, JSON.stringify(existing, null, 2));
+    const temporary = `${snippetsFile}.${process.pid}.tmp`;
+    fs.writeFileSync(temporary, JSON.stringify(existing, null, 2));
+    try {
+      fs.renameSync(temporary, snippetsFile);
+    } catch {
+      // Windows may not replace an existing destination atomically.
+      fs.copyFileSync(temporary, snippetsFile);
+      fs.unlinkSync(temporary);
+    }
 
     const action = await vscode.window.showInformationMessage(
       `Snippet "${prefix}" saved to playwright-custom.code-snippets`,

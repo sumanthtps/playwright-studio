@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import { getConfig } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildToolCommand } from '../config';
+import { runCommand } from '../terminal';
 
 export async function codeGen(): Promise<void> {
-  const { workingDirectory } = getConfig();
-
   const url = await vscode.window.showInputBox({
     prompt: 'Enter starting URL for Playwright Codegen (leave blank to skip)',
     placeHolder: 'https://example.com',
@@ -16,9 +14,9 @@ export async function codeGen(): Promise<void> {
     return;
   }
 
-  const cmd = url
-    ? `cd "${workingDirectory}" && npx playwright codegen ${url}`
-    : `cd "${workingDirectory}" && npx playwright codegen`;
-
-  runInTerminal(cmd);
+  const resource = vscode.window.activeTextEditor?.document.uri;
+  await runCommand(buildToolCommand('codegen', url ? [url] : []), {
+    resource,
+    name: 'Playwright Codegen',
+  });
 }

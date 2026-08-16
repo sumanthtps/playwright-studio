@@ -61,19 +61,19 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
           new vscode.CodeLens(range, {
             title: '$(play) Run',
             command: 'playwrightSnippets.runTest',
-            arguments: [filePath, item.name],
+            arguments: [filePath, item.name, item.line],
             tooltip: 'Run Test',
           }),
           new vscode.CodeLens(range, {
             title: '$(debug) Debug',
             command: 'playwrightSnippets.debugTest',
-            arguments: [filePath, item.name],
+            arguments: [filePath, item.name, item.line],
             tooltip: 'Debug Test',
           }),
           new vscode.CodeLens(range, {
             title: '$(eye) Inspect',
             command: 'playwrightSnippets.inspectTest',
-            arguments: [filePath, item.name],
+            arguments: [filePath, item.name, item.line],
             tooltip: 'Inspect Test',
           })
         );
@@ -96,19 +96,19 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
         new vscode.CodeLens(range, {
           title: '$(play) Run Suite',
           command: 'playwrightSnippets.runTest',
-          arguments: [filePath, item.name],
+          arguments: [filePath, item.name, item.line],
           tooltip: 'Run Suite',
         }),
         new vscode.CodeLens(range, {
           title: '$(debug) Debug Suite',
           command: 'playwrightSnippets.debugTest',
-          arguments: [filePath, item.name],
+          arguments: [filePath, item.name, item.line],
           tooltip: 'Debug Suite',
         }),
         new vscode.CodeLens(range, {
           title: '$(eye) Inspect Suite',
           command: 'playwrightSnippets.inspectTest',
-          arguments: [filePath, item.name],
+          arguments: [filePath, item.name, item.line],
           tooltip: 'Inspect Suite',
         })
       );

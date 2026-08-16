@@ -1,31 +1,19 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getConfig } from './config';
+import { extractProjectNames } from './projectParser';
 
-function extractProjectNames(content: string): string[] {
-  // Match the projects array block (handles multiline)
-  const projectsMatch = /projects\s*:\s*\[([^\]]*(?:\[[^\]]*\][^\]]*)*)\]/s.exec(content);
-  if (!projectsMatch) return [];
-
-  const block = projectsMatch[1];
-  const names: string[] = [];
-  const nameRe = /name\s*:\s*['"]([^'"]+)['"]/g;
-  let match: RegExpExecArray | null;
-  while ((match = nameRe.exec(block)) !== null) {
-    names.push(match[1]);
-  }
-  return names;
-}
-
-export async function getPlaywrightProjects(): Promise<string[]> {
-  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!root) return [];
+export async function getPlaywrightProjects(resource?: vscode.Uri | string): Promise<string[]> {
+  const root = getConfig(resource).workingDirectory;
 
   const candidates = [
     'playwright.config.ts',
+    'playwright.config.cts',
     'playwright.config.js',
     'playwright.config.mts',
     'playwright.config.mjs',
+    'playwright.config.cjs',
   ];
 
   for (const name of candidates) {

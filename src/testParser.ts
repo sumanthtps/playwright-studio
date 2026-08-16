@@ -69,7 +69,7 @@ export function parseTests(document: vscode.TextDocument): TestItem[] {
 export function isTestFile(document: vscode.TextDocument): boolean {
   const fileName = document.fileName;
   return (
-    /\.(spec|test)\.[jt]sx?$/.test(fileName) ||
+    /\.(spec|test)\.[cm]?[jt]sx?$/.test(fileName) ||
     fileName.includes('/tests/') ||
     fileName.includes('\\tests\\') ||
     fileName.includes('/e2e/') ||

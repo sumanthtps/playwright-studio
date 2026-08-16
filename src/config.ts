@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getResultsFilePath } from './resultsPath';
+import { CommandInvocation, escapeRegex, parseCommandLine } from './commandLine';
 
 export interface PlaywrightConfig {
   workingDirectory: string;
@@ -10,47 +11,89 @@ export interface PlaywrightConfig {
   captureResults: boolean;
 }
 
-function getWorkspaceRoot(): string {
-  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+function asUri(resource?: vscode.Uri | string): vscode.Uri | undefined {
+  if (resource instanceof vscode.Uri) return resource;
+  if (typeof resource === 'string' && resource) return vscode.Uri.file(resource);
+  return vscode.window.activeTextEditor?.document.uri;
 }
 
-function cfg(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('playwrightSnippets');
+function getWorkspaceRoot(resource?: vscode.Uri | string): string {
+  const uri = asUri(resource);
+  return (
+    (uri ? vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath : undefined) ??
+    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
+    process.cwd()
+  );
 }
 
-export function getConfig(): PlaywrightConfig {
-  const root = getWorkspaceRoot();
-  const workingDir = cfg().get<string>('workingDirectory', '');
+function cfg(resource?: vscode.Uri | string): vscode.WorkspaceConfiguration {
+  return vscode.workspace.getConfiguration('playwrightSnippets', asUri(resource));
+}
+
+export function getConfig(resource?: vscode.Uri | string): PlaywrightConfig {
+  const root = getWorkspaceRoot(resource);
+  const workingDir = cfg(resource).get<string>('workingDirectory', '');
   return {
     workingDirectory: workingDir ? path.resolve(root, workingDir) : root,
-    testCommand: cfg().get<string>('testCommand', 'npx playwright test'),
-    reporter: cfg().get<string>('reporter', ''),
-    env: cfg().get<Record<string, string>>('env', {}),
-    captureResults: cfg().get<boolean>('captureResults', false),
+    testCommand: cfg(resource).get<string>('testCommand', 'npx playwright test'),
+    reporter: cfg(resource).get<string>('reporter', ''),
+    env: cfg(resource).get<Record<string, string>>('env', {}),
+    captureResults: cfg(resource).get<boolean>('captureResults', true),
   };
 }
 
-export function getCaptureEnv(): Record<string, string> {
-  if (!cfg().get<boolean>('captureResults', false)) return {};
-  return { PLAYWRIGHT_JSON_OUTPUT_NAME: getResultsFilePath() };
+export function getCaptureEnv(resource?: vscode.Uri | string): Record<string, string> {
+  if (!cfg(resource).get<boolean>('captureResults', true)) return {};
+  return { PLAYWRIGHT_JSON_OUTPUT_FILE: getResultsFilePath() };
 }
 
-export function buildRunArgs(testFile: string, testName?: string): string[] {
-  const { testCommand } = getConfig();
-  const args = testCommand.split(/\s+/);
-  args.push(JSON.stringify(path.basename(testFile)));
-  if (testName) {
-    args.push('--grep', JSON.stringify(testName));
+function exactFileFilter(testFile: string, line?: number): string {
+  // Playwright matches file filters as regexes against normalized absolute paths.
+  const normalized = path.resolve(testFile).replace(/\\/g, '/');
+  const filter = escapeRegex(normalized);
+  return line === undefined ? filter : `${filter}:${line + 1}`;
+}
+
+function withReporterArgs(args: string[], config: PlaywrightConfig): void {
+  const reporters = config.reporter
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  if (reporters.length === 0) return;
+  if (config.captureResults && !reporters.includes('json')) reporters.push('json');
+  args.push('--reporter', reporters.join(','));
+}
+
+export function buildRunCommand(
+  testFile: string,
+  options: { testName?: string; line?: number } = {}
+): CommandInvocation {
+  const config = getConfig(testFile);
+  const command = parseCommandLine(config.testCommand);
+  command.args.push(exactFileFilter(testFile, options.line));
+  if (options.testName && options.line === undefined) {
+    command.args.push('--grep', escapeRegex(options.testName));
   }
-  return args;
+  withReporterArgs(command.args, config);
+  return command;
 }
 
-export function buildDebugArgs(testFile: string, testName?: string): string[] {
-  const args = buildRunArgs(testFile, testName);
-  args.push('--debug');
-  return args;
+export function buildWorkspaceRunCommand(resource?: vscode.Uri | string): CommandInvocation {
+  const config = getConfig(resource);
+  const command = parseCommandLine(config.testCommand);
+  withReporterArgs(command.args, config);
+  return command;
 }
 
-export function buildInspectArgs(testFile: string, testName?: string): string[] {
-  return buildRunArgs(testFile, testName);
+export function buildDebugCommand(
+  testFile: string,
+  options: { testName?: string; line?: number } = {}
+): CommandInvocation {
+  const command = buildRunCommand(testFile, options);
+  command.args.push('--debug');
+  return command;
+}
+
+export function buildToolCommand(tool: 'codegen' | 'show-report' | 'show-trace', args: string[] = []): CommandInvocation {
+  return { executable: 'npx', args: ['playwright', tool, ...args] };
 }

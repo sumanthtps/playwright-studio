@@ -82,7 +82,16 @@ export function activate(context: vscode.ExtensionContext): void {
   // Refresh code lenses on save/open
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(() => codeLens.refresh()),
-    vscode.workspace.onDidOpenTextDocument(() => codeLens.refresh())
+    vscode.workspace.onDidOpenTextDocument(() => codeLens.refresh()),
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (
+        event.affectsConfiguration('playwrightSnippets.captureResults') ||
+        event.affectsConfiguration('playwrightSnippets.reporter') ||
+        event.affectsConfiguration('playwrightSnippets.workingDirectory')
+      ) {
+        void checkAndPromptForJsonReporter(context);
+      }
+    })
   );
 
   void checkAndPromptForJsonReporter(context);

@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { PlaywrightCodeLensProvider } from '../codeLensProvider';
 import { parseTests } from '../testParser';
-import { buildRunArgs } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildWorkspaceRunCommand } from '../config';
+import { runCommand } from '../terminal';
 import { EnvProfileManager } from '../envProfile';
 import { getPlaywrightProjects } from '../playwrightProjects';
 import { saveAsSnippet } from '../snippetGenerator';
@@ -26,17 +26,25 @@ function getActiveFile(): string | undefined {
 
 function resolveFileTarget(file: unknown): string | undefined {
   if (typeof file === 'string' && file) return file;
+  if (file instanceof vscode.Uri && file.scheme === 'file') return file.fsPath;
   return getActiveFile();
 }
 
 async function resolveTestTarget(
   file: unknown,
-  name: unknown
-): Promise<{ file: string; name: string } | undefined> {
+  name: unknown,
+  line: unknown
+): Promise<{ file: string; name: string; line?: number } | undefined> {
   const resolvedFile = resolveFileTarget(file);
   if (!resolvedFile) return undefined;
 
-  if (typeof name === 'string' && name) return { file: resolvedFile, name };
+  if (typeof name === 'string' && name) {
+    return {
+      file: resolvedFile,
+      name,
+      line: typeof line === 'number' && Number.isInteger(line) ? line : undefined,
+    };
+  }
 
   const document = await vscode.workspace.openTextDocument(resolvedFile);
   const tests = parseTests(document).filter(item => item.kind === 'test');
@@ -51,7 +59,8 @@ async function resolveTestTarget(
   );
   if (!picked) return undefined;
 
-  return { file: resolvedFile, name: picked.label };
+  const selected = tests.find(test => test.name === picked.label && `Line ${test.line + 1}` === picked.description);
+  return { file: resolvedFile, name: picked.label, line: selected?.line };
 }
 
 async function runWithTag(file: unknown, tag: unknown): Promise<void> {
@@ -60,9 +69,9 @@ async function runWithTag(file: unknown, tag: unknown): Promise<void> {
 
   // CodeLens passes the tag directly; skip the quick pick in that case.
   if (typeof tag === 'string' && tag) {
-    const args = buildRunArgs(resolvedFile);
-    args.push('--grep', JSON.stringify(tag));
-    runInTerminal(args.join(' '));
+    const command = buildWorkspaceRunCommand(resolvedFile);
+    command.args.push('--grep', tag);
+    await runCommand(command, { resource: resolvedFile });
     return;
   }
 
@@ -102,21 +111,21 @@ async function runWithTag(file: unknown, tag: unknown): Promise<void> {
     pattern = picked.label;
   }
 
-  const args = buildRunArgs(resolvedFile);
-  args.push('--grep', JSON.stringify(pattern));
-  runInTerminal(args.join(' '));
+  const command = buildWorkspaceRunCommand(resolvedFile);
+  command.args.push('--grep', pattern);
+  await runCommand(command, { resource: resolvedFile });
 }
 
 async function runWithProject(file: unknown): Promise<void> {
   const resolvedFile = resolveFileTarget(file);
   if (!resolvedFile) return;
 
-  const projects = await getPlaywrightProjects();
+  const projects = await getPlaywrightProjects(resolvedFile);
   if (projects.length === 0) {
     void vscode.window.showInformationMessage(
-      'No projects found in playwright.config.ts. Running with default project.'
+      'No projects found in the Playwright config. Running all tests with the default project.'
     );
-    runFile(resolvedFile);
+    await runCommand(buildWorkspaceRunCommand(resolvedFile), { resource: resolvedFile });
     return;
   }
 
@@ -126,9 +135,18 @@ async function runWithProject(file: unknown): Promise<void> {
   );
   if (!picked || picked.length === 0) return;
 
-  const args = buildRunArgs(resolvedFile);
-  for (const p of picked) args.push('--project', p.label);
-  runInTerminal(args.join(' '));
+  const command = buildWorkspaceRunCommand(resolvedFile);
+  for (const p of picked) command.args.push('--project', p.label);
+  await runCommand(command, { resource: resolvedFile });
+}
+
+function tracePathFromArgument(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'spec' in value) {
+    const spec = (value as { spec?: { traceFile?: unknown } }).spec;
+    if (typeof spec?.traceFile === 'string') return spec.traceFile;
+  }
+  return undefined;
 }
 
 export function registerCommands(
@@ -137,21 +155,32 @@ export function registerCommands(
   profiles: EnvProfileManager
 ): void {
   const register = (id: string, fn: (...args: unknown[]) => unknown) =>
-    context.subscriptions.push(vscode.commands.registerCommand(id, fn));
+    context.subscriptions.push(
+      vscode.commands.registerCommand(id, async (...args: unknown[]) => {
+        try {
+          return await fn(...args);
+        } catch (error) {
+          await vscode.window.showErrorMessage(
+            `Playwright Studio: ${error instanceof Error ? error.message : String(error)}`
+          );
+          return undefined;
+        }
+      })
+    );
 
-  register('playwrightSnippets.runTest', async (file: unknown, name: unknown) => {
-    const target = await resolveTestTarget(file, name);
-    if (target) runTest(target.file, target.name);
+  register('playwrightSnippets.runTest', async (file: unknown, name: unknown, line: unknown) => {
+    const target = await resolveTestTarget(file, name, line);
+    if (target) await runTest(target.file, target.name, target.line);
   });
 
-  register('playwrightSnippets.runFile', (file: unknown) => {
+  register('playwrightSnippets.runFile', async (file: unknown) => {
     const target = resolveFileTarget(file);
-    if (target) runFile(target);
+    if (target) await runFile(target);
   });
 
-  register('playwrightSnippets.debugTest', async (file: unknown, name: unknown) => {
-    const target = await resolveTestTarget(file, name);
-    if (target) await debugTest(target.file, target.name);
+  register('playwrightSnippets.debugTest', async (file: unknown, name: unknown, line: unknown) => {
+    const target = await resolveTestTarget(file, name, line);
+    if (target) await debugTest(target.file, target.name, target.line);
   });
 
   register('playwrightSnippets.debugFile', async (file: unknown) => {
@@ -159,52 +188,54 @@ export function registerCommands(
     if (target) await debugFile(target);
   });
 
-  register('playwrightSnippets.inspectTest', async (file: unknown, name: unknown) => {
-    const target = await resolveTestTarget(file, name);
-    if (target) inspectTest(target.file, target.name);
+  register('playwrightSnippets.inspectTest', async (file: unknown, name: unknown, line: unknown) => {
+    const target = await resolveTestTarget(file, name, line);
+    if (target) await inspectTest(target.file, target.name, target.line);
   });
 
-  register('playwrightSnippets.inspectFile', (file: unknown) => {
+  register('playwrightSnippets.inspectFile', async (file: unknown) => {
     const target = resolveFileTarget(file);
-    if (target) inspectFile(target);
+    if (target) await inspectFile(target);
   });
 
-  register('playwrightSnippets.debugInspectTest', async (file: unknown, name: unknown) => {
-    const target = await resolveTestTarget(file, name);
-    if (target) debugInspectTest(target.file, target.name);
+  register('playwrightSnippets.debugInspectTest', async (file: unknown, name: unknown, line: unknown) => {
+    const target = await resolveTestTarget(file, name, line);
+    if (target) await debugInspectTest(target.file, target.name, target.line);
   });
 
-  register('playwrightSnippets.debugInspectFile', (file: unknown) => {
+  register('playwrightSnippets.debugInspectFile', async (file: unknown) => {
     const target = resolveFileTarget(file);
-    if (target) debugInspectFile(target);
+    if (target) await debugInspectFile(target);
   });
 
   register('playwrightSnippets.codeGen', () => codeGen());
   register('playwrightSnippets.showTrace', (traceFile: unknown) =>
-    showTrace(typeof traceFile === 'string' ? traceFile : undefined)
+    showTrace(tracePathFromArgument(traceFile))
   );
-  register('playwrightSnippets.showReport', () => showReport());
+  register('playwrightSnippets.showReport', (resource: unknown) =>
+    showReport(resource instanceof vscode.Uri || typeof resource === 'string' ? resource : undefined)
+  );
 
-  register('playwrightSnippets.runTestAtCursor', () => {
+  register('playwrightSnippets.runTestAtCursor', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
     const file = editor.document.uri.fsPath;
     const line = editor.selection.active.line;
     const items = parseTests(editor.document);
     const test = [...items].reverse().find(item => item.line <= line && item.kind === 'test');
-    if (test) runTest(file, test.name);
-    else runFile(file);
+    if (test) await runTest(file, test.name, test.line);
+    else await runFile(file);
   });
 
-  register('playwrightSnippets.inspectTestAtCursor', () => {
+  register('playwrightSnippets.inspectTestAtCursor', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
     const file = editor.document.uri.fsPath;
     const line = editor.selection.active.line;
     const items = parseTests(editor.document);
     const test = [...items].reverse().find(item => item.line <= line && item.kind === 'test');
-    if (test) inspectTest(file, test.name);
-    else inspectFile(file);
+    if (test) await inspectTest(file, test.name, test.line);
+    else await inspectFile(file);
   });
 
   register('playwrightSnippets.refreshCodeLens', () => codeLens.refresh());

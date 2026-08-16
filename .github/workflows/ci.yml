@@ -47,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Compile TypeScript
-        run: npm run compile:prod
+        run: npm run typecheck && npm run compile:prod
 
       - name: Package extension
         run: npx vsce package --no-dependencies
