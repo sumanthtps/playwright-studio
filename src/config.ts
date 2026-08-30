@@ -1,11 +1,17 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getResultsFilePath } from './resultsPath';
-import { CommandInvocation, escapeRegex, parseCommandLine } from './commandLine';
+import {
+  buildPlaywrightToolInvocation,
+  CommandInvocation,
+  escapeRegex,
+  parseCommandLine,
+} from './commandLine';
 
 export interface PlaywrightConfig {
   workingDirectory: string;
   testCommand: string;
+  toolCommand: string;
   reporter: string;
   env: Record<string, string>;
   captureResults: boolean;
@@ -36,6 +42,7 @@ export function getConfig(resource?: vscode.Uri | string): PlaywrightConfig {
   return {
     workingDirectory: workingDir ? path.resolve(root, workingDir) : root,
     testCommand: cfg(resource).get<string>('testCommand', 'npx playwright test'),
+    toolCommand: cfg(resource).get<string>('toolCommand', ''),
     reporter: cfg(resource).get<string>('reporter', ''),
     env: cfg(resource).get<Record<string, string>>('env', {}),
     captureResults: cfg(resource).get<boolean>('captureResults', true),
@@ -94,6 +101,11 @@ export function buildDebugCommand(
   return command;
 }
 
-export function buildToolCommand(tool: 'codegen' | 'show-report' | 'show-trace', args: string[] = []): CommandInvocation {
-  return { executable: 'npx', args: ['playwright', tool, ...args] };
+export function buildToolCommand(
+  tool: 'codegen' | 'show-report' | 'show-trace',
+  args: string[] = [],
+  resource?: vscode.Uri | string
+): CommandInvocation {
+  const config = getConfig(resource);
+  return buildPlaywrightToolInvocation(config.testCommand, config.toolCommand, tool, args);
 }

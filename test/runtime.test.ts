@@ -1,10 +1,22 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { escapeRegex, parseCommandLine } from '../src/commandLine';
+import { buildPlaywrightToolInvocation, escapeRegex, parseCommandLine } from '../src/commandLine';
 import { extractFixtureDefinitions } from '../src/fixtureParser';
-import { extractProjectNames } from '../src/projectParser';
+import { extractProjectNames, extractProjectNamesFromListReport } from '../src/projectParser';
 import { hasJsonReporterText, injectJsonReporterText } from '../src/reporterConfig';
 import { parseReportJson } from '../src/resultParser';
+import { parseSnippetFile, upsertSnippet } from '../src/snippetFile';
+import { findTestAtLine, parseTests } from '../src/testParser';
+
+function document(text: string) {
+  const lines = text.split('\n');
+  return {
+    lineCount: lines.length,
+    lineAt(line: number) {
+      return { text: lines[line] };
+    },
+  } as never;
+}
 
 describe('structured command parsing', () => {
   it('keeps quoted arguments together without evaluating shell syntax', () => {
@@ -21,6 +33,54 @@ describe('structured command parsing', () => {
   it('escapes Playwright regex filters literally', () => {
     assert.equal(escapeRegex('/repo/tests/total [draft].spec.ts'),
       '/repo/tests/total \\[draft\\]\\.spec\\.ts');
+  });
+
+  it('derives tool commands from npm, pnpm, direct, and explicit launchers', () => {
+    assert.deepEqual(
+      buildPlaywrightToolInvocation('pnpm exec playwright test --config e2e.config.ts', '', 'show-report'),
+      { executable: 'pnpm', args: ['exec', 'playwright', 'show-report'] }
+    );
+    assert.deepEqual(
+      buildPlaywrightToolInvocation('./node_modules/.bin/playwright test', '', 'codegen', ['https://example.com']),
+      {
+        executable: './node_modules/.bin/playwright',
+        args: ['codegen', 'https://example.com'],
+      }
+    );
+    assert.deepEqual(
+      buildPlaywrightToolInvocation('npm run e2e', 'yarn playwright', 'show-trace', ['trace.zip']),
+      { executable: 'yarn', args: ['playwright', 'show-trace', 'trace.zip'] }
+    );
+    assert.throws(
+      () => buildPlaywrightToolInvocation('npm run e2e', '', 'show-report'),
+      /toolCommand/
+    );
+  });
+});
+
+describe('test parsing and cursor targeting', () => {
+  it('reads title and details-object tags and records the complete call range', () => {
+    const items = parseTests(document(`
+test('checkout @title', {
+  tag: ['@smoke', '@fast'],
+}, async ({ page }) => {
+  await page.getByRole('button').click();
+});
+
+const outside = true;
+`));
+    assert.equal(items.length, 1);
+    assert.deepEqual(items[0].tags, ['@title', '@smoke', '@fast']);
+    assert.equal(items[0].line, 1);
+    assert.equal(items[0].endLine, 5);
+    assert.equal(findTestAtLine(items, 4)?.name, 'checkout @title');
+    assert.equal(findTestAtLine(items, 7), undefined);
+  });
+
+  it('recognizes chained suite modifiers', () => {
+    const items = parseTests(document("test.describe.serial.only('serial suite', () => {});"));
+    assert.equal(items[0]?.kind, 'describe');
+    assert.equal(items[0]?.name, 'serial suite');
   });
 });
 
@@ -49,6 +109,19 @@ describe('project parsing', () => {
       ],
     });`;
     assert.deepEqual(extractProjectNames(source), ['chromium', 'firefox']);
+  });
+
+  it('handles quoted config properties and project names from CLI list reports', () => {
+    assert.deepEqual(
+      extractProjectNames(`export default defineConfig({ 'projects': [{ 'name': 'webkit' }] })`),
+      ['webkit']
+    );
+    assert.deepEqual(
+      extractProjectNamesFromListReport(`config log\n${JSON.stringify({
+        config: { projects: [{ name: 'chromium' }, { name: 'firefox' }] },
+      })}`),
+      ['chromium', 'firefox']
+    );
   });
 });
 
@@ -109,5 +182,29 @@ describe('Playwright JSON result parsing', () => {
     assert.equal(parsed.specs[1].duration, 50);
     assert.equal(parsed.specs[1].error, 'final');
     assert.equal(parsed.specs[1].traceFile, '/repo/artifacts/trace.zip');
+  });
+});
+
+describe('custom snippet JSONC editing', () => {
+  it('accepts comments and trailing commas while preserving existing content', () => {
+    const original = `{
+      // Keep this comment.
+      "Existing": { "prefix": "old", "body": ["old"], },
+    }`;
+    const updated = upsertSnippet(original, 'New snippet', {
+      prefix: 'new',
+      body: ['const value = 1;'],
+      description: 'New snippet',
+      scope: 'javascript,typescript',
+    });
+    assert.match(updated, /Keep this comment/);
+    const parsed = parseSnippetFile(updated);
+    assert.ok(parsed.Existing);
+    assert.deepEqual(parsed['New snippet'], {
+      prefix: 'new',
+      body: ['const value = 1;'],
+      description: 'New snippet',
+      scope: 'javascript,typescript',
+    });
   });
 });

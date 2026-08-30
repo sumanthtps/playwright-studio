@@ -245,6 +245,7 @@ All settings live under `playwrightSnippets.*`:
 | ----------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
 | `playwrightSnippets.testCommand`          | `"npx playwright test"` | Executable and arguments used to run tests. Quotes are supported; shell operators and expansion are not executed |
+| `playwrightSnippets.toolCommand`          | `""`                    | Optional Playwright command prefix for Codegen, Trace Viewer, and reports; derived from `testCommand` when empty |
 | `playwrightSnippets.reporter`             | `""`                    | Optional comma-separated CLI reporters. Leave empty to use the config; `json` is appended when capture is enabled |
 | `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
 | `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_FILE` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your config when the reporter setting is empty |
@@ -495,25 +496,25 @@ Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the
 | `p-get-p`     | `page.getByPlaceholder()` |
 | `p-get-atxt`  | `page.getByAltText()`     |
 | `p-get-title` | `page.getByTitle()`       |
-| `p-$`         | `page.$()`                |
-| `p-$$`        | `page.$$()`               |
-| `p-$eval`     | `page.$eval()`            |
-| `p-$$eval`    | `page.$$eval()`           |
+| `p-$`         | Create a locator           |
+| `p-$$`        | `locator.all()`            |
+| `p-$eval`     | `locator.evaluate()`       |
+| `p-$$eval`    | `locator.evaluateAll()`    |
 
 ### Page — Actions
 
 | Prefix     | Description              |
 | ---------- | ------------------------ |
 | `p-clk`    | `page.click()`           |
-| `p-dbclk`  | `page.dblclick()`        |
+| `p-dbclk`  | `locator.dblclick()`     |
 | `p-clki`   | `page.nth().click()`     |
-| `p-fill`   | `page.fill()`            |
-| `p-type`   | `page.type()`            |
+| `p-fill`   | `locator.fill()`         |
+| `p-type`   | `locator.pressSequentially()` |
 | `p-chk`    | `page.check()`           |
 | `p-uchk`   | `page.uncheck()`         |
 | `p-hover`  | `page.hover()`           |
-| `p-focus`  | `page.focus()`           |
-| `p-press`  | `page.press()`           |
+| `p-focus`  | `locator.focus()`        |
+| `p-press`  | `locator.press()`        |
 | `p-so`     | `page.selectOption()`    |
 | `p-sif`    | `page.setInputFiles()`   |
 | `p-dnd`    | `page.dragAndDrop()`     |
@@ -621,12 +622,12 @@ Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the
 | ---------- | ---------------------------- |
 | `p-wf`     | `locator.waitFor()`          |
 | `p-loc-wf` | `locator.waitFor({ state })` |
-| `p-wfs`    | `page.waitForSelector()`     |
+| `p-wfs`    | `locator.waitFor()`          |
 | `p-wfls`   | `page.waitForLoadState()`    |
 | `p-wft`    | `page.waitForTimeout()`      |
 | `p-wfe`    | `page.waitForEvent()`        |
 | `p-wff`    | `page.waitForFunction()`     |
-| `p-wfn`    | `page.waitForNavigation()`   |
+| `p-wfn`    | `page.waitForURL()`          |
 | `p-wfreq`  | `page.waitForRequest()`      |
 | `p-wfres`  | `page.waitForResponse()`     |
 | `p-wfurl`  | `page.waitForURL()`          |

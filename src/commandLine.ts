@@ -69,3 +69,34 @@ export function parseCommandLine(command: string): CommandInvocation {
 export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+export function buildPlaywrightToolInvocation(
+  testCommand: string,
+  configuredToolCommand: string,
+  tool: 'codegen' | 'show-report' | 'show-trace',
+  args: string[] = []
+): CommandInvocation {
+  if (configuredToolCommand.trim()) {
+    const command = parseCommandLine(configuredToolCommand);
+    command.args.push(tool, ...args);
+    return command;
+  }
+
+  const command = parseCommandLine(testCommand);
+  const executableName = command.executable.replace(/\\/g, '/').split('/').pop()?.toLowerCase();
+  if (executableName === 'playwright' || executableName === 'playwright.cmd') {
+    command.args.splice(0, command.args.length, tool, ...args);
+    return command;
+  }
+
+  const playwrightAt = command.args.findIndex(value => value === 'playwright');
+  if (playwrightAt >= 0) {
+    command.args.splice(playwrightAt + 1, command.args.length, tool, ...args);
+    return command;
+  }
+
+  throw new Error(
+    "Cannot derive the Playwright tool command from 'playwrightSnippets.testCommand'. " +
+    "Set 'playwrightSnippets.toolCommand' (for example, 'pnpm exec playwright')."
+  );
+}

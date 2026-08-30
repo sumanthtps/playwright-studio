@@ -25,8 +25,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const profiles = new EnvProfileManager(context);
 
   // Wire profile env into the terminal
-  setExtraEnvProvider(() => profiles.getActiveEnv());
-  profiles.onDidChange(() => setExtraEnvProvider(() => profiles.getActiveEnv()));
+  setExtraEnvProvider(resource => profiles.getActiveEnv(resource));
 
   // Register CodeLens
   context.subscriptions.push(

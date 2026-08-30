@@ -88,7 +88,15 @@ function projectsArrayStart(content: string): number | undefined {
       const end = content.indexOf('*/', i + 2);
       i = end < 0 ? content.length : end + 2;
     } else if (/['"`]/.test(content[i])) {
-      i = skipString(content, i);
+      const end = skipString(content, i);
+      if (decodeString(content, i, end) === 'projects') {
+        const colon = skipTrivia(content, end);
+        const value = content[colon] === ':' ? skipTrivia(content, colon + 1) : colon;
+        if (content[colon] === ':' && content[value] === '[') {
+          candidates.push({ start: value, depth, property: i });
+        }
+      }
+      i = end;
     } else if (content[i] === '{') {
       depth++;
       i++;
@@ -142,7 +150,19 @@ export function extractProjectNames(content: string): string[] {
       continue;
     }
     if (/['"`]/.test(content[i])) {
-      i = skipString(content, i);
+      const propertyEnd = skipString(content, i);
+      if (objectDepth === 1 && decodeString(content, i, propertyEnd) === 'name') {
+        const colon = skipTrivia(content, propertyEnd);
+        const value = content[colon] === ':' ? skipTrivia(content, colon + 1) : colon;
+        if (content[colon] === ':' && /['"`]/.test(content[value])) {
+          const valueEnd = skipString(content, value);
+          const name = decodeString(content, value, valueEnd);
+          if (name && !names.includes(name)) names.push(name);
+          i = valueEnd;
+          continue;
+        }
+      }
+      i = propertyEnd;
       continue;
     }
     if (content[i] === '[' && objectDepth === 0) {
@@ -179,4 +199,46 @@ export function extractProjectNames(content: string): string[] {
   }
 
   return names;
+}
+
+export function extractProjectNamesFromListReport(output: string): string[] {
+  let start = -1;
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (let index = 0; index < output.length; index++) {
+    const char = output[index];
+    if (start < 0) {
+      if (char === '{') {
+        start = index;
+        depth = 1;
+      }
+      continue;
+    }
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') quoted = false;
+      continue;
+    }
+    if (char === '"') quoted = true;
+    else if (char === '{') depth++;
+    else if (char === '}' && --depth === 0) {
+      try {
+        const report = JSON.parse(output.slice(start, index + 1)) as {
+          config?: { projects?: Array<{ name?: unknown }> };
+        };
+        const names = [...new Set(
+          (report.config?.projects ?? [])
+            .map(project => project.name)
+            .filter((name): name is string => typeof name === 'string' && name.length > 0)
+        )];
+        if (names.length > 0) return names;
+      } catch {
+        // Ignore non-JSON log objects and keep scanning for the reporter payload.
+      }
+      start = -1;
+    }
+  }
+  return [];
 }

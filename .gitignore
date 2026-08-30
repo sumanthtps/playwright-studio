@@ -8,3 +8,4 @@ out/
 playwright-studio-results.json
 test-results/
 .test-dist/
+.vscode-test/

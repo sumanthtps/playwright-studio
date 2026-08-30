@@ -2,13 +2,18 @@ import * as vscode from 'vscode';
 import { getConfig, getCaptureEnv } from './config';
 import { CommandInvocation } from './commandLine';
 
-let extraEnvProvider: (() => Record<string, string>) | undefined;
+let extraEnvProvider: ((resource?: vscode.Uri | string) => Record<string, string>) | undefined;
 
-export function setExtraEnvProvider(fn: () => Record<string, string>): void {
+export function setExtraEnvProvider(
+  fn: (resource?: vscode.Uri | string) => Record<string, string>
+): void {
   extraEnvProvider = fn;
 }
 
-function executionEnv(resource?: vscode.Uri | string, extraEnv: Record<string, string> = {}): Record<string, string> {
+export function getExecutionEnv(
+  resource?: vscode.Uri | string,
+  extraEnv: Record<string, string> = {}
+): Record<string, string> {
   const { env } = getConfig(resource);
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
@@ -16,7 +21,7 @@ function executionEnv(resource?: vscode.Uri | string, extraEnv: Record<string, s
   return {
     ...inherited,
     ...env,
-    ...(extraEnvProvider?.() ?? {}),
+    ...(extraEnvProvider?.(resource) ?? {}),
     ...getCaptureEnv(resource),
     ...extraEnv,
   };
@@ -35,7 +40,7 @@ function taskScope(resource?: vscode.Uri | string): vscode.WorkspaceFolder | vsc
   );
 }
 
-function platformExecutable(executable: string): string {
+export function platformExecutable(executable: string): string {
   if (
     process.platform === 'win32' &&
     !/\.[A-Za-z0-9]+$/.test(executable) &&
@@ -57,12 +62,13 @@ export async function runCommand(
   const { workingDirectory } = getConfig(options.resource);
   const executable = platformExecutable(command.executable);
   const definition = {
-    type: 'playwrightStudio',
+    type: 'process',
+    id: 'playwrightStudio',
     executable,
   };
   const execution = new vscode.ProcessExecution(executable, command.args, {
     cwd: workingDirectory,
-    env: executionEnv(options.resource, options.extraEnv),
+    env: getExecutionEnv(options.resource, options.extraEnv),
   });
   const task = new vscode.Task(
     definition,
@@ -99,7 +105,7 @@ export async function debugCommand(
     runtimeExecutable: executable,
     runtimeArgs: command.args,
     cwd: workingDirectory,
-    env: executionEnv(options.resource),
+    env: getExecutionEnv(options.resource),
     console: 'integratedTerminal',
     internalConsoleOptions: 'neverOpen',
     autoAttachChildProcesses: true,

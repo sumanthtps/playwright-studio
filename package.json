@@ -201,17 +201,17 @@
       "editor/context": [
         {
           "command": "playwrightSnippets.runTestAtCursor",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "editorTextFocus && resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@1"
         },
         {
           "command": "playwrightSnippets.inspectTestAtCursor",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "editorTextFocus && resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@2"
         },
         {
           "submenu": "playwrightStudio.editorContext",
-          "when": "editorTextFocus && resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "editorTextFocus && resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@3"
         }
       ],
@@ -245,17 +245,17 @@
       "explorer/context": [
         {
           "command": "playwrightSnippets.runFile",
-          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@1"
         },
         {
           "command": "playwrightSnippets.inspectFile",
-          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@2"
         },
         {
           "submenu": "playwrightStudio.explorerContext",
-          "when": "resourceExtname =~ /\\.[cm]?[jt]sx?$/",
+          "when": "resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/",
           "group": "playwright@3"
         }
       ],
@@ -297,13 +297,13 @@
         "command": "playwrightSnippets.runTestAtCursor",
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/"
       },
       {
         "command": "playwrightSnippets.runWithTag",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && resourceFilename =~ /\\.(spec|test)\\.[cm]?[jt]sx?$/"
       }
     ],
     "configuration": {
@@ -311,21 +311,31 @@
       "properties": {
         "playwrightSnippets.workingDirectory": {
           "type": "string",
+          "scope": "resource",
           "default": "",
           "description": "Working directory for running Playwright tests (relative to workspace root, or absolute). Defaults to workspace root."
         },
         "playwrightSnippets.testCommand": {
           "type": "string",
+          "scope": "resource",
           "default": "npx playwright test",
           "description": "Executable and arguments used to run Playwright tests. Quotes are supported; shell operators and expansion are intentionally not executed."
         },
+        "playwrightSnippets.toolCommand": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Optional Playwright command prefix for Codegen, Trace Viewer, and HTML Report (for example, pnpm exec playwright). Leave empty to derive it from testCommand."
+        },
         "playwrightSnippets.reporter": {
           "type": "string",
+          "scope": "resource",
           "default": "",
           "description": "Optional comma-separated Playwright reporters to pass on the command line (e.g. list,html). Leave empty to use the Playwright config. When result capture is enabled, json is appended to this list."
         },
         "playwrightSnippets.env": {
           "type": "object",
+          "scope": "resource",
           "default": {},
           "description": "Additional environment variables to set when running tests.",
           "additionalProperties": {
@@ -334,11 +344,13 @@
         },
         "playwrightSnippets.captureResults": {
           "type": "boolean",
+          "scope": "resource",
           "default": true,
           "description": "When enabled, Playwright Studio sets PLAYWRIGHT_JSON_OUTPUT_FILE so the JSON reporter writes results to extension storage. JSON is appended to a non-empty reporter setting; otherwise it must be present in playwright.config and Playwright Studio offers to add it."
         },
         "playwrightSnippets.envProfiles": {
           "type": "object",
+          "scope": "resource",
           "default": {},
           "description": "Named environment profiles. Each key is a profile name and its value is a map of env vars applied when that profile is active. Switch profiles via the status bar or 'Playwright Studio: Switch Environment Profile'.",
           "additionalProperties": {
@@ -360,6 +372,7 @@
         },
         "playwrightSnippets.heatmapThresholdDays": {
           "type": "number",
+          "scope": "resource",
           "default": 7,
           "minimum": 1,
           "description": "Number of days after which a test is highlighted as 'cold' (never or rarely run) in the coverage heatmap."
@@ -421,6 +434,7 @@
     "typecheck": "tsc --noEmit",
     "test:snippets": "node --test test/snippets.test.js",
     "test:runtime": "esbuild test/runtime.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/runtime.test.js && node --test .test-dist/runtime.test.js",
+    "test:integration": "npm run compile:prod && esbuild test/integration/index.ts --bundle --platform=node --format=cjs --external:vscode --outfile=.test-dist/integration/index.js && node test/run-integration.js",
     "test": "npm run test:snippets && npm run test:runtime",
     "package": "npm run compile:prod && vsce package",
     "build": "npm run package"
@@ -428,8 +442,10 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.25.0",
+    "jsonc-parser": "^3.3.1",
     "semantic-release": "^25.0.3",
     "semantic-release-vsce": "^6.1.0",
     "typescript": "^5.7.0"

@@ -101,7 +101,7 @@
     },
     "page.dblclick()": {
         "prefix": "p-dbclk",
-        "body": "await page.dblclick('$0');",
+        "body": "await page.locator('$0').dblclick();",
         "description": "Clicks twice in the center of an element within the page"
     },
     "page.nth().click()": {
@@ -204,7 +204,7 @@
         "prefix": "p-wfs",
         "description": "Playwright waitForSelector",
         "body": [
-            "await this.page.waitForSelector(${0:selector});"
+            "await this.page.locator(${0:selector}).waitFor();"
         ]
     },
     "page.waitForLoadState()": {
@@ -233,8 +233,8 @@
     },
     "page.waitForNavigation()": {
         "prefix": "p-wfn",
-        "body": "await this.page.waitForNavigation();",
-        "description": "Waits until the page navigates to a new URL or reloads"
+        "body": "await this.page.waitForURL(${1:urlOrPattern});",
+        "description": "Waits until the page reaches a URL"
     },
     "page.waitForRequest()": {
         "prefix": "p-wfreq",
@@ -259,14 +259,14 @@
         "prefix": "p-fill",
         "description": "Playwright fill input",
         "body": [
-            "await this.page.fill(${1:selector}, ${2:value});"
+            "await this.page.locator(${1:selector}).fill(${2:value});"
         ]
     },
     "page.type()": {
         "prefix": "p-type",
         "description": "Playwright type input",
         "body": [
-            "await this.page.type(${1:selector}, ${2:value});"
+            "await this.page.locator(${1:selector}).pressSequentially(${2:value});"
         ]
     },
     "fill value in controls": {
@@ -338,9 +338,9 @@
         "body": [
             "const [${2:newPage}] = await Promise.all([",
             "\tcontext.waitForEvent('page'),",
-            "\tpage.click(${1:selector})",
+            "\tpage.locator(${1:selector}).click()",
             "])",
-            "await newPage.waitForLoadState();"
+            "await $2.waitForLoadState();"
         ]
     },
     "Navigate to new popup": {
@@ -349,9 +349,9 @@
         "body": [
             "const [${2:newPopup}] = await Promise.all([",
             "\tthis.page.waitForEvent('popup'),",
-            "\tthis.page.click(${1:selector})",
+            "\tthis.page.locator(${1:selector}).click()",
             "])",
-            "await newPage.waitForLoadState();"
+            "await $2.waitForLoadState();"
         ]
     },
     "page.getAttribute()": {
@@ -404,7 +404,7 @@
     },
     "page.focus()": {
         "prefix": "p-focus",
-        "body": "await this.page.focus('$0');",
+        "body": "await this.page.locator('$0').focus();",
         "description": "Focuses an element within the page"
     },
     "page.goBack()": {
@@ -799,18 +799,18 @@
     },
     "page.$": {
         "prefix": "p-$",
-        "body": "await this.page.$('$0');",
+        "body": "const ${1:locator} = this.page.locator('$0');",
         "description": "Finds a matching element by a query selector within the page"
     },
     "page.$$": {
         "prefix": "p-$$",
-        "body": "await this.page.$$('$0');",
+        "body": "const ${1:locators} = await this.page.locator('$0').all();",
         "description": "Finds all matching elements by a query selector within the page"
     },
     "page.$eval": {
         "prefix": "p-$eval",
         "body": [
-            "await this.page.$eval('$2', element => {",
+            "await this.page.locator('$2').evaluate(element => {",
             "\t${3:console.log(element);}",
             "});"
         ],
@@ -819,7 +819,7 @@
     "page.$$eval": {
         "prefix": "p-$$eval",
         "body": [
-            "await this.page.$$eval('$2', elements => {",
+            "await this.page.locator('$2').evaluateAll(elements => {",
             "\t${3:console.log(elements);}",
             "});"
         ],
@@ -847,7 +847,7 @@
     },
     "page.press with options": {
         "prefix": "p-press",
-        "body": "await this.page.press('$1', '${2:F1|F2|F3|F4|F5|F6|F7|F8|F9|F10|F11|F12|Backspace|Tab|Delete|Escape|Enter|PageUP|PageDown|ArrowUp|ArrowDown|ArrowLeft|ArrowRight}', fullPage: '${3|true,false|}' });",
+        "body": "await this.page.locator('$1').press('${2|F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,Backspace,Tab,Delete,Escape,Enter,PageUp,PageDown,ArrowUp,ArrowDown,ArrowLeft,ArrowRight|}');",
         "description": "Focuses an element within the page and presses on a specific key"
     },
     "page.on('close')": {
@@ -2573,9 +2573,9 @@
             "\tconst browser = await chromium.launch();",
             "\tconst page = await browser.newPage();",
             "\tawait page.goto('${1:https://example.com/login}');",
-            "\tawait page.fill('${2:[name=email]}', process.env.EMAIL!);",
-            "\tawait page.fill('${3:[name=password]}', process.env.PASSWORD!);",
-            "\tawait page.click('${4:[type=submit]}');",
+            "\tawait page.locator('${2:[name=email]}').fill(process.env.EMAIL!);",
+            "\tawait page.locator('${3:[name=password]}').fill(process.env.PASSWORD!);",
+            "\tawait page.locator('${4:[type=submit]}').click();",
             "\tawait page.context().storageState({ path: '${5:storageState.json}' });",
             "\tawait browser.close();",
             "}",

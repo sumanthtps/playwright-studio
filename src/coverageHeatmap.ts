@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ResultStore } from './resultStore';
-import { parseTests } from './testParser';
+import { isTestFile, parseTests } from './testParser';
 
 const STATE_KEY = 'playwright.testLastRun';
 
@@ -59,13 +59,17 @@ export class CoverageHeatmap implements vscode.Disposable {
 
   private updateEditors(): void {
     const lastRun = this.context.workspaceState.get<LastRunMap>(STATE_KEY, {});
-    const thresholdDays = vscode.workspace
-      .getConfiguration('playwrightSnippets')
-      .get<number>('heatmapThresholdDays', 7);
-    const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000;
     const now = Date.now();
 
     for (const editor of vscode.window.visibleTextEditors) {
+      if (!isTestFile(editor.document)) {
+        editor.setDecorations(this.coldType, []);
+        continue;
+      }
+      const thresholdDays = vscode.workspace
+        .getConfiguration('playwrightSnippets', editor.document.uri)
+        .get<number>('heatmapThresholdDays', 7);
+      const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000;
       const filePath = editor.document.uri.fsPath;
       const cold: vscode.DecorationOptions[] = [];
 

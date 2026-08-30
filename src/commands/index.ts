@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PlaywrightCodeLensProvider } from '../codeLensProvider';
-import { parseTests } from '../testParser';
+import { findTestAtLine, parseTests } from '../testParser';
 import { buildWorkspaceRunCommand } from '../config';
 import { runCommand } from '../terminal';
 import { EnvProfileManager } from '../envProfile';
@@ -120,12 +120,17 @@ async function runWithProject(file: unknown): Promise<void> {
   const resolvedFile = resolveFileTarget(file);
   if (!resolvedFile) return;
 
-  const projects = await getPlaywrightProjects(resolvedFile);
+  const projects = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Window,
+      title: 'Discovering Playwright projects…',
+    },
+    () => getPlaywrightProjects(resolvedFile)
+  );
   if (projects.length === 0) {
-    void vscode.window.showInformationMessage(
-      'No projects found in the Playwright config. Running all tests with the default project.'
+    void vscode.window.showWarningMessage(
+      'Playwright Studio could not discover any projects. Check the Playwright config or run without project filtering.'
     );
-    await runCommand(buildWorkspaceRunCommand(resolvedFile), { resource: resolvedFile });
     return;
   }
 
@@ -222,7 +227,7 @@ export function registerCommands(
     const file = editor.document.uri.fsPath;
     const line = editor.selection.active.line;
     const items = parseTests(editor.document);
-    const test = [...items].reverse().find(item => item.line <= line && item.kind === 'test');
+    const test = findTestAtLine(items, line);
     if (test) await runTest(file, test.name, test.line);
     else await runFile(file);
   });
@@ -233,7 +238,7 @@ export function registerCommands(
     const file = editor.document.uri.fsPath;
     const line = editor.selection.active.line;
     const items = parseTests(editor.document);
-    const test = [...items].reverse().find(item => item.line <= line && item.kind === 'test');
+    const test = findTestAtLine(items, line);
     if (test) await inspectTest(file, test.name, test.line);
     else await inspectFile(file);
   });
@@ -245,6 +250,6 @@ export function registerCommands(
   );
   register('playwrightSnippets.runWithProject', (file: unknown) => runWithProject(file));
   register('playwrightSnippets.switchEnvProfile', () => profiles.switchProfile());
-  register('playwrightSnippets.saveAsSnippet', () => saveAsSnippet());
+  register('playwrightSnippets.saveAsSnippet', () => saveAsSnippet(context));
   register('playwrightSnippets.setupCaptureResults', () => runJsonReporterSetup(context));
 }

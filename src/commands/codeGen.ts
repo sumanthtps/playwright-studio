@@ -15,7 +15,7 @@ export async function codeGen(): Promise<void> {
   }
 
   const resource = vscode.window.activeTextEditor?.document.uri;
-  await runCommand(buildToolCommand('codegen', url ? [url] : []), {
+  await runCommand(buildToolCommand('codegen', url ? [url] : [], resource), {
     resource,
     name: 'Playwright Codegen',
   });
