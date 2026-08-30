@@ -21,20 +21,13 @@
     },
     "Playwright integrationTest block": {
         "prefix": "m-int",
-        "description": "Playwright integrationTest wrapper function block",
+        "description": "Playwright integration test suite and test block",
         "body": [
-            "integrationTest(",
-            "    {",
-            "      envTypes: [EnvironmentType.${1:env}],",
-            "      runTypes: [RunType.Nightly],",
-            "      runEnvironments: [[RunEnvironment.Test, Severity.S3]],",
-            "      runGeos: [RunGeo.USA],",
-            "    },",
-            "    Team.${1|Team1,Team2|},",
-            "    '${2:title}',",
-            "    async ({ page }) => {",
-            "       ${3:testSteps}",
-            "    });"
+            "test.describe('${1:suite}', () => {",
+            "\ttest('${2:title}', async ({ page }) => {",
+            "\t\t${3:testSteps}",
+            "\t});",
+            "});"
         ]
     },
     "test.step()": {
@@ -94,14 +87,14 @@
     },
     "Click Selector": {
         "prefix": "m-clks",
-        "description": "clicks selector util",
+        "description": "Clicks a locator",
         "body": [
-            "await clickSelector(this.page, ${1:selector});"
+            "await this.page.locator(${1:selector}).click();"
         ]
     },
     "page.dblclick()": {
         "prefix": "p-dbclk",
-        "body": "await page.dblclick('$0');",
+        "body": "await page.locator('$0').dblclick();",
         "description": "Clicks twice in the center of an element within the page"
     },
     "page.nth().click()": {
@@ -113,16 +106,16 @@
     },
     "precise click with index": {
         "prefix": "m-pclk",
-        "description": "clicks selector util",
+        "description": "Clicks a locator at a specific index",
         "body": [
-            "await preciseClick(this.page, ${1:selector}, { index: ${2:index} });"
+            "await this.page.locator(${1:selector}).nth(${2:index}).click();"
         ]
     },
     "Navigate to Url": {
         "prefix": "m-ntu",
-        "description": "navigates to the url util",
+        "description": "Navigates to a URL",
         "body": [
-            "await navigateToUrl(this.page, ${1:url});"
+            "await this.page.goto(${1:url});"
         ]
     },
     "page.title()": {
@@ -134,9 +127,9 @@
     },
     "Verify page url": {
         "prefix": "m-vpurl",
-        "description": "Verify page url util",
+        "description": "Verifies the current page URL",
         "body": [
-            "await verifyPageURL(this.page, ${1:url});"
+            "await expect(this.page).toHaveURL(${1:url});"
         ]
     },
     "page.url()": {
@@ -204,7 +197,7 @@
         "prefix": "p-wfs",
         "description": "Playwright waitForSelector",
         "body": [
-            "await this.page.waitForSelector(${0:selector});"
+            "await this.page.locator(${0:selector}).waitFor();"
         ]
     },
     "page.waitForLoadState()": {
@@ -218,7 +211,7 @@
         "prefix": "p-wft",
         "description": "Playwright waitForTimeout",
         "body": [
-            "await this.page.waitForTimeout(Timeout.$1);"
+            "await this.page.waitForTimeout(${1:1000});"
         ]
     },
     "page.waitForEvent()": {
@@ -233,8 +226,8 @@
     },
     "page.waitForNavigation()": {
         "prefix": "p-wfn",
-        "body": "await this.page.waitForNavigation();",
-        "description": "Waits until the page navigates to a new URL or reloads"
+        "body": "await this.page.waitForURL(${1:urlOrPattern});",
+        "description": "Waits until the page reaches a URL"
     },
     "page.waitForRequest()": {
         "prefix": "p-wfreq",
@@ -248,32 +241,30 @@
     },
     "A11y check": {
         "prefix": "m-a11y",
-        "description": "Playwright a11y check util",
+        "description": "Matches the page accessibility tree against an ARIA snapshot",
         "body": [
-            "if (a11yCheck) {",
-            "  await a11y(this.page);",
-            "}"
+            "await expect(this.page).toMatchAriaSnapshot();"
         ]
     },
     "page.fill()": {
         "prefix": "p-fill",
         "description": "Playwright fill input",
         "body": [
-            "await this.page.fill(${1:selector}, ${2:value});"
+            "await this.page.locator(${1:selector}).fill(${2:value});"
         ]
     },
     "page.type()": {
         "prefix": "p-type",
         "description": "Playwright type input",
         "body": [
-            "await this.page.type(${1:selector}, ${2:value});"
+            "await this.page.locator(${1:selector}).pressSequentially(${2:value});"
         ]
     },
     "fill value in controls": {
         "prefix": "m-fill",
-        "description": "Fill value in control util",
+        "description": "Fills a locator with a value",
         "body": [
-            "await fillValueInControl(this.page, ${1:inputSelector}, ${2:value});"
+            "await this.page.locator(${1:inputSelector}).fill(${2:value});"
         ]
     },
     "page.isVisible()": {
@@ -338,9 +329,9 @@
         "body": [
             "const [${2:newPage}] = await Promise.all([",
             "\tcontext.waitForEvent('page'),",
-            "\tpage.click(${1:selector})",
+            "\tpage.locator(${1:selector}).click()",
             "])",
-            "await newPage.waitForLoadState();"
+            "await $2.waitForLoadState();"
         ]
     },
     "Navigate to new popup": {
@@ -349,9 +340,9 @@
         "body": [
             "const [${2:newPopup}] = await Promise.all([",
             "\tthis.page.waitForEvent('popup'),",
-            "\tthis.page.click(${1:selector})",
+            "\tthis.page.locator(${1:selector}).click()",
             "])",
-            "await newPage.waitForLoadState();"
+            "await $2.waitForLoadState();"
         ]
     },
     "page.getAttribute()": {
@@ -404,7 +395,7 @@
     },
     "page.focus()": {
         "prefix": "p-focus",
-        "body": "await this.page.focus('$0');",
+        "body": "await this.page.locator('$0').focus();",
         "description": "Focuses an element within the page"
     },
     "page.goBack()": {
@@ -799,18 +790,18 @@
     },
     "page.$": {
         "prefix": "p-$",
-        "body": "await this.page.$('$0');",
+        "body": "const ${1:locator} = this.page.locator('$0');",
         "description": "Finds a matching element by a query selector within the page"
     },
     "page.$$": {
         "prefix": "p-$$",
-        "body": "await this.page.$$('$0');",
+        "body": "const ${1:locators} = await this.page.locator('$0').all();",
         "description": "Finds all matching elements by a query selector within the page"
     },
     "page.$eval": {
         "prefix": "p-$eval",
         "body": [
-            "await this.page.$eval('$2', element => {",
+            "await this.page.locator('$2').evaluate(element => {",
             "\t${3:console.log(element);}",
             "});"
         ],
@@ -819,7 +810,7 @@
     "page.$$eval": {
         "prefix": "p-$$eval",
         "body": [
-            "await this.page.$$eval('$2', elements => {",
+            "await this.page.locator('$2').evaluateAll(elements => {",
             "\t${3:console.log(elements);}",
             "});"
         ],
@@ -847,7 +838,7 @@
     },
     "page.press with options": {
         "prefix": "p-press",
-        "body": "await this.page.press('$1', '${2:F1|F2|F3|F4|F5|F6|F7|F8|F9|F10|F11|F12|Backspace|Tab|Delete|Escape|Enter|PageUP|PageDown|ArrowUp|ArrowDown|ArrowLeft|ArrowRight}', fullPage: '${3|true,false|}' });",
+        "body": "await this.page.locator('$1').press('${2|F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,Backspace,Tab,Delete,Escape,Enter,PageUp,PageDown,ArrowUp,ArrowDown,ArrowLeft,ArrowRight|}');",
         "description": "Focuses an element within the page and presses on a specific key"
     },
     "page.on('close')": {
@@ -2045,11 +2036,11 @@
             "});"
         ]
     },
-    "page.accessibility.snapshot()": {
+    "page.ariaSnapshot()": {
         "prefix": "p-acc-snap",
         "description": "Captures the accessibility tree of the page",
         "body": [
-            "const ${1:snapshot} = await this.page.accessibility.snapshot();",
+            "const ${1:snapshot} = await this.page.ariaSnapshot();",
             "console.log(JSON.stringify(${1:snapshot}, null, 2));"
         ]
     },
@@ -2573,9 +2564,9 @@
             "\tconst browser = await chromium.launch();",
             "\tconst page = await browser.newPage();",
             "\tawait page.goto('${1:https://example.com/login}');",
-            "\tawait page.fill('${2:[name=email]}', process.env.EMAIL!);",
-            "\tawait page.fill('${3:[name=password]}', process.env.PASSWORD!);",
-            "\tawait page.click('${4:[type=submit]}');",
+            "\tawait page.locator('${2:[name=email]}').fill(process.env.EMAIL!);",
+            "\tawait page.locator('${3:[name=password]}').fill(process.env.PASSWORD!);",
+            "\tawait page.locator('${4:[type=submit]}').click();",
             "\tawait page.context().storageState({ path: '${5:storageState.json}' });",
             "\tawait browser.close();",
             "}",

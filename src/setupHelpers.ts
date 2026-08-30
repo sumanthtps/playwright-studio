@@ -2,9 +2,12 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getConfig } from './config';
+import { hasJsonReporterText, injectJsonReporterText } from './reporterConfig';
 
 const CONFIG_FILENAMES = [
   'playwright.config.ts',
+  'playwright.config.mts',
+  'playwright.config.cts',
   'playwright.config.js',
   'playwright.config.mjs',
   'playwright.config.cjs',
@@ -21,12 +24,7 @@ export function findPlaywrightConfig(workingDir: string): string | undefined {
 
 export function configHasJsonReporter(filePath: string): boolean {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    // Strip line and block comments to avoid false positives from commented-out reporters
-    const stripped = content
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/(^|[^:/])\/\/[^\n]*/g, '$1');
-    return /['"`]json['"`]/.test(stripped);
+    return hasJsonReporterText(fs.readFileSync(filePath, 'utf8'));
   } catch {
     return false;
   }
@@ -35,30 +33,18 @@ export function configHasJsonReporter(filePath: string): boolean {
 export function injectJsonReporter(filePath: string): boolean {
   try {
     const original = fs.readFileSync(filePath, 'utf8');
-
-    const arrayMatch = original.match(/(\breporter\s*:\s*\[)/);
-    if (arrayMatch && typeof arrayMatch.index === 'number') {
-      const insertAt = arrayMatch.index + arrayMatch[0].length;
-      const updated =
-        original.slice(0, insertAt) + "\n    ['json']," + original.slice(insertAt);
-      fs.writeFileSync(filePath, updated, 'utf8');
-      return true;
+    const updated = injectJsonReporterText(original);
+    if (updated === null) return false;
+    if (updated === original) return true;
+    const temporary = `${filePath}.playwright-studio.tmp`;
+    fs.writeFileSync(temporary, updated, 'utf8');
+    try {
+      fs.renameSync(temporary, filePath);
+    } catch {
+      fs.copyFileSync(temporary, filePath);
+      fs.unlinkSync(temporary);
     }
-
-    const stringMatch = original.match(/(\breporter\s*:\s*)(['"`])([^'"`]+)\2/);
-    if (stringMatch && typeof stringMatch.index === 'number') {
-      const fullMatch = stringMatch[0];
-      const existing = stringMatch[3];
-      const replacement = `reporter: [['${existing}'], ['json']]`;
-      const updated =
-        original.slice(0, stringMatch.index) +
-        replacement +
-        original.slice(stringMatch.index + fullMatch.length);
-      fs.writeFileSync(filePath, updated, 'utf8');
-      return true;
-    }
-
-    return false;
+    return true;
   } catch {
     return false;
   }
@@ -102,7 +88,7 @@ export async function runJsonReporterSetup(
   }
 
   if (choice === "Don't show again") {
-    await context.globalState.update(PROMPT_DISMISSED_KEY, true);
+    await context.workspaceState.update(PROMPT_DISMISSED_KEY, true);
     return;
   }
 
@@ -125,11 +111,13 @@ export async function runJsonReporterSetup(
 export async function checkAndPromptForJsonReporter(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  const cfg = vscode.workspace.getConfiguration('playwrightSnippets');
-  if (!cfg.get<boolean>('captureResults', true)) return;
-  if (context.globalState.get<boolean>(PROMPT_DISMISSED_KEY)) return;
+  const { workingDirectory, reporter, captureResults } = getConfig();
+  if (!captureResults) return;
+  if (context.workspaceState.get<boolean>(PROMPT_DISMISSED_KEY)) return;
 
-  const { workingDirectory } = getConfig();
+  // A non-empty reporter setting is passed on the CLI and JSON is appended by
+  // buildRunCommand, so no config mutation is required in that mode.
+  if (reporter.trim()) return;
   const configPath = findPlaywrightConfig(workingDirectory);
   if (!configPath) return;
   if (configHasJsonReporter(configPath)) return;

@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
-import { getConfig } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildToolCommand, getConfig } from '../config';
+import { runCommand } from '../terminal';
 
 export async function showTrace(traceFilePath?: string): Promise<void> {
   let tracePath: string;
+  const resource = vscode.window.activeTextEditor?.document.uri;
 
   if (traceFilePath) {
     tracePath = traceFilePath;
   } else {
-    const { workingDirectory } = getConfig();
+    const { workingDirectory } = getConfig(resource);
     const uris = await vscode.window.showOpenDialog({
       canSelectMany: false,
       openLabel: 'Open Trace',
@@ -20,5 +21,8 @@ export async function showTrace(traceFilePath?: string): Promise<void> {
     tracePath = uris[0].fsPath;
   }
 
-  runInTerminal(`npx playwright show-trace "${tracePath}"`);
+  await runCommand(buildToolCommand('show-trace', [tracePath], resource), {
+    resource: resource ?? tracePath,
+    name: 'Playwright Trace Viewer',
+  });
 }

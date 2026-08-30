@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ResultStore, SpecResult } from './resultStore';
+import { ResultStore, SpecResult, TestResults } from './resultStore';
 
 export class GutterDecorationManager implements vscode.Disposable {
   private readonly passType: vscode.TextEditorDecorationType;
@@ -47,23 +47,88 @@ export class GutterDecorationManager implements vscode.Disposable {
 
     this.disposables.push(
       store.onDidChange(() => this.update(store)),
-      vscode.window.onDidChangeVisibleTextEditors(() => this.update(store))
+      vscode.window.onDidChangeVisibleTextEditors(() => {
+        if (store.results) this.updateDecorations(store.results);
+      })
     );
   }
 
   private update(store: ResultStore): void {
     const results = store.results;
     if (!results) return;
+    this.updateDiagnostics(results);
+    this.updateDecorations(results);
+  }
 
-    this.diagnostics.clear();
-
+  private byFile(results: TestResults): Map<string, SpecResult[]> {
     const byFile = new Map<string, SpecResult[]>();
     for (const spec of results.specs) {
       const arr = byFile.get(spec.file) ?? [];
       arr.push(spec);
       byFile.set(spec.file, arr);
     }
+    return byFile;
+  }
 
+  private byLine(specs: SpecResult[]): Map<number, SpecResult[]> {
+    const byLine = new Map<number, SpecResult[]>();
+    for (const spec of specs) {
+      const lineSpecs = byLine.get(spec.line) ?? [];
+      lineSpecs.push(spec);
+      byLine.set(spec.line, lineSpecs);
+    }
+    return byLine;
+  }
+
+  private severity(spec: SpecResult): number {
+    if (spec.status === 'failed' || spec.status === 'timedOut') return 4;
+    if (spec.status === 'flaky') return 3;
+    if (spec.status === 'passed') return 2;
+    return 1;
+  }
+
+  private failureDiagnostic(lineSpecs: SpecResult[], range: vscode.Range): vscode.Diagnostic {
+    const failures = lineSpecs.filter(
+      item => item.status === 'failed' || item.status === 'timedOut'
+    );
+    const message = failures
+      .map(item => {
+        const prefix = item.projectName ? `[${item.projectName}] ` : '';
+        return `${prefix}${item.error?.split('\n')[0] ?? `Test "${item.title}" failed`}`;
+      })
+      .join('\n');
+    const diagnostic = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+    diagnostic.source = 'Playwright Studio';
+    const traceFile = failures.find(item => item.traceFile)?.traceFile;
+    if (traceFile) {
+      diagnostic.code = {
+        value: 'Open Trace',
+        target: vscode.Uri.parse(
+          `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([traceFile]))}`
+        ),
+      };
+    }
+    return diagnostic;
+  }
+
+  private updateDiagnostics(results: TestResults): void {
+    this.diagnostics.clear();
+    for (const [filePath, fileSpecs] of this.byFile(results)) {
+      const diagnostics: vscode.Diagnostic[] = [];
+      for (const [line, lineSpecs] of this.byLine(fileSpecs)) {
+        if (lineSpecs.some(spec => spec.status === 'failed' || spec.status === 'timedOut')) {
+          diagnostics.push(this.failureDiagnostic(
+            lineSpecs,
+            new vscode.Range(Math.max(0, line), 0, Math.max(0, line), Number.MAX_SAFE_INTEGER)
+          ));
+        }
+      }
+      if (diagnostics.length > 0) this.diagnostics.set(vscode.Uri.file(filePath), diagnostics);
+    }
+  }
+
+  private updateDecorations(results: TestResults): void {
+    const byFile = this.byFile(results);
     for (const editor of vscode.window.visibleTextEditors) {
       const filePath = editor.document.uri.fsPath;
       const fileSpecs = byFile.get(filePath) ?? [];
@@ -72,9 +137,11 @@ export class GutterDecorationManager implements vscode.Disposable {
       const failed: vscode.DecorationOptions[] = [];
       const skipped: vscode.DecorationOptions[] = [];
       const flaky: vscode.DecorationOptions[] = [];
-      const diagnosticList: vscode.Diagnostic[] = [];
 
-      for (const spec of fileSpecs) {
+      for (const lineSpecs of this.byLine(fileSpecs).values()) {
+        const spec = [...lineSpecs].sort(
+          (left, right) => this.severity(right) - this.severity(left)
+        )[0];
         const lineIdx = Math.max(0, Math.min(spec.line, editor.document.lineCount - 1));
         const range = editor.document.lineAt(lineIdx).range;
 
@@ -82,22 +149,6 @@ export class GutterDecorationManager implements vscode.Disposable {
           passed.push({ range });
         } else if (spec.status === 'failed' || spec.status === 'timedOut') {
           failed.push({ range });
-
-          const message = spec.error
-            ? spec.error.split('\n')[0]
-            : `Test "${spec.title}" failed`;
-          const diag = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
-          diag.source = 'Playwright Studio';
-
-          if (spec.traceFile) {
-            diag.code = {
-              value: 'Open Trace',
-              target: vscode.Uri.parse(
-                `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([spec.traceFile]))}`
-              ),
-            };
-          }
-          diagnosticList.push(diag);
         } else if (spec.status === 'skipped') {
           skipped.push({ range });
         } else if (spec.status === 'flaky') {
@@ -109,12 +160,6 @@ export class GutterDecorationManager implements vscode.Disposable {
       editor.setDecorations(this.failType, failed);
       editor.setDecorations(this.skipType, skipped);
       editor.setDecorations(this.flakyType, flaky);
-
-      if (diagnosticList.length > 0) {
-        this.diagnostics.set(editor.document.uri, diagnosticList);
-      } else {
-        this.diagnostics.delete(editor.document.uri);
-      }
     }
   }
 

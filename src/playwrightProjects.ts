@@ -1,31 +1,55 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawn } from 'child_process';
+import { getConfig } from './config';
+import { parseCommandLine } from './commandLine';
+import {
+  extractProjectNames,
+  extractProjectNamesFromListReport,
+  isProjectListStaticallyComplete,
+} from './projectParser';
+import { getExecutionEnv, platformExecutable } from './terminal';
 
-function extractProjectNames(content: string): string[] {
-  // Match the projects array block (handles multiline)
-  const projectsMatch = /projects\s*:\s*\[([^\]]*(?:\[[^\]]*\][^\]]*)*)\]/s.exec(content);
-  if (!projectsMatch) return [];
+async function discoverProjectsWithCli(resource?: vscode.Uri | string): Promise<string[]> {
+  const config = getConfig(resource);
+  const command = parseCommandLine(config.testCommand);
+  const env = getExecutionEnv(resource);
+  delete env.PLAYWRIGHT_JSON_OUTPUT_FILE;
 
-  const block = projectsMatch[1];
-  const names: string[] = [];
-  const nameRe = /name\s*:\s*['"]([^'"]+)['"]/g;
-  let match: RegExpExecArray | null;
-  while ((match = nameRe.exec(block)) !== null) {
-    names.push(match[1]);
-  }
-  return names;
+  return new Promise(resolve => {
+    const child = spawn(
+      platformExecutable(command.executable),
+      [...command.args, '--list', '--reporter=json'],
+      { cwd: config.workingDirectory, env, windowsHide: true, shell: false }
+    );
+    let output = '';
+    const append = (chunk: Buffer) => {
+      if (output.length < 5_000_000) output += chunk.toString();
+    };
+    child.stdout.on('data', append);
+    child.stderr.on('data', append);
+    child.on('error', () => resolve([]));
+    child.on('close', () => resolve(extractProjectNamesFromListReport(output)));
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve([]);
+    }, 20_000);
+    child.once('close', () => clearTimeout(timer));
+  });
 }
 
-export async function getPlaywrightProjects(): Promise<string[]> {
-  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!root) return [];
+export async function getPlaywrightProjects(resource?: vscode.Uri | string): Promise<string[]> {
+  const root = getConfig(resource).workingDirectory;
+  let staticFallback: string[] = [];
 
   const candidates = [
     'playwright.config.ts',
+    'playwright.config.cts',
     'playwright.config.js',
     'playwright.config.mts',
     'playwright.config.mjs',
+    'playwright.config.cjs',
   ];
 
   for (const name of candidates) {
@@ -34,11 +58,14 @@ export async function getPlaywrightProjects(): Promise<string[]> {
     try {
       const content = fs.readFileSync(full, 'utf8');
       const names = extractProjectNames(content);
-      if (names.length > 0) return names;
+      if (names.length > 0 && isProjectListStaticallyComplete(content)) return names;
+      staticFallback = names;
+      break;
     } catch {
       // skip unreadable config
     }
   }
 
-  return [];
+  const discovered = await discoverProjectsWithCli(resource);
+  return discovered.length > 0 ? discovered : staticFallback;
 }

@@ -1,13 +1,13 @@
-import { buildInspectArgs } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildDebugCommand } from '../config';
+import { runCommand } from '../terminal';
 
-export function inspectTest(testFile: string, testName: string): void {
-  const args = buildInspectArgs(testFile, testName);
-  args.push('--debug');
-  runInTerminal(args.join(' '));
+export async function inspectTest(testFile: string, testName?: string, line?: number): Promise<void> {
+  await runCommand(buildDebugCommand(testFile, { testName, line }), {
+    resource: testFile,
+    name: 'Playwright Inspector',
+  });
 }
 
-export function inspectFile(testFile: string): void {
-  const args = buildInspectArgs(testFile);
-  runInTerminal(args.join(' '), { PWDEBUG: '1' });
+export async function inspectFile(testFile: string): Promise<void> {
+  await inspectTest(testFile);
 }

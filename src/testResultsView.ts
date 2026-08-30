@@ -12,16 +12,21 @@ class FileNode extends vscode.TreeItem {
     const failed = specs.filter(s => s.status === 'failed' || s.status === 'timedOut').length;
     const passed = specs.filter(s => s.status === 'passed').length;
     const flaky = specs.filter(s => s.status === 'flaky').length;
+    const skipped = specs.filter(s => s.status === 'skipped').length;
     const parts = [`${passed} passed`];
     if (failed > 0) parts.push(`${failed} failed`);
     if (flaky > 0) parts.push(`${flaky} flaky`);
+    if (skipped > 0) parts.push(`${skipped} skipped`);
     this.description = parts.join(', ');
     this.tooltip = filePath;
     this.resourceUri = vscode.Uri.file(filePath);
-    this.iconPath =
-      failed > 0
-        ? new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'))
-        : new vscode.ThemeIcon('pass', new vscode.ThemeColor('testing.iconPassed'));
+    this.iconPath = failed > 0
+      ? new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'))
+      : flaky > 0
+        ? new vscode.ThemeIcon('warning', new vscode.ThemeColor('testing.iconFlaky'))
+        : skipped === specs.length
+          ? new vscode.ThemeIcon('debug-step-over', new vscode.ThemeColor('testing.iconSkipped'))
+          : new vscode.ThemeIcon('pass', new vscode.ThemeColor('testing.iconPassed'));
     this.contextValue = 'playwrightResultFile';
   }
 }
@@ -30,7 +35,7 @@ class SpecNode extends vscode.TreeItem {
   readonly kind = 'spec' as const;
   constructor(public readonly spec: SpecResult) {
     super(spec.title, vscode.TreeItemCollapsibleState.None);
-    this.description = `${spec.duration}ms`;
+    this.description = [spec.projectName, `${spec.duration}ms`].filter(Boolean).join(' · ');
     this.tooltip = spec.error ?? spec.title;
     this.iconPath = statusIcon(spec.status);
     this.command = {

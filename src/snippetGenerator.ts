@@ -1,25 +1,16 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import { parseSnippetFile, upsertSnippet } from './snippetFile';
 
-function getUserSnippetsDir(): string {
-  const home = os.homedir();
-  if (process.platform === 'win32') {
-    return path.join(
-      process.env['APPDATA'] ?? path.join(home, 'AppData', 'Roaming'),
-      'Code',
-      'User',
-      'snippets'
-    );
-  }
-  if (process.platform === 'darwin') {
-    return path.join(home, 'Library', 'Application Support', 'Code', 'User', 'snippets');
-  }
-  return path.join(home, '.config', 'Code', 'User', 'snippets');
+function getUserSnippetsDir(context: vscode.ExtensionContext): string {
+  // globalStorageUri follows the active VS Code product/profile/user-data directory.
+  // Walk from User[/profiles/<id>]/globalStorage/<extension-id> to its snippets sibling.
+  const profileRoot = path.dirname(path.dirname(context.globalStorageUri.fsPath));
+  return path.join(profileRoot, 'snippets');
 }
 
-export async function saveAsSnippet(): Promise<void> {
+export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     await vscode.window.showErrorMessage('No active editor.');
@@ -45,34 +36,59 @@ export async function saveAsSnippet(): Promise<void> {
     prompt: 'Snippet name — a short human-readable description',
     placeHolder: 'e.g. My login flow snippet',
     value: prefix,
+    validateInput: value => (value?.trim() ? undefined : 'Name is required'),
   });
   if (!name) return;
 
-  const snippetsDir = getUserSnippetsDir();
+  const snippetsDir = getUserSnippetsDir(context);
   const snippetsFile = path.join(snippetsDir, 'playwright-custom.code-snippets');
 
   let existing: Record<string, unknown> = {};
+  let original = '{}\n';
   if (fs.existsSync(snippetsFile)) {
     try {
-      existing = JSON.parse(fs.readFileSync(snippetsFile, 'utf8'));
-    } catch {
-      /* start fresh */
+      original = fs.readFileSync(snippetsFile, 'utf8');
+      existing = parseSnippetFile(original);
+    } catch (error) {
+      await vscode.window.showErrorMessage(
+        `Cannot save the snippet because ${path.basename(snippetsFile)} is not valid JSON. ` +
+        `Fix the file first; its existing contents were left unchanged. (${String(error)})`
+      );
+      return;
     }
+  }
+
+  const snippetName = name.trim();
+  if (Object.prototype.hasOwnProperty.call(existing, snippetName)) {
+    const choice = await vscode.window.showWarningMessage(
+      `A snippet named "${snippetName}" already exists. Replace it?`,
+      { modal: true },
+      'Replace'
+    );
+    if (choice !== 'Replace') return;
   }
 
   // Split into lines and escape $ signs
   const body = selectedText.split('\n').map(line => line.replace(/\$/g, '\\$'));
 
-  existing[name] = {
+  const snippet = {
     prefix: prefix.trim(),
     body,
-    description: name,
+    description: snippetName,
     scope: 'javascript,typescript,javascriptreact,typescriptreact',
   };
 
   try {
     fs.mkdirSync(snippetsDir, { recursive: true });
-    fs.writeFileSync(snippetsFile, JSON.stringify(existing, null, 2));
+    const temporary = `${snippetsFile}.${process.pid}.tmp`;
+    fs.writeFileSync(temporary, upsertSnippet(original, snippetName, snippet));
+    try {
+      fs.renameSync(temporary, snippetsFile);
+    } catch {
+      // Windows may not replace an existing destination atomically.
+      fs.copyFileSync(temporary, snippetsFile);
+      fs.unlinkSync(temporary);
+    }
 
     const action = await vscode.window.showInformationMessage(
       `Snippet "${prefix}" saved to playwright-custom.code-snippets`,
