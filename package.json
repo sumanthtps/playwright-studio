@@ -327,6 +327,12 @@
           "default": "",
           "description": "Optional Playwright command prefix for Codegen, Trace Viewer, and HTML Report (for example, pnpm exec playwright). Leave empty to derive it from testCommand."
         },
+        "playwrightSnippets.reportPath": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Optional HTML report directory passed to playwright show-report. Relative paths are resolved from workingDirectory. Leave empty for Playwright's default playwright-report directory."
+        },
         "playwrightSnippets.reporter": {
           "type": "string",
           "scope": "resource",

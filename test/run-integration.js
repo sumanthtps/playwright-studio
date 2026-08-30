@@ -14,6 +14,8 @@ async function main() {
   fs.mkdirSync(path.join(fixture, 'tests'), { recursive: true });
   fs.writeFileSync(path.join(fixture, '.vscode', 'settings.json'), JSON.stringify({
     'playwrightSnippets.testCommand': 'node mock-playwright.js',
+    'playwrightSnippets.toolCommand': 'node mock-tool.js',
+    'playwrightSnippets.reportPath': 'custom-report',
     'playwrightSnippets.reporter': 'list',
     'playwrightSnippets.captureResults': true,
   }, null, 2));
@@ -36,11 +38,16 @@ fs.writeFileSync(path.join(__dirname, 'last-invocation.json'), JSON.stringify({ 
 fs.writeFileSync(process.env.PLAYWRIGHT_JSON_OUTPUT_FILE, JSON.stringify({
   config: { rootDir: __dirname },
   suites: [{ specs: [
-    { title: 'first', file: 'tests/first.spec.ts', line: 2, tests: [{ projectName: 'chromium', status: 'unexpected', results: [{ status: 'failed', duration: 1, error: { message: 'first failed' }, attachments: [] }] }] },
-    { title: 'second', file: 'tests/second.spec.ts', line: 2, tests: [{ projectName: 'chromium', status: 'unexpected', results: [{ status: 'failed', duration: 1, error: { message: 'second failed' }, attachments: [] }] }] }
+    { title: 'first', file: 'tests/first.spec.ts', line: 2, tests: [{ projectName: 'chromium', status: 'unexpected', results: [{ status: 'failed', duration: 1, error: { message: '\\x1b[31mfirst failed\\x1b[39m' }, attachments: [] }] }] },
+    { title: 'second', file: 'tests/second.spec.ts', line: 2, tests: [{ projectName: 'chromium', status: 'unexpected', results: [{ status: 'failed', duration: 1, error: { message: '\\x1b[31msecond failed\\x1b[39m' }, attachments: [] }] }] }
   ] }],
   stats: { expected: 0, unexpected: 2, skipped: 0, flaky: 0, duration: 2, startTime: new Date().toISOString() }
 }));
+`);
+  fs.writeFileSync(path.join(fixture, 'mock-tool.js'), `
+const fs = require('fs');
+const path = require('path');
+fs.writeFileSync(path.join(__dirname, 'last-tool-invocation.json'), JSON.stringify({ argv: process.argv.slice(2) }));
 `);
 
   const options = {

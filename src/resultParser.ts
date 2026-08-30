@@ -47,6 +47,14 @@ function string(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+export function stripTerminalFormatting(value: string): string {
+  return value
+    // OSC sequences, including terminal hyperlinks.
+    .replace(/\u001B\][^\u0007]*(?:\u0007|\u001B\\)/g, '')
+    // CSI sequences such as Playwright/expect's color and emphasis codes.
+    .replace(/(?:\u001B\[|\u009B)[0-?]*[ -/]*[@-~]/g, '');
+}
+
 function outcome(test: JsonObject, finalResult: JsonObject | undefined): SpecStatus {
   switch (test.status) {
     case 'expected':
@@ -68,7 +76,7 @@ function lastError(results: JsonObject[]): string | undefined {
   for (let i = results.length - 1; i >= 0; i--) {
     const error = object(results[i].error);
     const message = string(error?.message) ?? string(error?.value);
-    if (message) return message;
+    if (message) return stripTerminalFormatting(message);
   }
   return undefined;
 }

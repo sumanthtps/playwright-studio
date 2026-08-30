@@ -201,6 +201,55 @@ export function extractProjectNames(content: string): string[] {
   return names;
 }
 
+/**
+ * Returns true only when every top-level project entry is an object with a
+ * statically readable, unique string name. Mixed arrays such as
+ * `[{ name: 'chromium' }, ...mobileProjects]` must be resolved through the
+ * Playwright CLI or the picker would silently omit projects.
+ */
+export function isProjectListStaticallyComplete(content: string): boolean {
+  const arrayStart = projectsArrayStart(content);
+  if (arrayStart === undefined) return false;
+  const code = maskStringsAndComments(content);
+  let arrayDepth = 1;
+  let objectDepth = 0;
+  let parenDepth = 0;
+  let entryStart = arrayStart + 1;
+  let objectEntries = 0;
+  let complete = true;
+
+  const inspectEntry = (end: number) => {
+    const entry = code.slice(entryStart, end).trim();
+    if (!entry) return;
+    if (!entry.startsWith('{')) complete = false;
+    else objectEntries++;
+  };
+
+  for (let i = arrayStart + 1; i < code.length; i++) {
+    const char = code[i];
+    if (char === '[') arrayDepth++;
+    else if (char === ']') {
+      if (arrayDepth === 1 && objectDepth === 0 && parenDepth === 0) {
+        inspectEntry(i);
+        break;
+      }
+      arrayDepth = Math.max(1, arrayDepth - 1);
+    } else if (char === '{') objectDepth++;
+    else if (char === '}') objectDepth = Math.max(0, objectDepth - 1);
+    else if (char === '(') parenDepth++;
+    else if (char === ')') parenDepth = Math.max(0, parenDepth - 1);
+    else if (
+      char === ',' && arrayDepth === 1 && objectDepth === 0 && parenDepth === 0
+    ) {
+      inspectEntry(i);
+      entryStart = i + 1;
+    }
+  }
+
+  const names = extractProjectNames(content);
+  return complete && objectEntries > 0 && names.length === objectEntries;
+}
+
 export function extractProjectNamesFromListReport(output: string): string[] {
   let start = -1;
   let depth = 0;

@@ -12,6 +12,7 @@ export interface PlaywrightConfig {
   workingDirectory: string;
   testCommand: string;
   toolCommand: string;
+  reportPath: string;
   reporter: string;
   env: Record<string, string>;
   captureResults: boolean;
@@ -43,6 +44,7 @@ export function getConfig(resource?: vscode.Uri | string): PlaywrightConfig {
     workingDirectory: workingDir ? path.resolve(root, workingDir) : root,
     testCommand: cfg(resource).get<string>('testCommand', 'npx playwright test'),
     toolCommand: cfg(resource).get<string>('toolCommand', ''),
+    reportPath: cfg(resource).get<string>('reportPath', ''),
     reporter: cfg(resource).get<string>('reporter', ''),
     env: cfg(resource).get<Record<string, string>>('env', {}),
     captureResults: cfg(resource).get<boolean>('captureResults', true),

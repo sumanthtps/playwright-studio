@@ -4,7 +4,11 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 import { getConfig } from './config';
 import { parseCommandLine } from './commandLine';
-import { extractProjectNames, extractProjectNamesFromListReport } from './projectParser';
+import {
+  extractProjectNames,
+  extractProjectNamesFromListReport,
+  isProjectListStaticallyComplete,
+} from './projectParser';
 import { getExecutionEnv, platformExecutable } from './terminal';
 
 async function discoverProjectsWithCli(resource?: vscode.Uri | string): Promise<string[]> {
@@ -37,6 +41,7 @@ async function discoverProjectsWithCli(resource?: vscode.Uri | string): Promise<
 
 export async function getPlaywrightProjects(resource?: vscode.Uri | string): Promise<string[]> {
   const root = getConfig(resource).workingDirectory;
+  let staticFallback: string[] = [];
 
   const candidates = [
     'playwright.config.ts',
@@ -53,11 +58,14 @@ export async function getPlaywrightProjects(resource?: vscode.Uri | string): Pro
     try {
       const content = fs.readFileSync(full, 'utf8');
       const names = extractProjectNames(content);
-      if (names.length > 0) return names;
+      if (names.length > 0 && isProjectListStaticallyComplete(content)) return names;
+      staticFallback = names;
+      break;
     } catch {
       // skip unreadable config
     }
   }
 
-  return discoverProjectsWithCli(resource);
+  const discovered = await discoverProjectsWithCli(resource);
+  return discovered.length > 0 ? discovered : staticFallback;
 }

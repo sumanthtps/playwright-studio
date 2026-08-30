@@ -68,6 +68,8 @@ export async function run(): Promise<void> {
   const secondDiagnostics = await waitForDiagnostics(second);
   assert.equal(firstDiagnostics.length, 1);
   assert.equal(secondDiagnostics.length, 1);
+  assert.equal(firstDiagnostics[0].message, '[chromium] first failed');
+  assert.equal(secondDiagnostics[0].message, '[chromium] second failed');
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   await new Promise(resolve => setTimeout(resolve, 300));
   assert.equal(
@@ -75,4 +77,15 @@ export async function run(): Promise<void> {
     1,
     'Diagnostics for hidden files should remain in the Problems panel.'
   );
+
+  const reportTask = waitForTask();
+  await vscode.commands.executeCommand('playwrightSnippets.showReport', first);
+  await reportTask;
+  const toolInvocation = JSON.parse(
+    fs.readFileSync(path.join(folder.uri.fsPath, 'last-tool-invocation.json'), 'utf8')
+  ) as { argv: string[] };
+  assert.deepEqual(toolInvocation.argv, [
+    'show-report',
+    path.join(folder.uri.fsPath, 'custom-report'),
+  ]);
 }

@@ -21,20 +21,13 @@
     },
     "Playwright integrationTest block": {
         "prefix": "m-int",
-        "description": "Playwright integrationTest wrapper function block",
+        "description": "Playwright integration test suite and test block",
         "body": [
-            "integrationTest(",
-            "    {",
-            "      envTypes: [EnvironmentType.${1:env}],",
-            "      runTypes: [RunType.Nightly],",
-            "      runEnvironments: [[RunEnvironment.Test, Severity.S3]],",
-            "      runGeos: [RunGeo.USA],",
-            "    },",
-            "    Team.${1|Team1,Team2|},",
-            "    '${2:title}',",
-            "    async ({ page }) => {",
-            "       ${3:testSteps}",
-            "    });"
+            "test.describe('${1:suite}', () => {",
+            "\ttest('${2:title}', async ({ page }) => {",
+            "\t\t${3:testSteps}",
+            "\t});",
+            "});"
         ]
     },
     "test.step()": {
@@ -94,9 +87,9 @@
     },
     "Click Selector": {
         "prefix": "m-clks",
-        "description": "clicks selector util",
+        "description": "Clicks a locator",
         "body": [
-            "await clickSelector(this.page, ${1:selector});"
+            "await this.page.locator(${1:selector}).click();"
         ]
     },
     "page.dblclick()": {
@@ -113,16 +106,16 @@
     },
     "precise click with index": {
         "prefix": "m-pclk",
-        "description": "clicks selector util",
+        "description": "Clicks a locator at a specific index",
         "body": [
-            "await preciseClick(this.page, ${1:selector}, { index: ${2:index} });"
+            "await this.page.locator(${1:selector}).nth(${2:index}).click();"
         ]
     },
     "Navigate to Url": {
         "prefix": "m-ntu",
-        "description": "navigates to the url util",
+        "description": "Navigates to a URL",
         "body": [
-            "await navigateToUrl(this.page, ${1:url});"
+            "await this.page.goto(${1:url});"
         ]
     },
     "page.title()": {
@@ -134,9 +127,9 @@
     },
     "Verify page url": {
         "prefix": "m-vpurl",
-        "description": "Verify page url util",
+        "description": "Verifies the current page URL",
         "body": [
-            "await verifyPageURL(this.page, ${1:url});"
+            "await expect(this.page).toHaveURL(${1:url});"
         ]
     },
     "page.url()": {
@@ -218,7 +211,7 @@
         "prefix": "p-wft",
         "description": "Playwright waitForTimeout",
         "body": [
-            "await this.page.waitForTimeout(Timeout.$1);"
+            "await this.page.waitForTimeout(${1:1000});"
         ]
     },
     "page.waitForEvent()": {
@@ -248,11 +241,9 @@
     },
     "A11y check": {
         "prefix": "m-a11y",
-        "description": "Playwright a11y check util",
+        "description": "Matches the page accessibility tree against an ARIA snapshot",
         "body": [
-            "if (a11yCheck) {",
-            "  await a11y(this.page);",
-            "}"
+            "await expect(this.page).toMatchAriaSnapshot();"
         ]
     },
     "page.fill()": {
@@ -271,9 +262,9 @@
     },
     "fill value in controls": {
         "prefix": "m-fill",
-        "description": "Fill value in control util",
+        "description": "Fills a locator with a value",
         "body": [
-            "await fillValueInControl(this.page, ${1:inputSelector}, ${2:value});"
+            "await this.page.locator(${1:inputSelector}).fill(${2:value});"
         ]
     },
     "page.isVisible()": {
@@ -2045,11 +2036,11 @@
             "});"
         ]
     },
-    "page.accessibility.snapshot()": {
+    "page.ariaSnapshot()": {
         "prefix": "p-acc-snap",
         "description": "Captures the accessibility tree of the page",
         "body": [
-            "const ${1:snapshot} = await this.page.accessibility.snapshot();",
+            "const ${1:snapshot} = await this.page.ariaSnapshot();",
             "console.log(JSON.stringify(${1:snapshot}, null, 2));"
         ]
     },

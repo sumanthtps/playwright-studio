@@ -46,7 +46,25 @@ function findReporterProperty(content: string): ReporterProperty | undefined {
       continue;
     }
     if (/['"`]/.test(content[i])) {
-      i = skipString(content, i);
+      const start = i;
+      const end = skipString(content, i);
+      const name = content.slice(start + 1, Math.max(start + 1, end - 1))
+        .replace(/\\(['"`\\])/g, '$1');
+      let colon = skipTrivia(content, end);
+
+      // Support both quoted keys (`"reporter": ...`) and static computed
+      // keys (`['reporter']: ...`). Previously these were skipped as string
+      // literals, which caused a second, ineffective reporter property to be
+      // inserted ahead of the real one.
+      if (content[colon] === ']') {
+        let before = start - 1;
+        while (before >= 0 && /\s/.test(content[before])) before--;
+        if (content[before] === '[') colon = skipTrivia(content, colon + 1);
+      }
+      if (name === 'reporter' && content[colon] === ':') {
+        candidates.push({ valueStart: skipTrivia(content, colon + 1), depth });
+      }
+      i = end;
       continue;
     }
     if (content[i] === '{') {

@@ -163,6 +163,9 @@ Capture any code block as a personal snippet:
 - **Show Trace Viewer** — pick a `.zip` trace file via file dialog, or click the trace link from a failure diagnostic.
 - **Show HTML Report** — opens the Playwright HTML report, also clickable from the status bar summary.
 
+If your HTML reporter uses a non-default `outputFolder`, set
+`playwrightSnippets.reportPath` to the same directory so the shortcut opens it.
+
 ---
 
 ### Code Generation
@@ -246,6 +249,7 @@ All settings live under `playwrightSnippets.*`:
 | `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
 | `playwrightSnippets.testCommand`          | `"npx playwright test"` | Executable and arguments used to run tests. Quotes are supported; shell operators and expansion are not executed |
 | `playwrightSnippets.toolCommand`          | `""`                    | Optional Playwright command prefix for Codegen, Trace Viewer, and reports; derived from `testCommand` when empty |
+| `playwrightSnippets.reportPath`            | `""`                    | Optional HTML report directory for **Show HTML Report**; relative paths resolve from `workingDirectory`         |
 | `playwrightSnippets.reporter`             | `""`                    | Optional comma-separated CLI reporters. Leave empty to use the config; `json` is appended when capture is enabled |
 | `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
 | `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_FILE` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your config when the reporter setting is empty |
@@ -258,6 +262,7 @@ All settings live under `playwrightSnippets.*`:
 {
   "playwrightSnippets.workingDirectory": "e2e",
   "playwrightSnippets.testCommand": "npx playwright test",
+  "playwrightSnippets.reportPath": "playwright-report",
   "playwrightSnippets.reporter": "list",
   "playwrightSnippets.captureResults": true,
   "playwrightSnippets.heatmapThresholdDays": 7,
@@ -864,7 +869,7 @@ Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the
 | `p-on-worker`   | `page.on('worker')`             |
 | `p-worker-eval` | `worker.evaluate()`             |
 | `p-worker-url`  | `worker.url()`                  |
-| `p-acc-snap`    | `page.accessibility.snapshot()` |
+| `p-acc-snap`    | `page.ariaSnapshot()`          |
 
 ---
 
