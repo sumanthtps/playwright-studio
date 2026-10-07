@@ -1070,7 +1070,7 @@
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.80.0",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.7.1",
+    "@vscode/vsce": "^4.0.0",
     "cross-spawn": "^7.0.6",
     "esbuild": "^0.25.0",
     "jsonc-parser": "^3.3.1",
