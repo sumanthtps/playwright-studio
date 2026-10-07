@@ -273,7 +273,8 @@ export class SelectorIntelligence implements vscode.Disposable {
               'The browser stopped responding. Open the website again. Check Playwright browser installation if this persists.',
           });
         },
-        action.type === 'navigate' ? 40000 : 25000,
+        // DevTools needs time to launch desktop Chrome and load its frontend.
+        action.type === 'devtools' ? 60000 : action.type === 'navigate' ? 40000 : 25000,
       ),
     };
     worker.send({ id, action }, (error) => {

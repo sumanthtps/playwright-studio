@@ -39,7 +39,7 @@ assert.ok(
   'Development files leaked into the VSIX.',
 );
 assert.ok(
-  !entries.some((e) => /^extension\/images\/(?:preview\.gif$|demo\/)/.test(e)),
+  !entries.some((e) => /^extension\/images\/(?:preview[^/]*\.gif$|demo\/)/.test(e)),
   'Demo media leaked into the VSIX.',
 );
 const manifest = JSON.parse(unzip('-p', file, 'extension/package.json'));

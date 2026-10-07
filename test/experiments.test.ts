@@ -41,7 +41,11 @@ const execute = (
 function fixture(name: string): string {
   const app = path.join(root, name);
   fs.mkdirSync(path.join(app, 'tests'), { recursive: true });
-  fs.symlinkSync(path.join(repo, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+  fs.symlinkSync(
+    path.join(repo, 'node_modules'),
+    path.join(app, 'node_modules'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
   fs.writeFileSync(path.join(app, 'package.json'), '{"private":true}');
   fs.writeFileSync(
     path.join(app, 'playwright.config.ts'),
@@ -203,5 +207,54 @@ it('journey adapter receives shared task criteria and produces repeated outcomes
     assert.equal(result.report?.specs.length, 3);
   } finally {
     await workspace.dispose();
+  }
+});
+
+it('capture preserves projects, nested titles, retries, output, steps, annotations and attachments', async () => {
+  const app = fixture('reporter-evidence');
+  const reportFile = path.join(app, 'captured.json');
+  fs.writeFileSync(
+    path.join(app, 'playwright.config.ts'),
+    "export default {testDir:'./tests',retries:1,projects:[{name:'desktop'},{name:'mobile'}],reporter:[['junit',{outputFile:'junit.xml'}]]};",
+  );
+  fs.writeFileSync(
+    path.join(app, 'tests/calc.spec.ts'),
+    `import {test,expect} from '@playwright/test';
+test.describe('Checkout',()=>{
+  test('recovers', {tag:'@smoke',annotation:{type:'issue',description:'demo-123'}}, async({},info)=>{
+    console.log('captured output');
+    await test.step('attach evidence',async()=>{
+      await info.attach('details',{body:Buffer.from('safe fixture'),contentType:'text/plain'});
+    });
+    expect(info.retry).toBe(1);
+  });
+  test.skip('pending',()=>{});
+});`,
+  );
+  const code = await execute({ executable: process.execPath, args: [cli, 'test'] }, app, {
+    PW_TEST_REPORTER: path.join(repo, 'dist/captureReporter.js'),
+    PLAYWRIGHT_JSON_OUTPUT_FILE: reportFile,
+  });
+  assert.equal(code, 0, lastOutput);
+  assert.ok(fs.existsSync(path.join(app, 'junit.xml')));
+  const report = parseReportJson(fs.readFileSync(reportFile, 'utf8'), app)!;
+  assert.equal(report.specs.length, 4);
+  assert.equal(report.summary.flaky, 2);
+  assert.equal(report.summary.skipped, 2);
+  for (const project of ['desktop', 'mobile']) {
+    const spec = report.specs.find(
+      (item) => item.projectName === project && item.title === 'recovers',
+    )!;
+    assert.equal(spec.status, 'flaky');
+    assert.deepEqual(spec.titlePath?.slice(-2), ['Checkout', 'recovers']);
+    assert.ok(!spec.titlePath?.includes(project));
+    assert.deepEqual(spec.tags, ['@smoke']);
+    assert.ok(spec.annotations?.some((item) => item.description === 'demo-123'));
+    assert.equal(spec.attempts?.length, 2);
+    assert.equal(spec.attempts?.[0].status, 'failed');
+    assert.equal(spec.attempts?.[1].status, 'passed');
+    assert.match(spec.output!, /captured output/);
+    assert.ok(spec.attempts?.[1].steps.some((step) => step.title === 'attach evidence'));
+    assert.equal(Buffer.from(spec.attachments![0].body!, 'base64').toString(), 'safe fixture');
   }
 });

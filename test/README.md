@@ -2,6 +2,16 @@
 
 Run `npm run typecheck` to check both extension source and tests. Run `npm test` for the portable test suites, and `npm run test:integration` for a real VS Code extension host. The integration runner creates disposable fixtures under `.vscode-test`; it does not run tests in the user's application repository.
 
+## v2 dependency refresh — 2026-10-07
+
+Local validation uses the latest stable direct dependencies, including Playwright 1.63, TypeScript 7 and the TypeScript 6 AST compatibility package. The checks cover 245 portable tests, six real Playwright experiments, four advanced experiments, Chromium/WebKit browser workflows, 17 selector-browser tests, four DevTools tests, and the VS Code integration workflow with 34 feature checks. Formatting, type checks, dependency audit and VSIX verification are separate gates.
+
+The capture-reporter regression runs two projects with retries and verifies nested titles, flaky/skipped outcomes, annotations, tags, output, steps and binary attachments while preserving a configured JUnit reporter. It exercises the public Playwright reporter API rather than internal package paths.
+
+Firefox cannot launch on this local macOS host because its profile directory is inaccessible. This matches the [upstream macOS Firefox issue](https://github.com/microsoft/playwright/issues/42768). Firefox remains enabled in Linux CI; a local launch failure is not counted as passing coverage. Windows and Linux results require a new GitHub Actions run of the updated branch.
+
+To regenerate the README panels from tested local fixtures, run `npm run demo:captures`; on macOS, `npm run demo:gif` assembles the captioned tour using FFmpeg and Swift. See the [tour guide](../docs/tour.md).
+
 ## Verified on 2026-09-07
 
 - Source and test TypeScript checks: passed.
@@ -74,7 +84,7 @@ The reusable `.github/workflows/validation.yml` runs:
 
 | Job | Coverage |
 | --- | --- |
-| Quality | TypeScript and all portable tests on Linux/Windows/macOS with Node 22; Linux also uses Node 24. |
+| Quality | TypeScript and all portable tests on Linux/Windows/macOS with Node 22; Linux also uses Node 24 and 26. |
 | Experiments | Existing mutation/repair/reporter/journey tests and new capsule/repair-challenge/incident workflows on all three operating systems. |
 | Browsers | Scenario injection, trace inspection, webview interaction, branches, laws, agent metrics and behavior diffs on Chromium, Firefox and WebKit. |
 | Extension host | Command registration and feature integration on VS Code Stable for all three operating systems, plus Insiders on Linux. |

@@ -11,13 +11,13 @@ out/**
 node_modules/**
 dist/**/*.map
 tsconfig*.json
-esbuild.js
+.gitattributes
 *.vsix
 playwright-studio-results.json
 test-results/**
 .test-dist/**
 # Repository/Marketplace demo media is linked remotely, never used at runtime.
-images/preview.gif
+images/preview*.gif
 images/demo/**
 
 .prettier*

@@ -21,6 +21,9 @@ The working tree identifies this build as 2.0.0. There is no 2.0.0 release tag i
 
 ### Changed
 
+- Updated development dependencies and GitHub Actions to current stable releases, with readable action version tags. TypeScript 7 handles type checks while Microsoft's TypeScript 6 compatibility package supplies the runtime AST API.
+- Requires VS Code 1.140 or newer, aligned with the current VS Code API types.
+- Replaced the README tour with a 48-second v2 feature GIF covering selectors, DevTools, Intelligence and Scenario Lab alongside core test workflows.
 - Keep Studio and Lab configuration, generated helper scripts and exported law regressions in VS Code workspace storage outside the repository. Migrate legacy `.playwright-studio` data with conflict detection and verified copies; leave Git ignore files unchanged.
 
 - Studio captures its runs automatically through a bundled reporter while preserving existing project reporters. Standard extension runs no longer need a configuration edit or reporter prompt.
@@ -33,6 +36,10 @@ The working tree identifies this build as 2.0.0. There is no 2.0.0 release tag i
 
 ### Fixed
 
+- Result capture uses Playwright's public reporter API instead of loading internal files removed in recent Playwright releases. Projects, retries, annotations, steps, output and attachments remain available.
+- DevTools discovery explicitly enables the automation command-line API required by current Chromium.
+- Windows builds no longer confuse the extension's build script with the esbuild CLI. Consistent LF checkouts and directory junction fixtures make validation portable.
+- Updated the VS Code test harness for the current macOS executable layout and isolated webview test documents to reset WebKit CSP state.
 - Exact file selection no longer includes similarly named files such as a `.spec.tsx` sibling of a selected `.spec.ts` file.
 - CLI discovery and health checks support Windows command shims, keep diagnostics separate from JSON output, close stdin, and bound output and execution time.
 - Probe timeout cleanup terminates child processes when process inspection is available, with a fallback when process inspection is blocked.

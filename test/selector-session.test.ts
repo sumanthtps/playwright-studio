@@ -134,6 +134,29 @@ it('work finishing while the panel is closed becomes the restored state', async 
   assert.equal(workers.length, 1);
 });
 
+it('a slow DevTools launch keeps the website worker alive and clears its deadline on success', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const app = controller();
+  const worker = await openPage(app);
+  await app.handle({ type: 'devtools' });
+  t.mock.timers.tick(35000);
+  assert.equal(app.worker, worker, 'Desktop Chrome may need longer than ordinary actions.');
+  worker.respond({ devtoolsOpen: true });
+  t.mock.timers.tick(60000);
+  assert.equal(app.worker, worker, 'A completed launch must cancel its watchdog.');
+  assert.equal(state.panels.at(-1).webview.posted.at(-1).devtoolsOpen, true);
+});
+
+it('an unresponsive DevTools launch still reaches a bounded deadline', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const app = controller();
+  await openPage(app);
+  await app.handle({ type: 'devtools' });
+  t.mock.timers.tick(60000);
+  assert.equal(app.worker, undefined);
+  assert.match(state.panels.at(-1).webview.posted.at(-1).error, /stopped responding/);
+});
+
 it('a copy finishing after its panel closes cannot acknowledge a different panel', async () => {
   const app = controller();
   const worker = await openPage(app);

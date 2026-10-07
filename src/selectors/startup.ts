@@ -4,6 +4,7 @@ import { SelectorError } from './errors';
 // The inspected browser exposes CDP only on loopback. Only Chrome's bundled
 // DevTools frontend may connect from a browser origin; ordinary websites cannot.
 export const SELECTOR_DEBUGGING_ARGS = [
+  '--enable-automation',
   '--remote-debugging-port=0',
   '--remote-debugging-address=127.0.0.1',
   '--remote-allow-origins=devtools://devtools',
@@ -69,7 +70,8 @@ export async function launchDevToolsBrowser(
     try {
       return await chromium.launch({
         headless,
-        timeout: 10000,
+        // A cold desktop Chrome launch can exceed the embedded browser's budget.
+        timeout: 30000,
         ...(channel ? { channel } : {}),
       });
     } catch (error) {

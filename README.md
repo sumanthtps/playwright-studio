@@ -1,8 +1,8 @@
 # Playwright Studio — Test Runner & Snippets
 
-**Run a test. Understand the failure. Save the setup for next time.**
+**Run a test. Inspect the page. Reproduce the failure.**
 
-Playwright Studio brings a test runner, debugger, saved run presets, failure artifacts, and **338 JavaScript and TypeScript snippets** into VS Code. Built for developers and QA engineers who work with Playwright every day.
+Playwright Studio brings test execution, live selector inspection, failure investigation, and **338 JavaScript and TypeScript snippets** into VS Code. Version 2 adds a dedicated testing sidebar, reusable run presets, captured artifacts, and local workflows for reproducing failures and checking repairs.
 
 **[Install Playwright Studio](https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets)** · [Quick start](#your-first-test-run) · [Setup & troubleshooting](docs/guide.md) · [All features](docs/features.md) · [Report a problem](https://github.com/sumanthtps/playwright-studio/issues/new/choose)
 
@@ -14,14 +14,24 @@ Playwright Studio brings a test runner, debugger, saved run presets, failure art
 | Understand what failed | Review attempts, output, screenshots, and available traces beside your test source. |
 | Return to a previous failure | Browse local run history and compare captured outcomes. |
 | Write the next test | Type `p-` for snippets, navigate fixtures, and apply supported locator quick fixes. |
+| Find a locator that matches the right element | Open Selector Intelligence, inspect the live page, and compare ranked locators with match counts. |
+| Reproduce a difficult condition | Use Scenario Lab for latency, HTTP errors, offline mode, and browser-clock changes. |
 
-![Playwright Studio running and reviewing tests in VS Code](https://raw.githubusercontent.com/sumanthtps/playwright-studio/main/images/preview.gif)
+![Playwright Studio v2: test runs, results, live selectors, Chrome DevTools, Intelligence workflows, Scenario Lab, analytics and snippets](images/preview-v2.gif)
 
-Recorded in VS Code with sample test results. [Browse captioned screenshots](docs/tour.md).
+A 48-second feature tour using VS Code captures and the current extension's browser-rendered panels, with local sample data. [Browse the scenes and reproduction steps](docs/tour.md).
+
+## What's new in v2
+
+- **A testing sidebar:** discover files, suites and runtime cases; run, debug or inspect them from Studio's Tests view. Results, History and Features stay close to the editor.
+- **Selector Intelligence:** browse a website inside the extension, inspect an element, and compare Playwright, CSS and XPath candidates. Check uniqueness, copy a locator, or open full Chrome DevTools attached to the same page. [Selector guide](docs/features.md#openselectorintelligence).
+- **An investigation workspace:** search 15 Intelligence workflows, including Failure Detective, Scenario Lab, Test the Tests and Verified Repair. Each workflow explains its prerequisites and produces reviewable evidence. [Intelligence guide](docs/intelligence.md).
+- **Advanced experiments:** capture reviewed failures in Bug Capsules, compare branch conditions, test Product Laws, challenge repairs, compare behavior and revisit incidents. Journey and agent experiments use your configured adapters. [Advanced workflow guide](docs/lab.md).
+- **Local, reusable evidence:** preserve run history, attempts, output and available artifacts. Keep Studio configuration and generated helpers in VS Code workspace storage, outside your project repository.
 
 ## Your first test run
 
-1. **Install** from the Marketplace. Open a trusted folder with Playwright installed and a `playwright.config.*` file. Requires VS Code 1.90 or newer.
+1. **Install** from the Marketplace. Open a trusted folder with Playwright installed and a `playwright.config.*` file. Requires VS Code 1.140 or newer.
 2. **Open a test** such as `checkout.spec.ts`. Click **Run** above the test, or use **Playwright Studio → Tests** in the activity bar.
 3. **Review the result** in **Results**. For failures, open available attachments or traces; choose **Run Failed Tests** to retry.
 

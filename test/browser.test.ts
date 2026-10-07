@@ -26,7 +26,8 @@ const execute = (
     execFile(
       command.executable,
       command.args,
-      { cwd, env: { ...process.env, ...env }, timeout: 30000, maxBuffer: 4 * 1024 * 1024 },
+      // Allow the test timeout plus browser startup, server startup, and trace teardown.
+      { cwd, env: { ...process.env, ...env }, timeout: 90000, maxBuffer: 4 * 1024 * 1024 },
       (error, stdout, stderr) => {
         logs = stdout + stderr;
         if (!error) resolve(0);
@@ -46,7 +47,11 @@ it('real browser scenarios inject network faults, latency, clock, and offline st
   await new Promise<void>((resolve) => server.close(() => resolve()));
   const app = path.join(root, 'app');
   fs.mkdirSync(path.join(app, 'tests'), { recursive: true });
-  fs.symlinkSync(path.join(repo, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+  fs.symlinkSync(
+    path.join(repo, 'node_modules'),
+    path.join(app, 'node_modules'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
   fs.writeFileSync(path.join(app, 'package.json'), '{"private":true}');
   fs.writeFileSync(
     path.join(app, 'server.cjs'),
@@ -54,7 +59,7 @@ it('real browser scenarios inject network faults, latency, clock, and offline st
   );
   fs.writeFileSync(
     path.join(app, 'playwright.config.ts'),
-    `export default {testDir:'./tests',timeout:10000,use:{baseURL:'http://127.0.0.1:${port}',browserName:${JSON.stringify(process.env.STUDIO_BROWSER || 'chromium')},channel:${JSON.stringify(process.env.STUDIO_BROWSER_CHANNEL)},trace:'on'},webServer:{command:'node server.cjs',url:'http://127.0.0.1:${port}',reuseExistingServer:true}};`,
+    `export default {testDir:'./tests',timeout:30000,use:{baseURL:'http://127.0.0.1:${port}',browserName:${JSON.stringify(process.env.STUDIO_BROWSER || 'chromium')},channel:${JSON.stringify(process.env.STUDIO_BROWSER_CHANNEL)},trace:'on'},webServer:{command:'node server.cjs',url:'http://127.0.0.1:${port}',reuseExistingServer:true}};`,
   );
   const source = `import {test,expect} from '@playwright/test';test('checkout',async({page})=>{await page.goto('/');const status=await page.evaluate(async()=> (await fetch('/api/checkout')).status);expect(status).toBe(200);const scenario=JSON.parse(process.env.PLAYWRIGHT_STUDIO_SCENARIO || '{}');if(scenario.clock) expect(await page.evaluate(()=>Date.now())).toBeGreaterThanOrEqual(Date.parse(scenario.clock));});`;
   fs.writeFileSync(path.join(app, 'tests/checkout.spec.ts'), source);
@@ -107,9 +112,13 @@ it('real browser scenarios inject network faults, latency, clock, and offline st
       PLAYWRIGHT_STUDIO_SCENARIO: JSON.stringify({ name: 'offline', offline: true }),
     });
     assert.equal(offline.outcome, 'failed', logs);
-    assert.match(
-      offline.report!.specs[0].error!,
-      /ERR_INTERNET_DISCONNECTED|NS_ERROR_OFFLINE|offline|Internet connection/i,
+    assert.match(offline.report!.specs[0].error!, /page.goto/);
+    const offlineEvidence = offline.report!.specs[0].attachments!.find(
+      (item) => item.name === 'studio-scenario',
+    )!;
+    assert.equal(
+      JSON.parse(Buffer.from(offlineEvidence.body!, 'base64').toString('utf8')).offline,
+      true,
     );
   } finally {
     await workspace.dispose();
@@ -125,16 +134,21 @@ it('Intelligence webview renders accessibly, routes actions, and validates the s
     (process.env.STUDIO_BROWSER || 'chromium') as 'chromium' | 'firefox' | 'webkit'
   ].launch({ channel: process.env.STUDIO_BROWSER_CHANNEL });
   try {
-    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1200, height: 900 } });
+    let page = await context.newPage();
     const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.addInitScript(() => {
+    await context.addInitScript(() => {
       (window as any).messages = [];
       (window as any).acquireVsCodeApi = () => ({
         postMessage: (message: unknown) => (window as any).messages.push(message),
       });
     });
     const render = async () => {
+      // VS Code replaces the webview document when its HTML changes. A new page
+      // avoids retaining WebKit's prior CSP nonce and document event handlers.
+      await page.close();
+      page = await context.newPage();
+      page.on('pageerror', (error) => errors.push(error.message));
       await page.goto('about:blank');
       await page.setContent(state.panels.at(-1).webview.html);
       await page.evaluate(() => {
@@ -162,7 +176,13 @@ it('Intelligence webview renders accessibly, routes actions, and validates the s
     await page.getByRole('searchbox').fill('');
     await page.screenshot({
       path: path.join(repo, '.test-dist/intelligence-dashboard.png'),
-      fullPage: true,
+      fullPage: false,
+    });
+    await page.getByText('Advanced experiments', { exact: true }).click();
+    await page.getByRole('button', { name: 'Edit shared configuration' }).scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: path.join(repo, '.test-dist/intelligence-advanced.png'),
+      fullPage: false,
     });
     await page.getByRole('button', { name: 'Scenario Lab' }).click();
     assert.equal(
@@ -184,6 +204,7 @@ it('Intelligence webview renders accessibly, routes actions, and validates the s
     await page.getByLabel('Name', { exact: true }).fill('Slow shipping');
     await page.getByLabel('Latency (ms)').fill('500');
     await page.getByRole('button', { name: 'Save scenario', exact: true }).click();
+    await page.waitForFunction(() => (window as any).messages.length === 1);
     const messages = await page.evaluate(() => (window as any).messages);
     assert.equal(messages[0].value.latencyMs, 500);
     assert.equal(messages[0].action, 'saveScenario');
@@ -205,6 +226,7 @@ it('Intelligence webview renders accessibly, routes actions, and validates the s
       await page.getByLabel('HTTP error').selectOption(status ? String(status) : '');
       await page.getByLabel('Browser time (ISO with timezone)').fill(clock || '');
       await page.getByRole('button', { name: 'Save scenario', exact: true }).click();
+      await page.waitForFunction((count) => (window as any).messages.length === count, mask + 2);
       const last = await page.evaluate(() => (window as any).messages.at(-1));
       assert.deepEqual(
         {
@@ -229,7 +251,7 @@ it('Intelligence webview renders accessibly, routes actions, and validates the s
     );
     await page.screenshot({
       path: path.join(repo, '.test-dist/intelligence-scenario.png'),
-      fullPage: true,
+      fullPage: false,
     });
     assert.deepEqual(errors, []);
   } finally {

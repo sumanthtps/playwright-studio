@@ -1,6 +1,6 @@
 # Bundled third-party notices
 
-TypeScript is covered by `typescript-LICENSE.txt`. The following packages are bundled into the extension runtime.
+The TypeScript AST API (`@typescript/typescript6` 6.0.2) is covered by `typescript-LICENSE.txt`. TypeScript 7 is used only for development type checks. The following packages are bundled into the extension runtime.
 
 ## cross-spawn 7.0.6
 

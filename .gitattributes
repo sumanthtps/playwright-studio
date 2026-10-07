@@ -1,0 +1,2 @@
+# Keep source and generated text identical on Windows, macOS, and Linux.
+* text=auto eol=lf
