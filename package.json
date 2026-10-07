@@ -1075,7 +1075,7 @@
     "esbuild": "^0.25.0",
     "jsonc-parser": "^3.3.1",
     "prettier": "^3.9.6",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   },
   "capabilities": {
     "untrustedWorkspaces": {
