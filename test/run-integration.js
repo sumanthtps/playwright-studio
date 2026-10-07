@@ -103,7 +103,13 @@ fs.writeFileSync(path.join(__dirname, 'last-tool-invocation.json'), JSON.stringi
   const options = {
     extensionDevelopmentPath: root,
     extensionTestsPath: path.join(root, '.test-dist', 'integration', 'index.js'),
-    launchArgs: [workspaceFile, path.join(fixture, 'tests', 'first.spec.ts'), '--disable-extensions'],
+    launchArgs: [
+      workspaceFile,
+      path.join(fixture, 'tests', 'first.spec.ts'),
+      '--disable-extensions',
+      // Xvfb runners have no hardware GPU. Avoid Electron renderer startup hangs.
+      ...(process.platform === 'linux' ? ['--disable-gpu', '--disable-dev-shm-usage'] : []),
+    ],
   };
   const macExecutable = '/Applications/Visual Studio Code.app/Contents/MacOS/Code';
   if (requestedVersion) options.version = requestedVersion;

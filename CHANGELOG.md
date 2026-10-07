@@ -2,9 +2,7 @@
 
 User-facing changes to Playwright Studio, newest first. Historical entries were reconstructed from Git tags, commit diffs and the version recorded in `package.json`. Dates below are repository dates; Marketplace publication dates have not been independently verified.
 
-## Unreleased — 2.0.0 development
-
-The working tree identifies this build as 2.0.0. There is no 2.0.0 release tag in this repository; these are development changes, not a confirmed Marketplace release.
+## 2.0.0 — 2026-10-07
 
 ### Added
 
@@ -56,6 +54,8 @@ The working tree identifies this build as 2.0.0. There is no 2.0.0 release tag i
 - Browser startup errors show readable recovery actions instead of a raw launch-error dump. Install Chromium uses the project's Playwright installer and retries the last URL; Use Chrome and Use Edge apply to the current VS Code window session.
 - Exclude generated HTML reports and local Studio state from the extension package.
 - Correct task/debug event races, runtime/parameterized case selection, environment parsing, coverage boundaries, and reporter/video configuration edits.
+- Retain cancellation requested during task startup until the process can be terminated, and never report a cancelled execution as successful.
+- Use platform-aware path assertions and allow sufficient browser and DevTools startup time in cross-platform validation. Disable hardware GPU rendering in Linux extension-host tests under Xvfb.
 
 ### Security
 
@@ -77,7 +77,7 @@ The working tree identifies this build as 2.0.0. There is no 2.0.0 release tag i
 ### Upgrade notes
 
 - The extension ID remains `sumanthtps.playwright-test-code-snippets`; existing users retain the same update path.
-- Requires VS Code 1.90 or newer and a trusted workspace for execution. Use the project's installed Playwright and browser binaries.
+- Requires VS Code 1.140 or newer and a trusted workspace for execution. Use the project's installed Playwright and browser binaries.
 - Selector Intelligence tries Playwright Chromium by default, with installed Chrome and Edge as fallbacks for missing executables. Set `playwrightSnippets.selectorBrowserChannel` to `chrome` or `msedge` to select that browser explicitly. Its browser session is separate from your normal browser profile.
 - Full DevTools requires a graphical desktop and installed Chrome, full Playwright Chromium or Edge. A headless-shell-only browser installation cannot display its frontend. Browser and DevTools state is not restored across VS Code reloads or restarts.
 - Test recency highlighting is not measured application line coverage. Import Istanbul/V8 data for line coverage.
