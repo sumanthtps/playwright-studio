@@ -31,7 +31,7 @@ A 48-second feature tour using VS Code captures and the current extension's brow
 
 ## Your first test run
 
-1. **Install** from the Marketplace. Open a trusted folder with Playwright installed and a `playwright.config.*` file. Requires VS Code 1.140 or newer.
+1. **Install** from the Marketplace. Open a trusted folder with Playwright installed and a `playwright.config.*` file. Requires VS Code 1.70.0 or newer. Native Test Coverage and continuous runs are available when supported by your VS Code version.
 2. **Open a test** such as `checkout.spec.ts`. Click **Run** above the test, or use **Playwright Studio → Tests** in the activity bar.
 3. **Review the result** in **Results**. For failures, open available attachments or traces; choose **Run Failed Tests** to retry.
 

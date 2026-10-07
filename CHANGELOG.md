@@ -2,6 +2,15 @@
 
 User-facing changes to Playwright Studio, newest first. Historical entries were reconstructed from Git tags, commit diffs and the version recorded in `package.json`. Dates below are repository dates; Marketplace publication dates have not been independently verified.
 
+## 2.0.1 — 2026-10-08
+
+### Fixed
+
+- Support VS Code 1.70.0 and newer instead of requiring VS Code 1.140.
+- Declare command and view activation events explicitly for older VS Code versions.
+- Enable native coverage and continuous runs only when supported by the VS Code host.
+- Build for Node.js 16 and pin VS Code API typings to 1.70.0 to preserve compatibility.
+
 ## 2.0.0 — 2026-10-07
 
 ### Added

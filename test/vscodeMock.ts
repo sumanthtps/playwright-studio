@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+export const version = '1.140.0';
 export class Disposable {
   constructor(private fn = () => {}) {}
   dispose() {

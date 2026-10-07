@@ -12,7 +12,7 @@ esbuild
     external: ['vscode'],
     format: 'cjs',
     platform: 'node',
-    target: 'node18',
+    target: 'node16',
     sourcemap: !production,
     minify: production,
   })

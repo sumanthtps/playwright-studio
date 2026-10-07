@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { coverageApi, FileCoverageDetail, BranchCoverage } from './vscodeCompatibility';
 import { insideDirectory, readableFileInRoots, readBoundedFile } from './fileSecurity';
 
 interface IstanbulLocation {
@@ -34,7 +35,7 @@ interface V8Script {
 
 export interface ImportedCoverageFile {
   uri: vscode.Uri;
-  details: vscode.FileCoverageDetail[];
+  details: FileCoverageDetail[];
 }
 
 function location(value: IstanbulLocation | undefined): vscode.Range {
@@ -59,7 +60,7 @@ function parseIstanbul(data: Record<string, unknown>, baseDir: string): Imported
       (fs.existsSync(resolved) && !readableFileInRoots(resolved, [baseDir]))
     )
       continue;
-    const details: vscode.FileCoverageDetail[] = [];
+    const details: FileCoverageDetail[] = [];
     const statements = Object.entries(file.statementMap).map(([id, mapped]) => ({
       id,
       range: location(mapped),
@@ -77,21 +78,25 @@ function parseIstanbul(data: Record<string, unknown>, baseDir: string): Imported
           a.range.start.character -
           (b.range.end.character - b.range.start.character),
     );
-    const branchesByStatement = new Map<string, vscode.BranchCoverage[]>();
+    const branchesByStatement = new Map<string, BranchCoverage[]>();
     for (const { branchId, index, mapped } of rawBranches) {
       const range = location(mapped);
       const owner = bySize.find((statement) => statement.range.contains(range.start));
       if (owner) {
         const branches = branchesByStatement.get(owner.id) ?? [];
         branches.push(
-          new vscode.BranchCoverage(file.b?.[branchId]?.[index] ?? 0, range, `branch ${index + 1}`),
+          new coverageApi.BranchCoverage(
+            file.b?.[branchId]?.[index] ?? 0,
+            range,
+            `branch ${index + 1}`,
+          ),
         );
         branchesByStatement.set(owner.id, branches);
       }
     }
     for (const [id, mapped] of Object.entries(file.statementMap)) {
       details.push(
-        new vscode.StatementCoverage(
+        new coverageApi.StatementCoverage(
           file.s[id] ?? 0,
           location(mapped),
           branchesByStatement.get(id) ?? [],
@@ -100,7 +105,7 @@ function parseIstanbul(data: Record<string, unknown>, baseDir: string): Imported
     }
     for (const [id, mapped] of Object.entries(file.fnMap ?? {})) {
       details.push(
-        new vscode.DeclarationCoverage(
+        new coverageApi.DeclarationCoverage(
           mapped.name || `(anonymous ${id})`,
           file.f?.[id] ?? 0,
           location(mapped.decl ?? mapped.loc),
@@ -142,13 +147,13 @@ function parseV8(scripts: V8Script[], baseDir: string): ImportedCoverageFile[] {
     } catch {
       continue;
     }
-    const details: vscode.FileCoverageDetail[] = [];
+    const details: FileCoverageDetail[] = [];
     for (const [functionIndex, fn] of (script.functions ?? []).entries()) {
       const ranges = fn.ranges ?? [];
       const outer = ranges[0];
       if (outer?.startOffset !== undefined && outer.endOffset !== undefined) {
         details.push(
-          new vscode.DeclarationCoverage(
+          new coverageApi.DeclarationCoverage(
             fn.functionName || `(anonymous ${functionIndex})`,
             outer.count ?? 0,
             new vscode.Range(
@@ -161,7 +166,7 @@ function parseV8(scripts: V8Script[], baseDir: string): ImportedCoverageFile[] {
       for (const range of ranges) {
         if (range.startOffset === undefined || range.endOffset === undefined) continue;
         details.push(
-          new vscode.StatementCoverage(
+          new coverageApi.StatementCoverage(
             range.count ?? 0,
             new vscode.Range(
               offsetPosition(source, range.startOffset),

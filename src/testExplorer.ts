@@ -1,5 +1,12 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import {
+  coverageApi,
+  hasNativeCoverage,
+  CompatibleProfile,
+  FileCoverage,
+  FileCoverageDetail,
+} from './vscodeCompatibility';
 import { buildRunCommand } from './config';
 import { ResultStore, SpecResult, TestResults } from './resultStore';
 import { parseTests } from './testParser';
@@ -26,11 +33,8 @@ export class PlaywrightTestExplorer
 {
   private readonly targets = new Map<string, TestTarget>();
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly coverageDetails = new WeakMap<
-    vscode.FileCoverage,
-    vscode.FileCoverageDetail[]
-  >();
-  private readonly coverageProfile: vscode.TestRunProfile;
+  private readonly coverageDetails = new WeakMap<FileCoverage, FileCoverageDetail[]>();
+  private readonly coverageProfile: CompatibleProfile;
   private readonly treeChanged = new vscode.EventEmitter<vscode.TestItem | undefined>();
   private readonly refreshTimers = new Map<string, NodeJS.Timeout>();
   private disposed = false;
@@ -51,7 +55,8 @@ export class PlaywrightTestExplorer
       (request, token) => this.run(request, token, false),
       true,
     );
-    runProfile.supportsContinuousRun = true;
+    if ('supportsContinuousRun' in runProfile)
+      (runProfile as CompatibleProfile).supportsContinuousRun = true;
     this.controller.createRunProfile(
       'Debug',
       vscode.TestRunProfileKind.Debug,
@@ -64,8 +69,9 @@ export class PlaywrightTestExplorer
       (request, token) => this.importCoverage(undefined, request, token),
       true,
     );
-    this.coverageProfile.loadDetailedCoverage = async (_run, coverage) =>
-      this.coverageDetails.get(coverage) ?? [];
+    if (hasNativeCoverage)
+      this.coverageProfile.loadDetailedCoverage = async (_run, coverage) =>
+        this.coverageDetails.get(coverage) ?? [];
 
     const watcher = vscode.workspace.createFileSystemWatcher(TEST_GLOB);
     watcher.onDidCreate((uri) => this.scheduleRefresh(uri));
@@ -252,6 +258,12 @@ export class PlaywrightTestExplorer
     request?: vscode.TestRunRequest,
     token?: vscode.CancellationToken,
   ): Promise<void> {
+    if (!hasNativeCoverage) {
+      void vscode.window.showInformationMessage(
+        'Native test coverage requires a newer VS Code version. Update VS Code to import coverage.',
+      );
+      return;
+    }
     const selected = source
       ? [source]
       : await vscode.window.showOpenDialog({
@@ -266,8 +278,7 @@ export class PlaywrightTestExplorer
       baseDir,
     );
     const coverageRequest =
-      request ??
-      new vscode.TestRunRequest(undefined, undefined, this.coverageProfile, false, false);
+      request ?? new vscode.TestRunRequest(undefined, undefined, this.coverageProfile);
     const run = this.controller.createTestRun(
       coverageRequest,
       `Coverage: ${path.basename(selected[0].fsPath)}`,
@@ -275,9 +286,11 @@ export class PlaywrightTestExplorer
     try {
       for (const file of files) {
         if (token?.isCancellationRequested) break;
-        const coverage = vscode.FileCoverage.fromDetails(file.uri, file.details);
+        const coverage = coverageApi.FileCoverage!.fromDetails(file.uri, file.details);
         this.coverageDetails.set(coverage, file.details);
-        run.addCoverage(coverage);
+        (run as vscode.TestRun & { addCoverage(coverage: FileCoverage): void }).addCoverage(
+          coverage,
+        );
       }
       run.appendOutput(`Imported coverage for ${files.length} files.\r\n`);
     } finally {
@@ -605,7 +618,13 @@ export class PlaywrightTestExplorer
       requested,
       inspect ? 'Inspect Playwright' : debug ? 'Debug Playwright' : 'Run Playwright',
     );
-    if (!request.continuous || debug || inspect || token.isCancellationRequested) return;
+    if (
+      !(request as vscode.TestRunRequest & { continuous?: boolean }).continuous ||
+      debug ||
+      inspect ||
+      token.isCancellationRequested
+    )
+      return;
 
     let queue = Promise.resolve();
     await new Promise<void>((resolve) => {

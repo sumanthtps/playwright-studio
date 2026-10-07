@@ -1,3 +1,4 @@
+import { coverageApi, hasNativeCoverage, FileCoverageDetail } from '../../src/vscodeCompatibility';
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -132,74 +133,82 @@ export async function featureChecks(folder: vscode.WorkspaceFolder): Promise<voi
     ]);
     assert.ok(!buildWorkspaceRunCommand(first).args.some((arg) => /:3$/.test(arg)));
   });
-  await check('Istanbul multiline ranges preserve ending column and branch/function counts', () => {
-    const files = parseCoverageJson(
-      JSON.stringify({
-        'app.js': {
-          statementMap: { 0: { start: { line: 1, column: 12 }, end: { line: 3, column: 2 } } },
-          s: { 0: 3 },
-          fnMap: {
-            0: {
-              name: 'main',
-              decl: { start: { line: 1, column: 12 }, end: { line: 1, column: 16 } },
+  if (hasNativeCoverage) {
+    await check(
+      'Istanbul multiline ranges preserve ending column and branch/function counts',
+      () => {
+        const files = parseCoverageJson(
+          JSON.stringify({
+            'app.js': {
+              statementMap: { 0: { start: { line: 1, column: 12 }, end: { line: 3, column: 2 } } },
+              s: { 0: 3 },
+              fnMap: {
+                0: {
+                  name: 'main',
+                  decl: { start: { line: 1, column: 12 }, end: { line: 1, column: 16 } },
+                },
+              },
+              f: { 0: 2 },
+              branchMap: {
+                0: { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 1 } }] },
+              },
+              b: { 0: [0] },
             },
+          }),
+          folder.uri.fsPath,
+        );
+        const statement = files[0].details[0] as FileCoverageDetail;
+        assert.equal((statement.location as vscode.Range).end.character, 2);
+        assert.equal(statement.executed, 3);
+        assert.equal(statement.branches![0].executed, 0);
+        assert.equal((files[0].details[1] as FileCoverageDetail).executed, 2);
+      },
+    );
+    await check('V8 single-range functions include statement coverage', () => {
+      const source = path.join(folder.uri.fsPath, 'app.js');
+      const files = parseCoverageJson(
+        JSON.stringify({
+          result: [
+            {
+              url: vscode.Uri.file(source).toString(),
+              functions: [
+                { functionName: 'main', ranges: [{ startOffset: 0, endOffset: 10, count: 1 }] },
+              ],
+            },
+          ],
+        }),
+        folder.uri.fsPath,
+      );
+      assert.ok(files[0].details.some((detail) => detail instanceof coverageApi.StatementCoverage));
+      assert.ok(
+        files[0].details.some((detail) => detail instanceof coverageApi.DeclarationCoverage),
+      );
+    });
+    await check('nested Istanbul statements count each branch once', () => {
+      const outer = { start: { line: 1, column: 0 }, end: { line: 5, column: 0 } };
+      const inner = { start: { line: 2, column: 0 }, end: { line: 3, column: 0 } };
+      const files = parseCoverageJson(
+        JSON.stringify({
+          'app.js': {
+            statementMap: { 0: outer, 1: inner },
+            s: { 0: 1, 1: 1 },
+            branchMap: { 0: { locations: [inner] } },
+            b: { 0: [1] },
           },
-          f: { 0: 2 },
-          branchMap: {
-            0: { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 1 } }] },
-          },
-          b: { 0: [0] },
-        },
-      }),
-      folder.uri.fsPath,
-    );
-    const statement = files[0].details[0] as vscode.StatementCoverage;
-    assert.equal((statement.location as vscode.Range).end.character, 2);
-    assert.equal(statement.executed, 3);
-    assert.equal(statement.branches[0].executed, 0);
-    assert.equal((files[0].details[1] as vscode.DeclarationCoverage).executed, 2);
-  });
-  await check('V8 single-range functions include statement coverage', () => {
-    const source = path.join(folder.uri.fsPath, 'app.js');
-    const files = parseCoverageJson(
-      JSON.stringify({
-        result: [
-          {
-            url: vscode.Uri.file(source).toString(),
-            functions: [
-              { functionName: 'main', ranges: [{ startOffset: 0, endOffset: 10, count: 1 }] },
-            ],
-          },
-        ],
-      }),
-      folder.uri.fsPath,
-    );
-    assert.ok(files[0].details.some((detail) => detail instanceof vscode.StatementCoverage));
-    assert.ok(files[0].details.some((detail) => detail instanceof vscode.DeclarationCoverage));
-  });
-  await check('nested Istanbul statements count each branch once', () => {
-    const outer = { start: { line: 1, column: 0 }, end: { line: 5, column: 0 } };
-    const inner = { start: { line: 2, column: 0 }, end: { line: 3, column: 0 } };
-    const files = parseCoverageJson(
-      JSON.stringify({
-        'app.js': {
-          statementMap: { 0: outer, 1: inner },
-          s: { 0: 1, 1: 1 },
-          branchMap: { 0: { locations: [inner] } },
-          b: { 0: [1] },
-        },
-      }),
-      folder.uri.fsPath,
-    );
-    assert.equal(
-      files[0].details.reduce(
-        (sum, detail) =>
-          sum + (detail instanceof vscode.StatementCoverage ? detail.branches.length : 0),
-        0,
-      ),
-      1,
-    );
-  });
+        }),
+        folder.uri.fsPath,
+      );
+      assert.equal(
+        files[0].details.reduce(
+          (sum, detail) =>
+            sum +
+            (detail instanceof coverageApi.StatementCoverage ? (detail.branches?.length ?? 0) : 0),
+          0,
+        ),
+        1,
+      );
+    });
+  }
   await check('unsupported coverage is rejected', () => {
     for (const source of ['null', '{}', '[]', 'not json'])
       assert.throws(() => parseCoverageJson(source, folder.uri.fsPath));
