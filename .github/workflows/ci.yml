@@ -47,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Compile TypeScript
-        run: npm run compile:prod
+        run: npm run typecheck && npm run compile:prod
 
       - name: Package extension
         run: npx vsce package --no-dependencies
@@ -58,3 +58,22 @@ jobs:
           name: vsix-package
           path: "*.vsix"
           retention-days: 7
+
+  integration:
+    name: VS Code integration test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run extension-host tests
+        run: xvfb-run -a npm run test:integration

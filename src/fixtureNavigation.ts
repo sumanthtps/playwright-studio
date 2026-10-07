@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { extractFixtureDefinitions } from './fixtureParser';
+import { isTestFile } from './testParser';
 
 interface FixtureDef {
   name: string;
@@ -6,8 +8,6 @@ interface FixtureDef {
   position: vscode.Position;
 }
 
-// Matches fixture implementation keys: `  myFixture: async ({ ... }, use) =>`
-const FIXTURE_IMPL_RE = /^(\s{1,6})(\w+)\s*:\s*async\s*\(/;
 // Matches files that define fixtures via extend
 const EXTEND_RE = /\.extend\s*[<(]/;
 
@@ -16,7 +16,7 @@ let cacheInvalidated = false;
 
 async function buildIndex(): Promise<FixtureDef[]> {
   const files = await vscode.workspace.findFiles(
-    '**/*.{ts,js}',
+    '**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}',
     '{**/node_modules/**,**/dist/**,**/build/**}'
   );
 
@@ -28,33 +28,12 @@ async function buildIndex(): Promise<FixtureDef[]> {
       const text = doc.getText();
       if (!EXTEND_RE.test(text)) continue;
 
-      let inExtendBody = false;
-      let braceDepth = 0;
-
-      for (let i = 0; i < doc.lineCount; i++) {
-        const line = doc.lineAt(i).text;
-
-        if (!inExtendBody) {
-          if (EXTEND_RE.test(line)) {
-            inExtendBody = true;
-            braceDepth = 0;
-          }
-          continue;
-        }
-
-        braceDepth += (line.match(/\{/g) ?? []).length;
-        braceDepth -= (line.match(/\}/g) ?? []).length;
-
-        if (braceDepth <= 0 && i > 0) {
-          inExtendBody = false;
-          continue;
-        }
-
-        const match = FIXTURE_IMPL_RE.exec(line);
-        if (match) {
-          const col = line.indexOf(match[2]);
-          defs.push({ name: match[2], uri: file, position: new vscode.Position(i, col) });
-        }
+      for (const def of extractFixtureDefinitions(text)) {
+        defs.push({
+          name: def.name,
+          uri: file,
+          position: new vscode.Position(def.line, def.column),
+        });
       }
     } catch {
       // skip unreadable files
@@ -82,7 +61,9 @@ export class FixtureNavigationProvider
   private readonly disposables: vscode.Disposable[] = [];
 
   constructor() {
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*.{ts,js}');
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      '**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}'
+    );
     watcher.onDidChange(() => invalidateFixtureIndex());
     watcher.onDidCreate(() => invalidateFixtureIndex());
     watcher.onDidDelete(() => invalidateFixtureIndex());
@@ -93,8 +74,10 @@ export class FixtureNavigationProvider
     document: vscode.TextDocument,
     position: vscode.Position
   ): Promise<vscode.Location[]> {
-    const word = document.getText(document.getWordRangeAtPosition(position));
-    if (!word) return [];
+    if (!isTestFile(document)) return [];
+    const range = document.getWordRangeAtPosition(position);
+    if (!range || !isFixtureReference(document, range)) return [];
+    const word = document.getText(range);
     const index = await getIndex();
     return index
       .filter(d => d.name === word)
@@ -105,18 +88,19 @@ export class FixtureNavigationProvider
     document: vscode.TextDocument,
     position: vscode.Position
   ): Promise<vscode.Hover | undefined> {
+    if (!isTestFile(document)) return undefined;
     const range = document.getWordRangeAtPosition(position);
-    if (!range) return undefined;
+    if (!range || !isFixtureReference(document, range)) return undefined;
     const word = document.getText(range);
     const index = await getIndex();
     const matches = index.filter(d => d.name === word);
     if (matches.length === 0) return undefined;
 
     const md = new vscode.MarkdownString();
-    md.isTrusted = true;
+    md.isTrusted = false;
     md.appendMarkdown(`**Playwright Fixture: \`${word}\`**\n\n`);
     for (const def of matches) {
-      const rel = vscode.workspace.asRelativePath(def.uri);
+      const rel = escapeMarkdown(vscode.workspace.asRelativePath(def.uri));
       const line = def.position.line + 1;
       md.appendMarkdown(
         `Defined in [${rel}:${line}](${def.uri.with({ fragment: `L${line}` })})\n\n`
@@ -128,4 +112,17 @@ export class FixtureNavigationProvider
   dispose(): void {
     this.disposables.forEach(d => d.dispose());
   }
+}
+
+function isFixtureReference(document: vscode.TextDocument, range: vscode.Range): boolean {
+  const offset = document.offsetAt(range.start);
+  const before = document.getText().slice(Math.max(0, offset - 2000), offset);
+  const openBrace = before.lastIndexOf('{');
+  const closeBrace = before.lastIndexOf('}');
+  if (openBrace < 0 || closeBrace > openBrace) return false;
+  return /(?:async\s*)?\(\s*$/.test(before.slice(0, openBrace));
+}
+
+function escapeMarkdown(value: string): string {
+  return value.replace(/[\\`*_[\]<>]/g, '\\$&');
 }

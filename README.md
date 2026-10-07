@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/badge/version-1.1.0-0f6b44?style=flat-square" alt="Version"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/badge/version-1.1.1-0f6b44?style=flat-square" alt="Version"></a>
   <a href="https://github.com/sumanthtps/playwright-studio/actions"><img src="https://github.com/sumanthtps/playwright-studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/sumanthtps/playwright-studio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgray.svg" alt="License"></a>
 </p>
@@ -163,6 +163,9 @@ Capture any code block as a personal snippet:
 - **Show Trace Viewer** — pick a `.zip` trace file via file dialog, or click the trace link from a failure diagnostic.
 - **Show HTML Report** — opens the Playwright HTML report, also clickable from the status bar summary.
 
+If your HTML reporter uses a non-default `outputFolder`, set
+`playwrightSnippets.reportPath` to the same directory so the shortcut opens it.
+
 ---
 
 ### Code Generation
@@ -196,8 +199,8 @@ Capture any code block as a personal snippet:
 
 | Shortcut                        | Command                          |
 | ------------------------------- | -------------------------------- |
-| `Ctrl+Shift+P` → `Ctrl+Shift+R` | Run Test at Cursor               |
-| `Ctrl+Shift+P` → `Ctrl+Shift+T` | Run Tests with Tag / Grep Filter |
+| `Ctrl+Alt+R` (`Cmd+Alt+R` on macOS) | Run Test at Cursor               |
+| `Ctrl+Alt+T` (`Cmd+Alt+T` on macOS) | Run Tests with Tag / Grep Filter |
 
 ---
 
@@ -244,10 +247,12 @@ All settings live under `playwrightSnippets.*`:
 | Setting                                   | Default                 | Description                                                                                                    |
 | ----------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
-| `playwrightSnippets.testCommand`          | `"npx playwright test"` | Base command used to run tests                                                                                 |
-| `playwrightSnippets.reporter`             | `""`                    | Currently unused. The extension does not pass `--reporter` to Playwright; configure reporters in `playwright.config.ts` |
+| `playwrightSnippets.testCommand`          | `"npx playwright test"` | Executable and arguments used to run tests. Quotes are supported; shell operators and expansion are not executed |
+| `playwrightSnippets.toolCommand`          | `""`                    | Optional Playwright command prefix for Codegen, Trace Viewer, and reports; derived from `testCommand` when empty |
+| `playwrightSnippets.reportPath`            | `""`                    | Optional HTML report directory for **Show HTML Report**; relative paths resolve from `workingDirectory`         |
+| `playwrightSnippets.reporter`             | `""`                    | Optional comma-separated CLI reporters. Leave empty to use the config; `json` is appended when capture is enabled |
 | `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
-| `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_NAME` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your `playwright.config` reporter array — Playwright Studio will offer to add it automatically the first time it's missing |
+| `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_FILE` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your config when the reporter setting is empty |
 | `playwrightSnippets.envProfiles`          | `{}`                    | Named env profiles — each key is a profile name, value is a map of env vars                                    |
 | `playwrightSnippets.heatmapThresholdDays` | `7`                     | Days after which a test is highlighted as never/rarely run                                                     |
 
@@ -257,6 +262,7 @@ All settings live under `playwrightSnippets.*`:
 {
   "playwrightSnippets.workingDirectory": "e2e",
   "playwrightSnippets.testCommand": "npx playwright test",
+  "playwrightSnippets.reportPath": "playwright-report",
   "playwrightSnippets.reporter": "list",
   "playwrightSnippets.captureResults": true,
   "playwrightSnippets.heatmapThresholdDays": 7,
@@ -287,9 +293,9 @@ The panel only populates when a Playwright run writes a JSON report to the exten
    ```json
    { "playwrightSnippets.captureResults": true }
    ```
-   This makes the extension export `PLAYWRIGHT_JSON_OUTPUT_NAME` into the terminals it spawns.
+   This makes the extension export `PLAYWRIGHT_JSON_OUTPUT_FILE` into the processes it starts.
 
-2. **Add the `json` reporter to `playwright.config.ts`.** The extension does not pass `--reporter` on the command line, so the JSON reporter must be present in your config:
+2. **Add the `json` reporter to `playwright.config.ts`.** When `playwrightSnippets.reporter` is empty, the JSON reporter must be present in your config:
    ```ts
    reporter: [
      ['list'],
@@ -304,9 +310,9 @@ The panel only populates when a Playwright run writes a JSON report to the exten
    { "playwrightSnippets.workingDirectory": "tests" }
    ```
 
-4. **Run tests via the extension, not a manual terminal.** Use CodeLens (`▶ Run Test`), the editor right-click menu (**Playwright Studio → Run Test at Cursor**), or the Command Palette (**Playwright Studio: Run Test**). The terminal that opens must be named **"Playwright"** in the dropdown. A terminal you opened yourself with `Ctrl+\`` will not have `PLAYWRIGHT_JSON_OUTPUT_NAME` set, so capture won't happen.
+4. **Run tests via the extension, not a manual terminal.** Use CodeLens (`▶ Run Test`), the editor right-click menu (**Playwright Studio → Run Test at Cursor**), or the Command Palette (**Playwright Studio: Run Test**). Manual terminals do not receive the extension's result-capture environment.
 
-5. **After changing settings, reload the window** (`Ctrl+Shift+P` → `Developer: Reload Window`) and **kill any pre-existing "Playwright" terminal** — its env vars were fixed at creation time.
+5. **Settings apply to the next run.** Each run receives a fresh working directory and environment, so no window reload or terminal cleanup is needed.
 
 6. **Verify the JSON file is being written.** It lives at:
    - **Windows:** `%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\playwright-studio-results.json`
@@ -319,9 +325,9 @@ The panel only populates when a Playwright run writes a JSON report to the exten
 
 `playwrightSnippets.workingDirectory` is wrong. Playwright doesn't search up the directory tree for `playwright.config.ts` — set `workingDirectory` to the folder that actually contains it.
 
-### Wrong reporter ends up on the command line
+### Reporter selection
 
-The extension no longer passes `--reporter` at all. If you still see one in the spawned command, your installed extension version is older than 1.0.8 — reinstall the latest VSIX.
+Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the setting is non-empty, it is passed through `--reporter` and therefore overrides the config for that run; `json` is added automatically while result capture is enabled.
 
 ---
 
@@ -495,25 +501,25 @@ The extension no longer passes `--reporter` at all. If you still see one in the 
 | `p-get-p`     | `page.getByPlaceholder()` |
 | `p-get-atxt`  | `page.getByAltText()`     |
 | `p-get-title` | `page.getByTitle()`       |
-| `p-$`         | `page.$()`                |
-| `p-$$`        | `page.$$()`               |
-| `p-$eval`     | `page.$eval()`            |
-| `p-$$eval`    | `page.$$eval()`           |
+| `p-$`         | Create a locator           |
+| `p-$$`        | `locator.all()`            |
+| `p-$eval`     | `locator.evaluate()`       |
+| `p-$$eval`    | `locator.evaluateAll()`    |
 
 ### Page — Actions
 
 | Prefix     | Description              |
 | ---------- | ------------------------ |
 | `p-clk`    | `page.click()`           |
-| `p-dbclk`  | `page.dblclick()`        |
+| `p-dbclk`  | `locator.dblclick()`     |
 | `p-clki`   | `page.nth().click()`     |
-| `p-fill`   | `page.fill()`            |
-| `p-type`   | `page.type()`            |
+| `p-fill`   | `locator.fill()`         |
+| `p-type`   | `locator.pressSequentially()` |
 | `p-chk`    | `page.check()`           |
 | `p-uchk`   | `page.uncheck()`         |
 | `p-hover`  | `page.hover()`           |
-| `p-focus`  | `page.focus()`           |
-| `p-press`  | `page.press()`           |
+| `p-focus`  | `locator.focus()`        |
+| `p-press`  | `locator.press()`        |
 | `p-so`     | `page.selectOption()`    |
 | `p-sif`    | `page.setInputFiles()`   |
 | `p-dnd`    | `page.dragAndDrop()`     |
@@ -621,12 +627,12 @@ The extension no longer passes `--reporter` at all. If you still see one in the 
 | ---------- | ---------------------------- |
 | `p-wf`     | `locator.waitFor()`          |
 | `p-loc-wf` | `locator.waitFor({ state })` |
-| `p-wfs`    | `page.waitForSelector()`     |
+| `p-wfs`    | `locator.waitFor()`          |
 | `p-wfls`   | `page.waitForLoadState()`    |
 | `p-wft`    | `page.waitForTimeout()`      |
 | `p-wfe`    | `page.waitForEvent()`        |
 | `p-wff`    | `page.waitForFunction()`     |
-| `p-wfn`    | `page.waitForNavigation()`   |
+| `p-wfn`    | `page.waitForURL()`          |
 | `p-wfreq`  | `page.waitForRequest()`      |
 | `p-wfres`  | `page.waitForResponse()`     |
 | `p-wfurl`  | `page.waitForURL()`          |
@@ -863,7 +869,7 @@ The extension no longer passes `--reporter` at all. If you still see one in the 
 | `p-on-worker`   | `page.on('worker')`             |
 | `p-worker-eval` | `worker.evaluate()`             |
 | `p-worker-url`  | `worker.url()`                  |
-| `p-acc-snap`    | `page.accessibility.snapshot()` |
+| `p-acc-snap`    | `page.ariaSnapshot()`          |
 
 ---
 

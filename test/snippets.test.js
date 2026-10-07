@@ -84,4 +84,23 @@ describe('Each snippet', () => {
       }
     }
   });
+
+  it('does not emit removed APIs or repository-specific helper symbols', () => {
+    const bodies = Object.values(snippets)
+      .flatMap((snippet) => Array.isArray(snippet.body) ? snippet.body : [snippet.body])
+      .join('\n');
+    for (const unsupported of [
+      'page.accessibility.snapshot',
+      'Timeout.$',
+      'integrationTest(',
+      'EnvironmentType.',
+      'clickSelector(',
+      'preciseClick(',
+      'navigateToUrl(',
+      'verifyPageURL(',
+      'fillValueInControl(',
+    ]) {
+      assert.equal(bodies.includes(unsupported), false, `Unsupported snippet symbol: ${unsupported}`);
+    }
+  });
 });

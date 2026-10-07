@@ -1,11 +1,10 @@
-import { buildRunArgs } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildRunCommand } from '../config';
+import { runCommand } from '../terminal';
 
-export function runTest(testFile: string, testName?: string): void {
-  const args = buildRunArgs(testFile, testName);
-  runInTerminal(args.join(' '));
+export async function runTest(testFile: string, testName?: string, line?: number): Promise<void> {
+  await runCommand(buildRunCommand(testFile, { testName, line }), { resource: testFile });
 }
 
-export function runFile(testFile: string): void {
-  runTest(testFile);
+export async function runFile(testFile: string): Promise<void> {
+  await runTest(testFile);
 }

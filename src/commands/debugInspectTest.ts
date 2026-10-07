@@ -1,11 +1,18 @@
-import { buildDebugArgs } from '../config';
-import { runInTerminal } from '../terminal';
+import { buildDebugCommand } from '../config';
+import { debugCommand } from '../terminal';
 
-export function debugInspectTest(testFile: string, testName?: string): void {
-  const args = buildDebugArgs(testFile, testName);
-  runInTerminal(args.join(' '));
+export async function debugInspectTest(
+  testFile: string,
+  testName?: string,
+  line?: number
+): Promise<void> {
+  const started = await debugCommand(buildDebugCommand(testFile, { testName, line }), {
+    resource: testFile,
+    name: 'Debug Playwright with Inspector',
+  });
+  if (!started) throw new Error('VS Code could not start the Playwright debug session.');
 }
 
-export function debugInspectFile(testFile: string): void {
-  debugInspectTest(testFile);
+export async function debugInspectFile(testFile: string): Promise<void> {
+  await debugInspectTest(testFile);
 }

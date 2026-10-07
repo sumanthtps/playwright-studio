@@ -25,8 +25,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const profiles = new EnvProfileManager(context);
 
   // Wire profile env into the terminal
-  setExtraEnvProvider(() => profiles.getActiveEnv());
-  profiles.onDidChange(() => setExtraEnvProvider(() => profiles.getActiveEnv()));
+  setExtraEnvProvider(resource => profiles.getActiveEnv(resource));
 
   // Register CodeLens
   context.subscriptions.push(
@@ -82,7 +81,16 @@ export function activate(context: vscode.ExtensionContext): void {
   // Refresh code lenses on save/open
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(() => codeLens.refresh()),
-    vscode.workspace.onDidOpenTextDocument(() => codeLens.refresh())
+    vscode.workspace.onDidOpenTextDocument(() => codeLens.refresh()),
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (
+        event.affectsConfiguration('playwrightSnippets.captureResults') ||
+        event.affectsConfiguration('playwrightSnippets.reporter') ||
+        event.affectsConfiguration('playwrightSnippets.workingDirectory')
+      ) {
+        void checkAndPromptForJsonReporter(context);
+      }
+    })
   );
 
   void checkAndPromptForJsonReporter(context);
