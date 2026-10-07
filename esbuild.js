@@ -4,9 +4,9 @@ const production = process.argv.includes('--production');
 
 esbuild
   .build({
-    entryPoints: ['src/extension.ts'],
+    entryPoints: ['src/extension.ts', 'src/captureReporter.ts', 'src/selectorWorker.ts'],
     bundle: true,
-    outfile: 'dist/extension.js',
+    outdir: 'dist',
     external: ['vscode'],
     format: 'cjs',
     platform: 'node',

@@ -48,7 +48,8 @@ function findReporterProperty(content: string): ReporterProperty | undefined {
     if (/['"`]/.test(content[i])) {
       const start = i;
       const end = skipString(content, i);
-      const name = content.slice(start + 1, Math.max(start + 1, end - 1))
+      const name = content
+        .slice(start + 1, Math.max(start + 1, end - 1))
         .replace(/\\(['"`\\])/g, '$1');
       let colon = skipTrivia(content, end);
 
@@ -98,10 +99,11 @@ function findReporterProperty(content: string): ReporterProperty | undefined {
       if (char === '{') configDepth++;
       else if (char === '}') configDepth--;
     }
-    return candidates.find(candidate =>
-      candidate.depth === configDepth &&
-      candidate.valueStart > configOpen &&
-      candidate.valueStart < configClose
+    return candidates.find(
+      (candidate) =>
+        candidate.depth === configDepth &&
+        candidate.valueStart > configOpen &&
+        candidate.valueStart < configClose,
     );
   }
   return candidates.sort((left, right) => left.depth - right.depth)[0];

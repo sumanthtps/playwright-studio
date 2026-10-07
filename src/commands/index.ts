@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { SelectorIntelligence } from '../selectors/controller';
 import { PlaywrightCodeLensProvider } from '../codeLensProvider';
 import { findTestAtLine, parseTests } from '../testParser';
 import { buildWorkspaceRunCommand } from '../config';
@@ -14,6 +15,14 @@ import { inspectFile, inspectTest } from './inspectTest';
 import { runFile, runTest } from './runTest';
 import { showReport } from './showReport';
 import { showTrace } from './showTrace';
+import { ResultStore } from '../resultStore';
+import { registerFeatureCommands } from '../featureCommands';
+import { ArtifactViewer } from '../artifactViewer';
+import { PlaywrightTestExplorer } from '../testExplorer';
+import { AnalyticsViewer } from '../analyticsViewer';
+import { registerIntelligenceCommands } from '../intelligence/controller';
+import { openFeatureCatalog } from '../featuresView';
+import { requireWorkspaceTrust } from '../security';
 
 function getActiveFile(): string | undefined {
   const editor = vscode.window.activeTextEditor;
@@ -33,7 +42,7 @@ function resolveFileTarget(file: unknown): string | undefined {
 async function resolveTestTarget(
   file: unknown,
   name: unknown,
-  line: unknown
+  line: unknown,
 ): Promise<{ file: string; name: string; line?: number } | undefined> {
   const resolvedFile = resolveFileTarget(file);
   if (!resolvedFile) return undefined;
@@ -47,19 +56,21 @@ async function resolveTestTarget(
   }
 
   const document = await vscode.workspace.openTextDocument(resolvedFile);
-  const tests = parseTests(document).filter(item => item.kind === 'test');
+  const tests = parseTests(document).filter((item) => item.kind === 'test');
   if (tests.length === 0) {
     void vscode.window.showErrorMessage('No Playwright tests were found in the current file.');
     return undefined;
   }
 
   const picked = await vscode.window.showQuickPick(
-    tests.map(test => ({ label: test.name, description: `Line ${test.line + 1}` })),
-    { placeHolder: 'Select a Playwright test' }
+    tests.map((test) => ({ label: test.name, description: `Line ${test.line + 1}` })),
+    { placeHolder: 'Select a Playwright test' },
   );
   if (!picked) return undefined;
 
-  const selected = tests.find(test => test.name === picked.label && `Line ${test.line + 1}` === picked.description);
+  const selected = tests.find(
+    (test) => test.name === picked.label && `Line ${test.line + 1}` === picked.description,
+  );
   return { file: resolvedFile, name: picked.label, line: selected?.line };
 }
 
@@ -125,18 +136,18 @@ async function runWithProject(file: unknown): Promise<void> {
       location: vscode.ProgressLocation.Window,
       title: 'Discovering Playwright projects…',
     },
-    () => getPlaywrightProjects(resolvedFile)
+    () => getPlaywrightProjects(resolvedFile),
   );
   if (projects.length === 0) {
     void vscode.window.showWarningMessage(
-      'Playwright Studio could not discover any projects. Check the Playwright config or run without project filtering.'
+      'Playwright Studio could not discover any projects. Check the Playwright config or run without project filtering.',
     );
     return;
   }
 
   const picked = await vscode.window.showQuickPick(
-    projects.map(p => ({ label: p })),
-    { placeHolder: 'Select Playwright project(s) to run', canPickMany: true }
+    projects.map((p) => ({ label: p })),
+    { placeHolder: 'Select Playwright project(s) to run', canPickMany: true },
   );
   if (!picked || picked.length === 0) return;
 
@@ -157,21 +168,29 @@ function tracePathFromArgument(value: unknown): string | undefined {
 export function registerCommands(
   context: vscode.ExtensionContext,
   codeLens: PlaywrightCodeLensProvider,
-  profiles: EnvProfileManager
+  profiles: EnvProfileManager,
+  store: ResultStore,
+  artifactViewer: ArtifactViewer,
+  testExplorer: PlaywrightTestExplorer,
+  analyticsViewer: AnalyticsViewer,
 ): void {
+  registerIntelligenceCommands(context, store);
   const register = (id: string, fn: (...args: unknown[]) => unknown) =>
     context.subscriptions.push(
       vscode.commands.registerCommand(id, async (...args: unknown[]) => {
         try {
+          if (id !== 'playwrightSnippets.openFeatureCatalog') requireWorkspaceTrust();
           return await fn(...args);
         } catch (error) {
           await vscode.window.showErrorMessage(
-            `Playwright Studio: ${error instanceof Error ? error.message : String(error)}`
+            `Playwright Studio: ${error instanceof Error ? error.message : String(error)}`,
           );
           return undefined;
         }
-      })
+      }),
     );
+
+  register('playwrightSnippets.openFeatureCatalog', (id) => openFeatureCatalog(context, id));
 
   register('playwrightSnippets.runTest', async (file: unknown, name: unknown, line: unknown) => {
     const target = await resolveTestTarget(file, name, line);
@@ -193,32 +212,44 @@ export function registerCommands(
     if (target) await debugFile(target);
   });
 
-  register('playwrightSnippets.inspectTest', async (file: unknown, name: unknown, line: unknown) => {
-    const target = await resolveTestTarget(file, name, line);
-    if (target) await inspectTest(target.file, target.name, target.line);
-  });
+  register(
+    'playwrightSnippets.inspectTest',
+    async (file: unknown, name: unknown, line: unknown) => {
+      const target = await resolveTestTarget(file, name, line);
+      if (target) await inspectTest(target.file, target.name, target.line);
+    },
+  );
 
   register('playwrightSnippets.inspectFile', async (file: unknown) => {
     const target = resolveFileTarget(file);
     if (target) await inspectFile(target);
   });
 
-  register('playwrightSnippets.debugInspectTest', async (file: unknown, name: unknown, line: unknown) => {
-    const target = await resolveTestTarget(file, name, line);
-    if (target) await debugInspectTest(target.file, target.name, target.line);
-  });
+  register(
+    'playwrightSnippets.debugInspectTest',
+    async (file: unknown, name: unknown, line: unknown) => {
+      const target = await resolveTestTarget(file, name, line);
+      if (target) await debugInspectTest(target.file, target.name, target.line);
+    },
+  );
 
   register('playwrightSnippets.debugInspectFile', async (file: unknown) => {
     const target = resolveFileTarget(file);
     if (target) await debugInspectFile(target);
   });
 
+  const selectors = new SelectorIntelligence(context);
+  context.subscriptions.push(selectors);
+  register('playwrightSnippets.openSelectorIntelligence', () => selectors.show());
   register('playwrightSnippets.codeGen', () => codeGen());
+  register('playwrightSnippets.openLocatorPicker', () => codeGen());
   register('playwrightSnippets.showTrace', (traceFile: unknown) =>
-    showTrace(tracePathFromArgument(traceFile))
+    showTrace(tracePathFromArgument(traceFile)),
   );
   register('playwrightSnippets.showReport', (resource: unknown) =>
-    showReport(resource instanceof vscode.Uri || typeof resource === 'string' ? resource : undefined)
+    showReport(
+      resource instanceof vscode.Uri || typeof resource === 'string' ? resource : undefined,
+    ),
   );
 
   register('playwrightSnippets.runTestAtCursor', async () => {
@@ -244,12 +275,22 @@ export function registerCommands(
   });
 
   register('playwrightSnippets.refreshCodeLens', () => codeLens.refresh());
-
-  register('playwrightSnippets.runWithTag', (file: unknown, tag: unknown) =>
-    runWithTag(file, tag)
+  register('playwrightSnippets.refreshTests', () => testExplorer.refresh());
+  register('playwrightSnippets.runExplorerTests', (item: unknown) =>
+    testExplorer.runFromSidebar(item as vscode.TestItem | undefined, 'run'),
   );
+  register('playwrightSnippets.debugExplorerTests', (item: unknown) =>
+    testExplorer.runFromSidebar(item as vscode.TestItem | undefined, 'debug'),
+  );
+
+  register('playwrightSnippets.inspectExplorerTests', (item: unknown) =>
+    testExplorer.runFromSidebar(item as vscode.TestItem | undefined, 'inspect'),
+  );
+
+  register('playwrightSnippets.runWithTag', (file: unknown, tag: unknown) => runWithTag(file, tag));
   register('playwrightSnippets.runWithProject', (file: unknown) => runWithProject(file));
   register('playwrightSnippets.switchEnvProfile', () => profiles.switchProfile());
   register('playwrightSnippets.saveAsSnippet', () => saveAsSnippet(context));
-  register('playwrightSnippets.setupCaptureResults', () => runJsonReporterSetup(context));
+  register('playwrightSnippets.setupCaptureResults', () => runJsonReporterSetup());
+  registerFeatureCommands(context, store, profiles, artifactViewer, testExplorer, analyticsViewer);
 }

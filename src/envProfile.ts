@@ -10,7 +10,7 @@ export class EnvProfileManager implements vscode.Disposable {
   constructor(private readonly context: vscode.ExtensionContext) {
     this.activeByFolder = context.workspaceState.get<Record<string, string | undefined>>(
       'activeEnvProfiles',
-      {}
+      {},
     );
     const legacy = context.workspaceState.get<string>('activeEnvProfile');
     if (legacy && !this.activeByFolder[this.resourceKey()]) {
@@ -19,7 +19,7 @@ export class EnvProfileManager implements vscode.Disposable {
       void context.workspaceState.update('activeEnvProfile', undefined);
     }
     this.disposables.push(
-      vscode.workspace.onDidChangeConfiguration(e => {
+      vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('playwrightSnippets.envProfiles')) {
           const key = this.resourceKey();
           const active = this.activeByFolder[key];
@@ -32,7 +32,7 @@ export class EnvProfileManager implements vscode.Disposable {
       }),
       vscode.window.onDidChangeActiveTextEditor(() => {
         this._onDidChange.fire(this.activeProfile);
-      })
+      }),
     );
   }
 
@@ -44,10 +44,18 @@ export class EnvProfileManager implements vscode.Disposable {
     return Object.keys(this.allProfiles());
   }
 
+  getProfileNames(resource?: vscode.Uri | string): string[] {
+    return Object.keys(this.allProfiles(resource));
+  }
+
   getActiveEnv(resource?: vscode.Uri | string): Record<string, string> {
     const active = this.activeByFolder[this.resourceKey(resource)];
     if (!active) return {};
     return this.allProfiles(resource)[active] ?? {};
+  }
+
+  getProfileEnv(name: string, resource?: vscode.Uri | string): Record<string, string> {
+    return this.allProfiles(resource)[name] ?? {};
   }
 
   private asUri(resource?: vscode.Uri | string): vscode.Uri | undefined {
@@ -58,9 +66,11 @@ export class EnvProfileManager implements vscode.Disposable {
 
   private resourceKey(resource?: vscode.Uri | string): string {
     const uri = this.asUri(resource);
-    return (uri ? vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() : undefined)
-      ?? vscode.workspace.workspaceFolders?.[0]?.uri.toString()
-      ?? '__workspace__';
+    return (
+      (uri ? vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() : undefined) ??
+      vscode.workspace.workspaceFolders?.[0]?.uri.toString() ??
+      '__workspace__'
+    );
   }
 
   private allProfiles(resource?: vscode.Uri | string): Record<string, Record<string, string>> {
@@ -79,12 +89,12 @@ export class EnvProfileManager implements vscode.Disposable {
     if (names.length === 0) {
       const action = await vscode.window.showInformationMessage(
         'No environment profiles configured. Add them under "playwrightSnippets.envProfiles" in settings.',
-        'Open Settings'
+        'Open Settings',
       );
       if (action === 'Open Settings') {
         vscode.commands.executeCommand(
           'workbench.action.openSettings',
-          'playwrightSnippets.envProfiles'
+          'playwrightSnippets.envProfiles',
         );
       }
       return;
@@ -92,7 +102,7 @@ export class EnvProfileManager implements vscode.Disposable {
 
     const items: vscode.QuickPickItem[] = [
       { label: '$(circle-slash) default', description: 'No profile — use base env settings' },
-      ...names.map(n => ({
+      ...names.map((n) => ({
         label: `$(server-environment) ${n}`,
         description: Object.keys(profiles[n] ?? {}).join(', '),
       })),
@@ -114,6 +124,6 @@ export class EnvProfileManager implements vscode.Disposable {
 
   dispose(): void {
     this._onDidChange.dispose();
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach((d) => d.dispose());
   }
 }

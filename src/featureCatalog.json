@@ -1,0 +1,634 @@
+[
+  {
+    "id": "editor-sidebar",
+    "title": "Editor and sidebar features",
+    "features": [
+      {
+        "id": "snippets",
+        "title": "338 JavaScript and TypeScript snippets",
+        "description": "Type p- in JavaScript, TypeScript, JSX or TSX to browse test, locator, assertion, API, network, browser and other snippet families."
+      },
+      {
+        "id": "test-discovery",
+        "title": "Native Test Explorer",
+        "description": "Discover files, suites and tests in the Studio Tests view and VS Code Testing view; captured runtime cases extend static discovery."
+      },
+      {
+        "id": "continuous-runs",
+        "title": "Continuous test runs",
+        "description": "Enable continuous runs through the native Testing API to rerun selected tests when relevant files change."
+      },
+      {
+        "id": "codelens",
+        "title": "Editor CodeLens actions",
+        "description": "Use inline Run, Debug and Inspect actions above tests and suites, including tag actions."
+      },
+      {
+        "id": "result-capture",
+        "title": "Automatic result capture",
+        "description": "Studio adds its capture reporter at run time while preserving existing reporters; normal extension runs need no JSON reporter edit."
+      },
+      {
+        "id": "results-tree",
+        "title": "Results sidebar",
+        "description": "Browse captured passed, failed, flaky and skipped outcomes, project groups and source locations."
+      },
+      {
+        "id": "failure-gutter",
+        "title": "Test status in the editor gutter",
+        "description": "See pass, failure, flaky and skipped status beside test source lines."
+      },
+      {
+        "id": "failure-problems",
+        "title": "Failure diagnostics in Problems",
+        "description": "Navigate captured failures through the Problems panel with messages and available trace links."
+      },
+      {
+        "id": "captured-evidence",
+        "title": "Attempts, steps and output",
+        "description": "Inspect captured attempts, step summaries, stdout/stderr, attachments and source/runtime metadata through results and evidence reports."
+      },
+      {
+        "id": "persistent-history",
+        "title": "Persistent run history",
+        "description": "Retain workspace run summaries and outcomes between VS Code sessions and navigate back to their source."
+      },
+      {
+        "id": "status-bar",
+        "title": "Environment and run status bar",
+        "description": "See the selected environment and most recent run summary in the VS Code status bar."
+      },
+      {
+        "id": "recency-heatmap",
+        "title": "Test recency highlights",
+        "description": "Highlight test coverage recency from captured results; this is separate from measured application line coverage."
+      },
+      {
+        "id": "fixture-definition",
+        "title": "Go to fixture definition",
+        "description": "Jump from a custom fixture parameter to its workspace definition."
+      },
+      {
+        "id": "fixture-hover",
+        "title": "Fixture hover information",
+        "description": "Hover over a fixture parameter to inspect its definition and source link."
+      },
+      {
+        "id": "locator-diagnostics",
+        "title": "Locator diagnostics",
+        "description": "Highlight supported legacy selector patterns and suggest more maintainable locators."
+      },
+      {
+        "id": "locator-quick-fixes",
+        "title": "Locator quick fixes",
+        "description": "Apply supported semantic locator or legacy API replacements through editor quick fixes."
+      },
+      {
+        "id": "component-sidebar",
+        "title": "Components sidebar",
+        "description": "Discover component tests and stories and navigate to their source."
+      },
+      {
+        "id": "annotations-sidebar",
+        "title": "Tags and annotations sidebar",
+        "description": "Browse captured tags, test annotations and quarantine context with source navigation."
+      },
+      {
+        "id": "config-detection",
+        "title": "Automatic project detection",
+        "description": "Find the nearest supported Playwright configuration and resolve runs in the appropriate project or workspace root."
+      },
+      {
+        "id": "json-config",
+        "title": "Studio and lab JSON validation",
+        "description": "Get validation and completions for local Studio and Lab configuration in VS Code workspace storage."
+      },
+      {
+        "id": "keyboard-shortcuts",
+        "title": "Keyboard shortcuts",
+        "description": "Run the test at the cursor with Ctrl+Alt+R (Cmd+Alt+R on macOS) or open tag/grep selection with Ctrl+Alt+T (Cmd+Alt+T)."
+      },
+      {
+        "id": "getting-started",
+        "title": "Getting started walkthrough",
+        "description": "Use VS Code Get Started to learn editor execution, Codegen and trace/report inspection."
+      }
+    ]
+  },
+  {
+    "id": "run-debug",
+    "title": "Run and debug",
+    "features": [
+      {
+        "id": "runTest",
+        "title": "Run Test",
+        "description": "Run one test or suite selected from the active test file.",
+        "command": "playwrightSnippets.runTest"
+      },
+      {
+        "id": "runFile",
+        "title": "Run All Tests in File",
+        "description": "Run every test in the active or selected test file.",
+        "command": "playwrightSnippets.runFile"
+      },
+      {
+        "id": "debugTest",
+        "title": "Debug Test",
+        "description": "Run a selected test under the VS Code debugger with breakpoints.",
+        "command": "playwrightSnippets.debugTest"
+      },
+      {
+        "id": "debugFile",
+        "title": "Debug All Tests in File",
+        "description": "Debug every test in a file with the VS Code debugger.",
+        "command": "playwrightSnippets.debugFile"
+      },
+      {
+        "id": "inspectTest",
+        "title": "Inspect Test",
+        "description": "Run a selected test with Playwright Inspector.",
+        "command": "playwrightSnippets.inspectTest"
+      },
+      {
+        "id": "inspectFile",
+        "title": "Inspect All Tests in File",
+        "description": "Run a file with Playwright Inspector.",
+        "command": "playwrightSnippets.inspectFile"
+      },
+      {
+        "id": "debugInspectTest",
+        "title": "Debug Test with Inspector",
+        "description": "Use VS Code debugging and Playwright Inspector together for a selected test.",
+        "command": "playwrightSnippets.debugInspectTest"
+      },
+      {
+        "id": "debugInspectFile",
+        "title": "Debug All Tests with Inspector",
+        "description": "Use VS Code debugging and Playwright Inspector together for a test file.",
+        "command": "playwrightSnippets.debugInspectFile"
+      },
+      {
+        "id": "runTestAtCursor",
+        "title": "Run Test at Cursor",
+        "description": "Run the test at the editor cursor using its source line.",
+        "command": "playwrightSnippets.runTestAtCursor"
+      },
+      {
+        "id": "inspectTestAtCursor",
+        "title": "Inspect Test at Cursor",
+        "description": "Open Playwright Inspector for the test at the editor cursor.",
+        "command": "playwrightSnippets.inspectTestAtCursor"
+      },
+      {
+        "id": "runExplorerTests",
+        "title": "Run Tests",
+        "description": "Run the selected test, suite or file from the Tests sidebar, or all discovered tests from its toolbar.",
+        "command": "playwrightSnippets.runExplorerTests"
+      },
+      {
+        "id": "debugExplorerTests",
+        "title": "Debug Tests",
+        "description": "Debug the selected sidebar tests, or all discovered tests from its toolbar.",
+        "command": "playwrightSnippets.debugExplorerTests"
+      },
+      {
+        "id": "inspectExplorerTests",
+        "title": "Inspect Tests",
+        "description": "Open selected tests, suites or files in Playwright Inspector from the eye icon beside Run and Debug.",
+        "command": "playwrightSnippets.inspectExplorerTests"
+      },
+      {
+        "id": "refreshTests",
+        "title": "Refresh Tests",
+        "description": "Refresh source discovery in the Studio sidebar and native Test Explorer.",
+        "command": "playwrightSnippets.refreshTests"
+      },
+      {
+        "id": "openUIMode",
+        "title": "Open Playwright UI Mode",
+        "description": "Launch Playwright UI Mode for interactive test execution and inspection.",
+        "command": "playwrightSnippets.openUIMode"
+      },
+      {
+        "id": "watchFile",
+        "title": "Watch Current Test File in UI Mode",
+        "description": "Launch UI Mode scoped to the current test file for reruns while editing.",
+        "command": "playwrightSnippets.watchFile"
+      },
+      {
+        "id": "cancelRuns",
+        "title": "Cancel All Runs",
+        "description": "Stop the extension's active test tasks and debug sessions, including the current experiment execution.",
+        "command": "playwrightSnippets.cancelRuns"
+      }
+    ]
+  },
+  {
+    "id": "run-selection",
+    "title": "Run selection and configuration",
+    "features": [
+      {
+        "id": "runWithTag",
+        "title": "Run Tests with Tag / Grep Filter",
+        "description": "Select a discovered tag or enter a grep expression to filter tests.",
+        "command": "playwrightSnippets.runWithTag"
+      },
+      {
+        "id": "runWithProject",
+        "title": "Run Tests with Project Selection",
+        "description": "Choose one or more configured Playwright browser projects.",
+        "command": "playwrightSnippets.runWithProject"
+      },
+      {
+        "id": "runMatrix",
+        "title": "Run with Matrix Options",
+        "description": "Choose scope, projects, grep, headed mode, workers, retries, repetitions, timeouts, trace/video policies, shards and snapshot options; optionally save a preset.",
+        "command": "playwrightSnippets.runMatrix"
+      },
+      {
+        "id": "runPreset",
+        "title": "Run Saved Preset",
+        "description": "Run a saved combination of test scope, projects, options and environment profile.",
+        "command": "playwrightSnippets.runPreset"
+      },
+      {
+        "id": "manageRunPresets",
+        "title": "Manage Saved Run Presets",
+        "description": "Rename, duplicate, edit, delete or run saved presets.",
+        "command": "playwrightSnippets.manageRunPresets"
+      },
+      {
+        "id": "runFailed",
+        "title": "Run Failed Tests",
+        "description": "Rerun failed tests from the latest captured results.",
+        "command": "playwrightSnippets.runFailed"
+      },
+      {
+        "id": "runLastFailed",
+        "title": "Run Last Failed",
+        "description": "Use Playwright's last-failed selection for the project.",
+        "command": "playwrightSnippets.runLastFailed"
+      },
+      {
+        "id": "repeatUntilFailure",
+        "title": "Repeat Until Failure",
+        "description": "Repeat a selected test with an iteration limit and stop on failure.",
+        "command": "playwrightSnippets.repeatUntilFailure"
+      },
+      {
+        "id": "runShard",
+        "title": "Run a Shard",
+        "description": "Run one numbered shard of the selected test suite.",
+        "command": "playwrightSnippets.runShard"
+      },
+      {
+        "id": "copyCICommand",
+        "title": "Copy Sharded CI Command",
+        "description": "Copy a Playwright command with sharding options for use in CI.",
+        "command": "playwrightSnippets.copyCICommand"
+      }
+    ]
+  },
+  {
+    "id": "results-artifacts",
+    "title": "Results and artifacts",
+    "features": [
+      {
+        "id": "setupCaptureResults",
+        "title": "Set Up Result Capture (Add JSON Reporter)",
+        "description": "Optionally add JSON reporting to the project config for runs outside Studio; extension-managed runs already capture results automatically.",
+        "command": "playwrightSnippets.setupCaptureResults"
+      },
+      {
+        "id": "showTrace",
+        "title": "Show Trace Viewer",
+        "description": "Open a captured or selected trace archive in Playwright Trace Viewer.",
+        "command": "playwrightSnippets.showTrace"
+      },
+      {
+        "id": "showReport",
+        "title": "Show HTML Report",
+        "description": "Open the project's Playwright HTML report.",
+        "command": "playwrightSnippets.showReport"
+      },
+      {
+        "id": "openArtifact",
+        "title": "Open Test Artifact",
+        "description": "Inspect captured screenshot, video, trace and other test attachments.",
+        "command": "playwrightSnippets.openArtifact"
+      },
+      {
+        "id": "reviewSnapshots",
+        "title": "Review and Accept Snapshot Artifacts",
+        "description": "Review expected, actual and diff attachments and choose whether to accept a snapshot.",
+        "command": "playwrightSnippets.reviewSnapshots"
+      },
+      {
+        "id": "updateSnapshots",
+        "title": "Update Screenshots and ARIA Snapshots",
+        "description": "Rerun tests with screenshot and ARIA snapshot updates enabled.",
+        "command": "playwrightSnippets.updateSnapshots"
+      },
+      {
+        "id": "setupVideoOverride",
+        "title": "Set Up Video Policy Override",
+        "description": "Set up the optional config hook that allows Studio's video policy override to take effect.",
+        "command": "playwrightSnippets.setupVideoOverride"
+      }
+    ]
+  },
+  {
+    "id": "history-health",
+    "title": "History and test health",
+    "features": [
+      {
+        "id": "showAnalytics",
+        "title": "Show Flaky and Duration Analytics",
+        "description": "Review flaky tests, failure frequency and test durations from captured run history.",
+        "command": "playwrightSnippets.showAnalytics"
+      },
+      {
+        "id": "compareRuns",
+        "title": "Compare Two Runs",
+        "description": "Compare outcomes and timing between two saved runs.",
+        "command": "playwrightSnippets.compareRuns"
+      },
+      {
+        "id": "exportHistory",
+        "title": "Open Run History as Markdown",
+        "description": "Open the workspace's recorded run history as Markdown.",
+        "command": "playwrightSnippets.exportHistory"
+      },
+      {
+        "id": "clearHistory",
+        "title": "Clear Run History",
+        "description": "Remove saved run history after confirmation.",
+        "command": "playwrightSnippets.clearHistory"
+      },
+      {
+        "id": "quarantineTest",
+        "title": "Quarantine Test at Cursor",
+        "description": "Mark the test at the cursor as quarantined with a reason.",
+        "command": "playwrightSnippets.quarantineTest"
+      },
+      {
+        "id": "unquarantineTest",
+        "title": "Remove Test Quarantine at Cursor",
+        "description": "Remove the quarantine marker from the test at the cursor.",
+        "command": "playwrightSnippets.unquarantineTest"
+      }
+    ]
+  },
+  {
+    "id": "authoring",
+    "title": "Writing and maintaining tests",
+    "features": [
+      {
+        "id": "codeGen",
+        "title": "Open Codegen",
+        "description": "Launch Playwright Codegen to record interactions and generate tests.",
+        "command": "playwrightSnippets.codeGen"
+      },
+      {
+        "id": "openLocatorPicker",
+        "title": "Open Live Locator Picker",
+        "description": "Launch the live Playwright locator picker for a target page.",
+        "command": "playwrightSnippets.openLocatorPicker"
+      },
+      {
+        "id": "saveAsSnippet",
+        "title": "Save Selection as Snippet",
+        "description": "Save the selected editor text as a reusable snippet in the current VS Code profile.",
+        "command": "playwrightSnippets.saveAsSnippet"
+      },
+      {
+        "id": "openComponentGallery",
+        "title": "Open Component Testing Gallery",
+        "description": "Browse component test files and Storybook stories discovered in the workspace.",
+        "command": "playwrightSnippets.openComponentGallery"
+      },
+      {
+        "id": "initializeAgents",
+        "title": "Initialize Playwright Test Agents",
+        "description": "Initialize Playwright's supported test-agent files in the project.",
+        "command": "playwrightSnippets.initializeAgents"
+      },
+      {
+        "id": "generateTestPlan",
+        "title": "Create Test Plan with Planner Agent",
+        "description": "Hand a planning prompt to a supported installed agent workflow for review.",
+        "command": "playwrightSnippets.generateTestPlan"
+      },
+      {
+        "id": "generateTestsFromPlan",
+        "title": "Generate Tests from Reviewed Plan",
+        "description": "Hand a reviewed plan to the test-generation agent workflow.",
+        "command": "playwrightSnippets.generateTestsFromPlan"
+      },
+      {
+        "id": "healFailures",
+        "title": "Heal Captured Failures with Agent",
+        "description": "Prepare a healer-agent handoff using captured failing-test evidence.",
+        "command": "playwrightSnippets.healFailures"
+      },
+      {
+        "id": "openSelectorIntelligence",
+        "title": "Open Selector Intelligence",
+        "description": "Browse a website inside VS Code, inspect an element, and compare live-verified Playwright locators, CSS selectors and XPath with uniqueness counts.",
+        "command": "playwrightSnippets.openSelectorIntelligence"
+      }
+    ]
+  },
+  {
+    "id": "workspace",
+    "title": "Projects and environments",
+    "features": [
+      {
+        "id": "switchEnvProfile",
+        "title": "Switch Environment Profile",
+        "description": "Choose a named environment profile for subsequent runs.",
+        "command": "playwrightSnippets.switchEnvProfile"
+      },
+      {
+        "id": "selectEnvFile",
+        "title": "Select .env File",
+        "description": "Choose an optional .env file whose values are loaded for execution.",
+        "command": "playwrightSnippets.selectEnvFile"
+      },
+      {
+        "id": "openWorkspaceDashboard",
+        "title": "Open Multi-Root Workspace Dashboard",
+        "description": "Review detected Playwright roots across a multi-root workspace.",
+        "command": "playwrightSnippets.openWorkspaceDashboard"
+      },
+      {
+        "id": "showProjectGraph",
+        "title": "Show Project Dependency Graph",
+        "description": "Display configured Playwright projects and their dependencies.",
+        "command": "playwrightSnippets.showProjectGraph"
+      },
+      {
+        "id": "healthCheck",
+        "title": "Run Configuration Health Check",
+        "description": "Check project detection, configuration, execution settings and result/report paths.",
+        "command": "playwrightSnippets.healthCheck"
+      },
+      {
+        "id": "installBrowsers",
+        "title": "Install Playwright Browsers",
+        "description": "Install Playwright browser binaries using the project's tool command.",
+        "command": "playwrightSnippets.installBrowsers"
+      },
+      {
+        "id": "updateBrowsers",
+        "title": "Update Playwright Browsers",
+        "description": "Refresh the browser binaries for the project's installed Playwright version.",
+        "command": "playwrightSnippets.updateBrowsers"
+      }
+    ]
+  },
+  {
+    "id": "coverage-sharing",
+    "title": "Coverage and sharing",
+    "features": [
+      {
+        "id": "importCoverage",
+        "title": "Import Istanbul/V8 Coverage",
+        "description": "Import existing Istanbul or V8 coverage into VS Code's native test coverage UI.",
+        "command": "playwrightSnippets.importCoverage"
+      },
+      {
+        "id": "exportResults",
+        "title": "Export Latest Results",
+        "description": "Export the latest captured results as Markdown, JSON or JUnit XML, or copy a summary.",
+        "command": "playwrightSnippets.exportResults"
+      },
+      {
+        "id": "postGitHubComment",
+        "title": "Post Latest Results to GitHub",
+        "description": "Review the destination and confirm before posting a captured result summary through GitHub CLI.",
+        "command": "playwrightSnippets.postGitHubComment"
+      }
+    ]
+  },
+  {
+    "id": "intelligence",
+    "title": "Playwright Intelligence",
+    "features": [
+      {
+        "id": "openIntelligence",
+        "title": "Open Intelligence Dashboard",
+        "description": "Open the dashboard containing all 15 intelligence and advanced testing workflows.",
+        "command": "playwrightSnippets.openIntelligence"
+      },
+      {
+        "id": "investigateFailures",
+        "title": "Investigate Failures",
+        "description": "Failure Detective groups captured failures using signatures, traces and source evidence; explanations are investigation hypotheses.",
+        "command": "playwrightSnippets.investigateFailures"
+      },
+      {
+        "id": "testTheTests",
+        "title": "Test the Tests with Mutations",
+        "description": "Challenge selected tests with isolated application mutations, comparing a passing baseline with each changed source.",
+        "command": "playwrightSnippets.testTheTests"
+      },
+      {
+        "id": "openScenarioLab",
+        "title": "Open Scenario Lab",
+        "description": "Save and run latency, HTTP error, offline and clock scenarios; compare against baseline and reduce failing recipes.",
+        "command": "playwrightSnippets.openScenarioLab"
+      },
+      {
+        "id": "showBehaviorMap",
+        "title": "Show Living Behavior Map",
+        "description": "Index literal routes, semantic UI roles, steps, assertions, imports and promise links into a Living Behavior Map.",
+        "command": "playwrightSnippets.showBehaviorMap"
+      },
+      {
+        "id": "showChangeRadar",
+        "title": "Show Change Radar",
+        "description": "Select checks for changed files under a time budget using imports, coverage links, history, promises and recorded incidents.",
+        "command": "playwrightSnippets.showChangeRadar"
+      },
+      {
+        "id": "verifyRepair",
+        "title": "Verify a Candidate Repair",
+        "description": "Reproduce the original failure, audit a candidate test repair and run it repeatedly in an isolated copy before review.",
+        "command": "playwrightSnippets.verifyRepair"
+      },
+      {
+        "id": "benchmarkJourneys",
+        "title": "Benchmark Human and Agent Journeys",
+        "description": "Compare scripted human-style interactions with user-supplied agent adapters against shared success criteria.",
+        "command": "playwrightSnippets.benchmarkJourneys"
+      },
+      {
+        "id": "managePromises",
+        "title": "Manage Product Promises",
+        "description": "Record observable product promises, owners, priority and linked tests, then inspect evidence freshness for the current source.",
+        "command": "playwrightSnippets.managePromises"
+      }
+    ]
+  },
+  {
+    "id": "advanced",
+    "title": "Advanced testing workflows",
+    "features": [
+      {
+        "id": "openBugCapsules",
+        "title": "Open Bug Capsules",
+        "description": "Capture reviewed, checksummed source bundles that reproduce a failure; inspect or reproduce imported capsules in disposable copies.",
+        "command": "playwrightSnippets.openBugCapsules"
+      },
+      {
+        "id": "branchFailure",
+        "title": "Branch the Failure",
+        "description": "Rerun a journey with checkpoint-triggered network, cookie, offline, clock or misleading-text conditions and compare observed outcomes.",
+        "command": "playwrightSnippets.branchFailure"
+      },
+      {
+        "id": "checkProductLaws",
+        "title": "Check Product Laws",
+        "description": "Run seeded sequences against a user-defined business invariant, reduce reproduced failures and export regression tests.",
+        "command": "playwrightSnippets.checkProductLaws"
+      },
+      {
+        "id": "openAgentWindTunnel",
+        "title": "Open Agent Wind Tunnel",
+        "description": "Compare user-supplied agent adapters across model labels and branch conditions using measured completion, forbidden actions, recovery and cost.",
+        "command": "playwrightSnippets.openAgentWindTunnel"
+      },
+      {
+        "id": "challengeRepair",
+        "title": "Challenge a Candidate Repair",
+        "description": "Challenge a candidate repair with known application defects as negative controls, alongside failure reproduction and repeated candidate runs.",
+        "command": "playwrightSnippets.challengeRepair"
+      },
+      {
+        "id": "showBehaviorDiff",
+        "title": "Compare Runtime Behavior Across Revisions",
+        "description": "Run selected journeys against a Git revision and the saved workspace, comparing outcomes, ARIA snapshots, focus, URLs and response statuses.",
+        "command": "playwrightSnippets.showBehaviorDiff"
+      },
+      {
+        "id": "openIncidentMemory",
+        "title": "Open Incident Memory",
+        "description": "Record and exchange incident summaries, regression links and optional negative controls; validate them and feed affected files into Change Radar.",
+        "command": "playwrightSnippets.openIncidentMemory"
+      }
+    ]
+  },
+  {
+    "id": "discovery",
+    "title": "Feature discovery",
+    "features": [
+      {
+        "id": "openFeatureCatalog",
+        "title": "Open Feature Catalog",
+        "description": "Open this complete feature catalog; the Features sidebar lists each entry separately with a description.",
+        "command": "playwrightSnippets.openFeatureCatalog"
+      }
+    ]
+  }
+]

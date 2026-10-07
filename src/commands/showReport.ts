@@ -8,7 +8,11 @@ export async function showReport(resource?: vscode.Uri | string): Promise<void> 
   const { reportPath, workingDirectory } = getConfig(resolvedResource);
   const configuredPath = reportPath.trim();
   const args = configuredPath
-    ? [path.isAbsolute(configuredPath) ? configuredPath : path.resolve(workingDirectory, configuredPath)]
+    ? [
+        path.isAbsolute(configuredPath)
+          ? configuredPath
+          : path.resolve(workingDirectory, configuredPath),
+      ]
     : [];
   await runCommand(buildToolCommand('show-report', args, resolvedResource), {
     resource: resolvedResource,

@@ -1,10 +1,10 @@
 {
   "name": "playwright-test-code-snippets",
-  "displayName": "Playwright Studio",
+  "displayName": "Playwright Studio: Test Runner & Snippets",
   "license": "MIT",
   "author": "Sumanth T P",
   "publisher": "sumanthtps",
-  "description": "Playwright IDE for VS Code — inline tag/project filters, environment profiles, coverage heatmap, fixture navigation, save-as-snippet, plus 338 typed snippets.",
+  "description": "Run and debug Playwright tests in VS Code. Save run presets, review traces and screenshots, track test history, and write faster with 338 JS/TS snippets.",
   "homepage": "https://github.com/sumanthtps/playwright-studio",
   "repository": {
     "type": "git",
@@ -16,45 +16,31 @@
     "color": "#0f6b44",
     "theme": "dark"
   },
-  "version": "1.1.1",
+  "version": "2.0.0",
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
-    "Snippets",
     "Testing",
-    "Debuggers",
-    "Other"
+    "Snippets",
+    "Debuggers"
   ],
   "keywords": [
     "playwright",
-    "playwright-test",
-    "playwright snippets",
-    "playwright studio",
-    "playwright ide",
-    "playwright tools",
-    "e2e",
-    "end-to-end",
-    "testing",
-    "automation",
-    "test automation",
-    "codelens",
+    "playwright test",
     "test runner",
     "test explorer",
+    "playwright snippets",
+    "e2e testing",
+    "test automation",
+    "debugger",
     "trace viewer",
-    "codegen",
-    "html report",
-    "fixtures",
-    "fixture navigation",
-    "tag filter",
-    "grep",
-    "env profile",
-    "coverage heatmap",
-    "untested code",
-    "qa",
-    "browser testing",
-    "typescript",
-    "javascript"
+    "screenshots",
+    "test history",
+    "run presets",
+    "flaky tests",
+    "javascript",
+    "typescript"
   ],
   "markdown": "github",
   "qna": "marketplace",
@@ -63,7 +49,18 @@
     "onLanguage:javascript",
     "onLanguage:typescript",
     "onLanguage:javascriptreact",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onView:playwrightStudio.resultsView",
+    "onView:playwrightStudio.historyView",
+    "onView:playwrightStudio.componentsView",
+    "onView:playwrightStudio.annotationsView",
+    "workspaceContains:**/playwright.config.ts",
+    "workspaceContains:**/playwright.config.js",
+    "workspaceContains:**/playwright.config.mts",
+    "workspaceContains:**/playwright.config.mjs",
+    "workspaceContains:**/playwright.config.cts",
+    "workspaceContains:**/playwright.config.cjs",
+    "onView:playwrightStudio.testsView"
   ],
   "contributes": {
     "snippets": [
@@ -85,12 +82,47 @@
       }
     ],
     "views": {
-      "explorer": [
+      "playwrightStudio": [
+        {
+          "id": "playwrightStudio.testsView",
+          "name": "Tests",
+          "icon": "images/playwright-studio-activity.svg",
+          "contextualTitle": "Playwright Studio"
+        },
         {
           "id": "playwrightStudio.resultsView",
-          "name": "Playwright Results",
-          "icon": "images/playwright-logo.png",
-          "when": "workspaceFolderCount > 0"
+          "name": "Results",
+          "icon": "images/playwright-studio-activity.svg",
+          "when": "workspaceFolderCount > 0",
+          "contextualTitle": "Playwright Studio"
+        },
+        {
+          "id": "playwrightStudio.historyView",
+          "name": "History",
+          "icon": "images/playwright-studio-activity.svg",
+          "when": "workspaceFolderCount > 0",
+          "contextualTitle": "Playwright Studio"
+        },
+        {
+          "id": "playwrightStudio.componentsView",
+          "name": "Components",
+          "icon": "images/playwright-studio-activity.svg",
+          "when": "workspaceFolderCount > 0",
+          "contextualTitle": "Playwright Studio"
+        },
+        {
+          "id": "playwrightStudio.annotationsView",
+          "name": "Annotations",
+          "icon": "images/playwright-studio-activity.svg",
+          "when": "workspaceFolderCount > 0",
+          "contextualTitle": "Playwright Studio"
+        },
+        {
+          "id": "playwrightStudio.featuresView",
+          "name": "Features",
+          "icon": "images/playwright-studio-activity.svg",
+          "contextualTitle": "Playwright Studio",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -151,6 +183,11 @@
         "category": "Playwright Studio"
       },
       {
+        "command": "playwrightSnippets.openLocatorPicker",
+        "title": "Open Live Locator Picker",
+        "category": "Playwright Studio"
+      },
+      {
         "command": "playwrightSnippets.showTrace",
         "title": "Show Trace Viewer",
         "category": "Playwright Studio",
@@ -159,7 +196,8 @@
       {
         "command": "playwrightSnippets.showReport",
         "title": "Show HTML Report",
-        "category": "Playwright Studio"
+        "category": "Playwright Studio",
+        "icon": "$(open-preview)"
       },
       {
         "command": "playwrightSnippets.runWithTag",
@@ -185,6 +223,301 @@
         "command": "playwrightSnippets.setupCaptureResults",
         "title": "Set Up Result Capture (Add JSON Reporter)",
         "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runMatrix",
+        "title": "Run with Matrix Options",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runPreset",
+        "title": "Run Saved Preset",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.manageRunPresets",
+        "title": "Manage Saved Run Presets",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.setupVideoOverride",
+        "title": "Set Up Video Policy Override",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runFailed",
+        "title": "Run Failed Tests",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runLastFailed",
+        "title": "Run Last Failed",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.repeatUntilFailure",
+        "title": "Repeat Until Failure",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.runShard",
+        "title": "Run a Shard",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.copyCICommand",
+        "title": "Copy Sharded CI Command",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openUIMode",
+        "title": "Open Playwright UI Mode",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.watchFile",
+        "title": "Watch Current Test File in UI Mode",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.updateSnapshots",
+        "title": "Update Screenshots and ARIA Snapshots",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.installBrowsers",
+        "title": "Install Playwright Browsers",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.updateBrowsers",
+        "title": "Update Playwright Browsers",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.initializeAgents",
+        "title": "Initialize Playwright Test Agents",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.generateTestPlan",
+        "title": "Create Test Plan with Planner Agent",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.generateTestsFromPlan",
+        "title": "Generate Tests from Reviewed Plan",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.healFailures",
+        "title": "Heal Captured Failures with Agent",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openComponentGallery",
+        "title": "Open Component Testing Gallery",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.showProjectGraph",
+        "title": "Show Project Dependency Graph",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.importCoverage",
+        "title": "Import Istanbul/V8 Coverage",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.showAnalytics",
+        "title": "Show Flaky and Duration Analytics",
+        "category": "Playwright Studio",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "playwrightSnippets.openWorkspaceDashboard",
+        "title": "Open Multi-Root Workspace Dashboard",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.compareRuns",
+        "title": "Compare Two Runs",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.reviewSnapshots",
+        "title": "Review and Accept Snapshot Artifacts",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.exportResults",
+        "title": "Export Latest Results",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.exportHistory",
+        "title": "Open Run History as Markdown",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.postGitHubComment",
+        "title": "Post Latest Results to GitHub",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.clearHistory",
+        "title": "Clear Run History",
+        "category": "Playwright Studio",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "playwrightSnippets.selectEnvFile",
+        "title": "Select .env File",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.healthCheck",
+        "title": "Run Configuration Health Check",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openArtifact",
+        "title": "Open Test Artifact",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.cancelRuns",
+        "title": "Cancel All Runs",
+        "category": "Playwright Studio",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "playwrightSnippets.quarantineTest",
+        "title": "Quarantine Test at Cursor",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.unquarantineTest",
+        "title": "Remove Test Quarantine at Cursor",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openIntelligence",
+        "title": "Open Intelligence Dashboard",
+        "category": "Playwright Studio",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "playwrightSnippets.investigateFailures",
+        "title": "Investigate Failures",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.testTheTests",
+        "title": "Test the Tests with Mutations",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openScenarioLab",
+        "title": "Open Scenario Lab",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.showBehaviorMap",
+        "title": "Show Living Behavior Map",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.showChangeRadar",
+        "title": "Show Change Radar",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.verifyRepair",
+        "title": "Verify a Candidate Repair",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.benchmarkJourneys",
+        "title": "Benchmark Human and Agent Journeys",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.managePromises",
+        "title": "Manage Product Promises",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openBugCapsules",
+        "title": "Open Bug Capsules",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.branchFailure",
+        "title": "Branch the Failure",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.checkProductLaws",
+        "title": "Check Product Laws",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openAgentWindTunnel",
+        "title": "Open Agent Wind Tunnel",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.challengeRepair",
+        "title": "Challenge a Candidate Repair",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.showBehaviorDiff",
+        "title": "Compare Runtime Behavior Across Revisions",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.openIncidentMemory",
+        "title": "Open Incident Memory",
+        "category": "Playwright Studio"
+      },
+      {
+        "command": "playwrightSnippets.refreshTests",
+        "title": "Refresh Tests",
+        "category": "Playwright Studio",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "playwrightSnippets.runExplorerTests",
+        "title": "Run Tests",
+        "category": "Playwright Studio",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "playwrightSnippets.debugExplorerTests",
+        "title": "Debug Tests",
+        "category": "Playwright Studio",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "playwrightSnippets.openFeatureCatalog",
+        "title": "Open Feature Catalog",
+        "category": "Playwright Studio",
+        "icon": "$(book)"
+      },
+      {
+        "command": "playwrightSnippets.openSelectorIntelligence",
+        "title": "Open Selector Intelligence",
+        "category": "Playwright Studio",
+        "icon": "$(inspect)"
+      },
+      {
+        "command": "playwrightSnippets.inspectExplorerTests",
+        "title": "Inspect Tests",
+        "category": "Playwright Studio",
+        "icon": "$(eye)"
       }
     ],
     "submenus": [
@@ -282,6 +615,56 @@
           "command": "playwrightSnippets.showReport",
           "when": "view == playwrightStudio.resultsView",
           "group": "navigation"
+        },
+        {
+          "command": "playwrightSnippets.showAnalytics",
+          "when": "view == playwrightStudio.historyView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "playwrightSnippets.clearHistory",
+          "when": "view == playwrightStudio.historyView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "playwrightSnippets.openIntelligence",
+          "when": "view == playwrightStudio.historyView",
+          "group": "navigation"
+        },
+        {
+          "command": "playwrightSnippets.runExplorerTests",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "playwrightSnippets.debugExplorerTests",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "playwrightSnippets.refreshTests",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "playwrightSnippets.openIntelligence",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@5"
+        },
+        {
+          "command": "playwrightSnippets.openFeatureCatalog",
+          "when": "view == playwrightStudio.featuresView",
+          "group": "navigation"
+        },
+        {
+          "command": "playwrightSnippets.inspectExplorerTests",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "playwrightSnippets.openSelectorIntelligence",
+          "when": "view == playwrightStudio.testsView",
+          "group": "navigation@6"
         }
       ],
       "view/item/context": [
@@ -289,6 +672,21 @@
           "command": "playwrightSnippets.showTrace",
           "when": "view == playwrightStudio.resultsView && viewItem == playwrightSpecWithTrace",
           "group": "inline"
+        },
+        {
+          "command": "playwrightSnippets.runExplorerTests",
+          "when": "view == playwrightStudio.testsView && viewItem == playwrightStudioTest",
+          "group": "inline@1"
+        },
+        {
+          "command": "playwrightSnippets.debugExplorerTests",
+          "when": "view == playwrightStudio.testsView && viewItem == playwrightStudioTest",
+          "group": "inline@2"
+        },
+        {
+          "command": "playwrightSnippets.inspectExplorerTests",
+          "when": "view == playwrightStudio.testsView && viewItem == playwrightStudioTest",
+          "group": "inline@3"
         }
       ]
     },
@@ -313,7 +711,7 @@
           "type": "string",
           "scope": "resource",
           "default": "",
-          "description": "Working directory for running Playwright tests (relative to workspace root, or absolute). Defaults to workspace root."
+          "description": "Working directory for running Playwright tests (relative to workspace root, or absolute). Detected from the nearest playwright.config file; falls back to the workspace root."
         },
         "playwrightSnippets.testCommand": {
           "type": "string",
@@ -348,11 +746,17 @@
             "type": "string"
           }
         },
+        "playwrightSnippets.envFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Optional .env file loaded before configured environment variables. Relative paths are resolved from workingDirectory; values are never displayed by the extension."
+        },
         "playwrightSnippets.captureResults": {
           "type": "boolean",
           "scope": "resource",
           "default": true,
-          "description": "When enabled, Playwright Studio sets PLAYWRIGHT_JSON_OUTPUT_FILE so the JSON reporter writes results to extension storage. JSON is appended to a non-empty reporter setting; otherwise it must be present in playwright.config and Playwright Studio offers to add it."
+          "description": "Capture results automatically for extension runs. Adds the JSON reporter at runtime while retaining configured reporters; no config-file edits are needed."
         },
         "playwrightSnippets.envProfiles": {
           "type": "object",
@@ -382,6 +786,161 @@
           "default": 7,
           "minimum": 1,
           "description": "Number of days after which a test is highlighted as 'cold' (never or rarely run) in the coverage heatmap."
+        },
+        "playwrightSnippets.historyLimit": {
+          "type": "number",
+          "scope": "resource",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 500,
+          "description": "Maximum number of captured Playwright runs retained per Playwright root in extension storage."
+        },
+        "playwrightSnippets.runPresets": {
+          "type": "array",
+          "scope": "resource",
+          "default": [],
+          "description": "Named run-matrix presets. Presets can also be created through 'Run with Matrix Options'.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "scope"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "workspace",
+                  "file"
+                ]
+              },
+              "projects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "grep": {
+                "type": "string"
+              },
+              "headed": {
+                "type": "boolean"
+              },
+              "trace": {
+                "type": "string",
+                "enum": [
+                  "on",
+                  "off",
+                  "retain-on-failure",
+                  "on-first-retry"
+                ]
+              },
+              "workers": {
+                "type": "number",
+                "minimum": 1
+              },
+              "retries": {
+                "type": "number",
+                "minimum": 0
+              },
+              "repeatEach": {
+                "type": "number",
+                "minimum": 1
+              },
+              "lastFailed": {
+                "type": "boolean"
+              },
+              "envProfile": {
+                "type": "string"
+              },
+              "timeout": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxFailures": {
+                "type": "number",
+                "minimum": 0
+              },
+              "grepInvert": {
+                "type": "string"
+              },
+              "shard": {
+                "type": "string",
+                "pattern": "^[0-9]+/[0-9]+$"
+              },
+              "updateSnapshots": {
+                "type": "string",
+                "enum": [
+                  "changed",
+                  "missing",
+                  "all",
+                  "none"
+                ]
+              },
+              "fullyParallel": {
+                "type": "boolean"
+              },
+              "forbidOnly": {
+                "type": "boolean"
+              },
+              "failOnFlakyTests": {
+                "type": "boolean"
+              },
+              "onlyChanged": {
+                "type": "boolean"
+              },
+              "video": {
+                "type": "string",
+                "enum": [
+                  "off",
+                  "on",
+                  "retain-on-failure",
+                  "on-first-retry"
+                ]
+              }
+            }
+          }
+        },
+        "playwrightSnippets.uiHost": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Optional host passed to Playwright UI Mode."
+        },
+        "playwrightSnippets.uiPort": {
+          "type": "number",
+          "scope": "resource",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Optional port passed to Playwright UI Mode; 0 lets Playwright choose."
+        },
+        "playwrightSnippets.componentGalleryUrl": {
+          "type": "string",
+          "scope": "resource",
+          "default": "http://localhost:3100",
+          "description": "URL opened by the Component Testing Gallery command."
+        },
+        "playwrightSnippets.intelligenceRunTimeoutMs": {
+          "type": "number",
+          "default": 180000,
+          "minimum": 1000,
+          "maximum": 3600000,
+          "scope": "resource",
+          "description": "Maximum duration of each isolated Intelligence execution before cancellation."
+        },
+        "playwrightSnippets.selectorBrowserChannel": {
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "chrome",
+            "msedge"
+          ],
+          "description": "Browser for Selector Intelligence. Automatic tries Playwright Chromium, then installed Chrome and Edge if the browser executable is missing. Select a channel to use only that browser."
         }
       }
     },
@@ -392,9 +951,21 @@
         "description": "Run Playwright tests, generate code, and inspect failures without leaving VS Code.",
         "steps": [
           {
+            "id": "playwrightStudio.checkSetup",
+            "title": "Check your Playwright project",
+            "description": "Open a trusted project with Playwright installed and a playwright.config file. Studio uses your existing configuration.\n[Check project setup](command:playwrightSnippets.healthCheck)",
+            "media": {
+              "image": "images/walkthrough-run.svg",
+              "altText": "Check a Playwright project before running a test"
+            },
+            "completionEvents": [
+              "onCommand:playwrightSnippets.healthCheck"
+            ]
+          },
+          {
             "id": "playwrightStudio.runTest",
             "title": "Run a test from the editor",
-            "description": "Open a Playwright test file and use CodeLens, the editor tab menu, or the Command Palette to run a test quickly.",
+            "description": "Open a .spec.ts or .test.ts file and click Run above a test. Studio captures results automatically.\n[Run the current test file](command:playwrightSnippets.runFile)",
             "media": {
               "image": "images/walkthrough-run.svg",
               "altText": "Playwright Studio run test walkthrough"
@@ -408,7 +979,7 @@
           {
             "id": "playwrightStudio.codegen",
             "title": "Generate Playwright code",
-            "description": "Launch Codegen directly from VS Code to record actions and bootstrap new tests faster.",
+            "description": "Record interactions with Playwright Codegen, or type p- in a JavaScript or TypeScript file to browse snippets.\n[Open Codegen](command:playwrightSnippets.codeGen)",
             "media": {
               "image": "images/walkthrough-codegen.svg",
               "altText": "Playwright Studio codegen walkthrough"
@@ -420,7 +991,7 @@
           {
             "id": "playwrightStudio.trace",
             "title": "Open traces and reports",
-            "description": "Inspect failures with Trace Viewer or open the Playwright HTML report without leaving the editor.",
+            "description": "Open Results to inspect a failure and its attachments. Trace Viewer is available when your run captured a trace.\n[Open a trace](command:playwrightSnippets.showTrace)",
             "media": {
               "image": "images/walkthrough-trace.svg",
               "altText": "Playwright Studio trace viewer walkthrough"
@@ -432,28 +1003,84 @@
           }
         ]
       }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "**/.playwright-studio/studio.json",
+        "url": "./schemas/studio.schema.json"
+      },
+      {
+        "fileMatch": "**/.playwright-studio/lab.json",
+        "url": "./schemas/lab.schema.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "playwrightStudio",
+          "title": "Playwright Studio",
+          "icon": "images/playwright-studio-activity.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "playwrightStudio.testsView",
+        "contents": "Open a folder with Playwright tests to get started.\n[Open Folder](command:vscode.openFolder)\n[Browse all features](command:playwrightSnippets.openFeatureCatalog)",
+        "when": "workspaceFolderCount == 0"
+      },
+      {
+        "view": "playwrightStudio.testsView",
+        "contents": "No Playwright tests found yet. Open a project containing a playwright.config file and a .spec.ts or .test.ts file.\n[Check project setup](command:playwrightSnippets.healthCheck)\n[Refresh tests](command:playwrightSnippets.refreshTests)\n[Read setup guide](command:playwrightSnippets.openFeatureCatalog)",
+        "when": "workspaceFolderCount > 0"
+      }
     ]
   },
   "scripts": {
     "compile": "node esbuild.js",
     "compile:prod": "node esbuild.js --production",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test:snippets": "node --test test/snippets.test.js",
     "test:runtime": "esbuild test/runtime.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/runtime.test.js && node --test .test-dist/runtime.test.js",
     "test:integration": "npm run compile:prod && esbuild test/integration/index.ts --bundle --platform=node --format=cjs --external:vscode --outfile=.test-dist/integration/index.js && node test/run-integration.js",
-    "test": "npm run test:snippets && npm run test:runtime",
+    "test": "npm run check:features && npm run test:snippets && npm run test:runtime && npm run test:commands && npm run test:intelligence && npm run test:lab && npm run test:security && npm run test:production && npm run test:selectors && npm run test:storage",
     "package": "npm run compile:prod && vsce package",
-    "build": "npm run package"
+    "build": "npm run package",
+    "test:commands": "esbuild test/commands.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/commands.test.js && node --test .test-dist/commands.test.js",
+    "test:intelligence": "esbuild test/intelligence.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/intelligence.test.js && node --test .test-dist/intelligence.test.js",
+    "test:experiments": "npm run compile:prod && esbuild test/experiments.test.ts --bundle --external:playwright/package.json --platform=node --format=cjs --outfile=.test-dist/experiments.test.js && node --test .test-dist/experiments.test.js",
+    "test:browser": "npm run compile:prod && esbuild test/browser.test.ts --bundle --external:playwright/package.json --external:@playwright/test --alias:vscode=./test/vscodeMock.ts --platform=node --format=cjs --outfile=.test-dist/browser.test.js && node --test .test-dist/browser.test.js",
+    "test:lab": "esbuild test/lab.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/lab.test.js && node --test .test-dist/lab.test.js",
+    "test:lab-experiments": "npm run compile:prod && esbuild test/lab-experiments.test.ts --bundle --platform=node --format=cjs --external:playwright/package.json --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/lab-experiments.test.js && node --test .test-dist/lab-experiments.test.js",
+    "test:lab-browser": "npm run compile:prod && esbuild test/lab-browser.test.ts --bundle --platform=node --format=cjs --external:playwright/package.json --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/lab-browser.test.js && node --test .test-dist/lab-browser.test.js",
+    "docs:features": "node scripts/build-feature-catalog.js",
+    "check:features": "node scripts/build-feature-catalog.js --check",
+    "prepackage": "npm run check:features",
+    "test:security": "esbuild test/security.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/security.test.js && node --test .test-dist/security.test.js",
+    "test:production": "esbuild test/production.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/production.test.js && node --test .test-dist/production.test.js",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\" esbuild.js",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\" esbuild.js",
+    "test:selectors": "esbuild test/selectors.test.ts test/selector-startup.test.ts test/selector-session.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outdir=.test-dist && node --test .test-dist/selectors.test.js .test-dist/selector-startup.test.js .test-dist/selector-session.test.js",
+    "test:selector-browser": "npm run compile:prod && esbuild test/selector-browser.test.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile=.test-dist/selector-browser.test.js && node --test .test-dist/selector-browser.test.js",
+    "test:selector-devtools": "esbuild test/selector-devtools.test.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile=.test-dist/selector-devtools.test.js && node --test .test-dist/selector-devtools.test.js",
+    "test:storage": "esbuild test/studio-storage.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/studio-storage.test.js && node --test .test-dist/studio-storage.test.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.80.0",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
+    "cross-spawn": "^7.0.6",
     "esbuild": "^0.25.0",
     "jsonc-parser": "^3.3.1",
-    "semantic-release": "^25.0.3",
-    "semantic-release-vsce": "^6.1.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.7.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Playwright tools execute workspace tests, configuration and dependencies. Trust the workspace before enabling Studio."
+    }
   }
 }

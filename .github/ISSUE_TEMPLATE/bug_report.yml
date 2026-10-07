@@ -1,0 +1,30 @@
+name: Report a bug
+description: Help us reproduce a problem with Playwright Studio.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Describe what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the Studio command or button and a minimal test/config example if possible. Remove secrets before sharing.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions and operating system
+      placeholder: "Studio version, VS Code version, Playwright version, OS"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Error output or health check
+      description: Paste relevant output from Run Configuration Health Check or the task terminal. Remove tokens, passwords, and private URLs.

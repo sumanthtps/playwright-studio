@@ -117,19 +117,18 @@ function projectsArrayStart(content: string): number | undefined {
   }
   const bounds = configBounds(content);
   if (bounds) {
-    return candidates.find(candidate =>
-      candidate.depth === bounds.depth &&
-      candidate.property > bounds.open &&
-      candidate.property < bounds.close
+    return candidates.find(
+      (candidate) =>
+        candidate.depth === bounds.depth &&
+        candidate.property > bounds.open &&
+        candidate.property < bounds.close,
     )?.start;
   }
   return candidates.sort((left, right) => left.depth - right.depth)[0]?.start;
 }
 
 function decodeString(content: string, start: number, end: number): string {
-  return content
-    .slice(start + 1, end - 1)
-    .replace(/\\(['"`\\])/g, '$1');
+  return content.slice(start + 1, end - 1).replace(/\\(['"`\\])/g, '$1');
 }
 
 export function extractProjectNames(content: string): string[] {
@@ -238,9 +237,7 @@ export function isProjectListStaticallyComplete(content: string): boolean {
     else if (char === '}') objectDepth = Math.max(0, objectDepth - 1);
     else if (char === '(') parenDepth++;
     else if (char === ')') parenDepth = Math.max(0, parenDepth - 1);
-    else if (
-      char === ',' && arrayDepth === 1 && objectDepth === 0 && parenDepth === 0
-    ) {
+    else if (char === ',' && arrayDepth === 1 && objectDepth === 0 && parenDepth === 0) {
       inspectEntry(i);
       entryStart = i + 1;
     }
@@ -250,7 +247,12 @@ export function isProjectListStaticallyComplete(content: string): boolean {
   return complete && objectEntries > 0 && names.length === objectEntries;
 }
 
-export function extractProjectNamesFromListReport(output: string): string[] {
+export interface ProjectGraphNode {
+  name: string;
+  dependencies: string[];
+}
+
+export function extractProjectGraphFromListReport(output: string): ProjectGraphNode[] {
   let start = -1;
   let depth = 0;
   let quoted = false;
@@ -275,14 +277,16 @@ export function extractProjectNamesFromListReport(output: string): string[] {
     else if (char === '}' && --depth === 0) {
       try {
         const report = JSON.parse(output.slice(start, index + 1)) as {
-          config?: { projects?: Array<{ name?: unknown }> };
+          config?: { projects?: Array<{ name?: unknown; dependencies?: unknown }> };
         };
-        const names = [...new Set(
-          (report.config?.projects ?? [])
-            .map(project => project.name)
-            .filter((name): name is string => typeof name === 'string' && name.length > 0)
-        )];
-        if (names.length > 0) return names;
+        const nodes = (report.config?.projects ?? []).flatMap((project) => {
+          if (typeof project.name !== 'string' || !project.name) return [];
+          const dependencies = Array.isArray(project.dependencies)
+            ? project.dependencies.filter((name): name is string => typeof name === 'string')
+            : [];
+          return [{ name: project.name, dependencies }];
+        });
+        if (nodes.length > 0) return nodes;
       } catch {
         // Ignore non-JSON log objects and keep scanning for the reporter payload.
       }
@@ -290,4 +294,8 @@ export function extractProjectNamesFromListReport(output: string): string[] {
     }
   }
   return [];
+}
+
+export function extractProjectNamesFromListReport(output: string): string[] {
+  return [...new Set(extractProjectGraphFromListReport(output).map((project) => project.name))];
 }

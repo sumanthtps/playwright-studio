@@ -1,12 +1,16 @@
 import * as vscode from 'vscode';
 import { isTestFile, parseTests } from './testParser';
 
-export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
+export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider, vscode.Disposable {
   private readonly onDidChangeCodeLensesEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeCodeLenses = this.onDidChangeCodeLensesEmitter.event;
 
   refresh(): void {
     this.onDidChangeCodeLensesEmitter.fire();
+  }
+
+  dispose(): void {
+    this.onDidChangeCodeLensesEmitter.dispose();
   }
 
   provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
@@ -50,7 +54,7 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
         command: 'playwrightSnippets.runWithProject',
         arguments: [filePath],
         tooltip: 'Run with Project Selection',
-      })
+      }),
     );
 
     for (const item of items) {
@@ -75,7 +79,7 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
             command: 'playwrightSnippets.inspectTest',
             arguments: [filePath, item.name, item.line],
             tooltip: 'Inspect Test',
-          })
+          }),
         );
 
         // Per-test tag lenses
@@ -86,7 +90,7 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
               command: 'playwrightSnippets.runWithTag',
               arguments: [filePath, tag],
               tooltip: `Run all tests tagged ${tag}`,
-            })
+            }),
           );
         }
         continue;
@@ -110,7 +114,7 @@ export class PlaywrightCodeLensProvider implements vscode.CodeLensProvider {
           command: 'playwrightSnippets.inspectTest',
           arguments: [filePath, item.name, item.line],
           tooltip: 'Inspect Suite',
-        })
+        }),
       );
     }
 

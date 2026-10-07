@@ -4,7 +4,7 @@ import { debugCommand } from '../terminal';
 export async function debugInspectTest(
   testFile: string,
   testName?: string,
-  line?: number
+  line?: number,
 ): Promise<void> {
   const started = await debugCommand(buildDebugCommand(testFile, { testName, line }), {
     resource: testFile,

@@ -1,0 +1,192 @@
+name: All feature validation
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency security audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=moderate --ignore-scripts
+
+  quality:
+    name: Unit and command tests (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, node: 22 }
+          - { os: ubuntu-latest, node: 24 }
+          - { os: windows-latest, node: 22 }
+          - { os: macos-latest, node: 22 }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Check source formatting
+        run: npm run format:check
+      - name: Type-check source and tests
+        run: npm run typecheck
+      - name: Snippets, parsers, commands, intelligence and lab tests
+        run: npm test
+
+  experiments:
+    name: Real Playwright experiments (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Mutation, repair, reporter and journey execution
+        run: npm run test:experiments
+      - name: Portable capsules, repair challenges and incident regressions
+        run: npm run test:lab-experiments
+      - name: Retain experiment reports and process logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: experiments-${{ matrix.os }}
+          path: .test-dist/lab-experiments/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+
+  browsers:
+    name: Browser workflows (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      STUDIO_BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install browser and operating-system dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Scenario injection, trace capture and webview interaction
+        run: npm run test:browser
+      - name: Branching, product laws, agent wind tunnel and behavior diff
+        run: npm run test:lab-browser
+      - name: Selector ranking, browsing and packaged browser worker
+        if: matrix.browser == 'chromium'
+        run: npm run test:selector-browser
+      - name: Full Chrome DevTools attachment and lifecycle
+        if: matrix.browser == 'chromium'
+        run: xvfb-run -a npm run test:selector-devtools
+        env:
+          STUDIO_DEVTOOLS_HEADED: '1'
+      - name: Retain screenshots, traces, reports and process logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-evidence-${{ matrix.browser }}
+          path: |
+            .test-dist/*.png
+            .test-dist/lab-browser/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+
+  extension-host:
+    name: VS Code ${{ matrix.version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, version: stable }
+          - { os: ubuntu-latest, version: insiders }
+          - { os: windows-latest, version: stable }
+          - { os: macos-latest, version: stable }
+    env:
+      STUDIO_VSCODE_VERSION: ${{ matrix.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run extension-host tests with a virtual display
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:integration
+      - name: Run extension-host tests
+        if: runner.os != 'Linux'
+        run: npm run test:integration
+      - name: Retain extension-host logs
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vscode-${{ matrix.os }}-${{ matrix.version }}
+          path: .vscode-test/**/logs/**
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+  package:
+    name: Package and verify VSIX
+    needs: [dependency-audit, quality, experiments, browsers, extension-host]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build extension package
+        run: npm run package -- --out playwright-studio-ci.vsix
+      - name: Verify feature catalog, runtime, schemas and 1.5 MB VSIX budget
+        run: node scripts/verify-vsix.js playwright-studio-ci.vsix
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: validated-vsix
+          path: playwright-studio-ci.vsix
+          if-no-files-found: error
+          retention-days: 7

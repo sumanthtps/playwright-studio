@@ -1,337 +1,258 @@
-<h1 align="center">Playwright Studio</h1>
+# Playwright Studio — Test Runner & Snippets
 
-<p align="center">
-  <img src="images/playwright-logo.png" alt="Playwright Studio logo" width="148" />
-</p>
+**Run a test. Understand the failure. Save the setup for next time.**
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets"><img src="https://img.shields.io/badge/version-1.1.1-0f6b44?style=flat-square" alt="Version"></a>
-  <a href="https://github.com/sumanthtps/playwright-studio/actions"><img src="https://github.com/sumanthtps/playwright-studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/sumanthtps/playwright-studio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgray.svg" alt="License"></a>
-</p>
+Playwright Studio brings a test runner, debugger, saved run presets, failure artifacts, and **338 JavaScript and TypeScript snippets** into VS Code. Built for developers and QA engineers who work with Playwright every day.
 
-<p align="center">
-  <strong>The Playwright IDE that actually feels like an IDE.</strong>
-</p>
+**[Install Playwright Studio](https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets)** · [Quick start](#your-first-test-run) · [Setup & troubleshooting](docs/guide.md) · [All features](docs/features.md) · [Report a problem](https://github.com/sumanthtps/playwright-studio/issues/new/choose)
 
-<p align="center">
-  Inline tag filters · multi-project picker · environment profiles · coverage heatmap ·<br>
-  fixture Go-to-Definition · save-as-snippet · 338 typed snippets — and the rest of what you'd expect.
-</p>
+## Spend less time rebuilding the same test run
 
-<p align="center">
-  <img src="images/preview.gif" alt="Preview of Playwright Studio inside VS Code" width="920" />
-</p>
+| When you need to… | Use Studio to… |
+| --- | --- |
+| Reproduce a failure in one browser or environment | Save projects, tags, retries, and environment settings as a reusable run preset. |
+| Understand what failed | Review attempts, output, screenshots, and available traces beside your test source. |
+| Return to a previous failure | Browse local run history and compare captured outcomes. |
+| Write the next test | Type `p-` for snippets, navigate fixtures, and apply supported locator quick fixes. |
 
----
+![Playwright Studio running and reviewing tests in VS Code](https://raw.githubusercontent.com/sumanthtps/playwright-studio/main/images/preview.gif)
 
-## Why Playwright Studio?
+Recorded in VS Code with sample test results. [Browse captioned screenshots](docs/tour.md).
 
-If you already use Microsoft's official **Playwright Test for VS Code**, you have run / debug / inspect / codegen / trace. Playwright Studio adds the layer on top — the things you *also* want every day.
+## Your first test run
 
-|                                                  | Playwright Test for VS Code (Microsoft) | **Playwright Studio**       |
-| ------------------------------------------------ | --------------------------------------- | --------------------------- |
-| Run / Debug / Inspect from CodeLens              | ✅                                       | ✅                           |
-| Codegen launcher                                 | ✅                                       | ✅                           |
-| Trace Viewer & HTML Report shortcuts             | ✅                                       | ✅                           |
-| Inline `@tag` filter lenses on each test         | ❌                                       | ✅                           |
-| Multi-project picker (chromium, firefox, …)      | ❌                                       | ✅                           |
-| Environment profile switcher (status bar)        | ❌                                       | ✅                           |
-| Coverage heatmap — find untested code            | ❌                                       | ✅                           |
-| Fixture Go-to-Definition + Hover                 | ❌                                       | ✅                           |
-| Save selected code as a reusable snippet         | ❌                                       | ✅                           |
-| 338 typed snippets (page, locator, assert, …)    | ❌                                       | ✅                           |
-| Live results panel + gutter icons + diagnostics  | ✅                                       | ✅                           |
+1. **Install** from the Marketplace. Open a trusted folder with Playwright installed and a `playwright.config.*` file. Requires VS Code 1.90 or newer.
+2. **Open a test** such as `checkout.spec.ts`. Click **Run** above the test, or use **Playwright Studio → Tests** in the activity bar.
+3. **Review the result** in **Results**. For failures, open available attachments or traces; choose **Run Failed Tests** to retry.
 
-You can run both extensions side-by-side — they don't conflict.
+A standard project needs **no extension settings or reporter edits**. Studio adds result capture to its own runs and retains your existing reporters.
 
----
+Prefer the terminal? Install with:
 
-## Features
-
-### CodeLens Test Runner
-
-Open any Playwright spec file and get inline actions on every test and suite:
-
-```
-Run All   Debug All   Inspect All   $(tag) Run with Tag   $(layers) Run with Project
-──────────────────────────────────────────────────────────────────────────────────────
-Run       Debug       Inspect       @smoke  @regression
-Run Suite Debug Suite Inspect Suite
-```
-
-- **Run / Debug / Inspect** at the file, suite, and individual test level.
-- **Run with Tag** — filter by `@tag` found in test names, or enter a custom regex grep pattern.
-- **Run with Project** — pick one or more projects from your `playwright.config.ts` (e.g. `chromium`, `firefox`, `webkit`).
-- Per-test tag lenses appear automatically when your test name contains `@tags`.
-
----
-
-### Live Test Results Panel
-
-After each run a **Playwright Results** tree appears in the Explorer sidebar:
-
-- Tests grouped by file with pass / fail counts.
-- Click any test node to jump directly to its source line.
-- Failed tests show their error message as a tooltip.
-- Tests with an attached trace file show an "Open Trace" action.
-
-Result capture is **on by default**. The first time the extension activates against a workspace whose `playwright.config.*` is missing the `json` reporter, it offers a one-click **"Add JSON reporter"** button — the config is patched safely and the panel starts working. You can re-run the prompt any time via **Command Palette → Playwright Studio: Set Up Result Capture (Add JSON Reporter)**.
-
-Then just run tests through the extension (CodeLens, right-click menu, or Command Palette). See [Troubleshooting](#troubleshooting) if the panel stays empty.
-
----
-
-### Gutter Decorations & Failure Diagnostics
-
-Pass/fail status is shown inline after every test run:
-
-| Icon            | Meaning                 |
-| --------------- | ----------------------- |
-| 🟢 Green circle  | Test passed             |
-| 🔴 Red circle    | Test failed / timed out |
-| ⚫ Grey circle   | Test skipped            |
-| 🟠 Orange circle | Test flaky              |
-
-- **Overview ruler** in the scrollbar highlights failures and flaky tests at a glance.
-- **Diagnostics** (squiggles) appear on failed tests with the first line of the error message.
-- When a trace file is attached to the failure, the diagnostic code link opens the **Trace Viewer** directly.
-
----
-
-### Status Bar — Last Run Summary & Env Profile
-
-**Last run summary** appears in the status bar after each run:
-
-```
-$(pass) 24 passed      ← click to open HTML report
-$(error) 21 passed  3 failed
-```
-
-**Environment profile switcher** shows the active profile next to it:
-
-```
-$(server-environment) staging    ← click to switch profile
-```
-
-Configure profiles in settings:
-
-```json
-"playwrightSnippets.envProfiles": {
-  "staging":    { "BASE_URL": "https://staging.example.com" },
-  "production": { "BASE_URL": "https://example.com" }
-}
-```
-
-Switch profiles via the status bar or `Playwright Studio: Switch Environment Profile` from the Command Palette. The Playwright terminal is automatically recreated with the new environment.
-
----
-
-### Coverage Heatmap — Find Untested Code
-
-Tests that have **never been run** (or not run within the configured threshold) are highlighted with a subtle amber background and an inline `never run` label.
-
-- Threshold is configurable via `playwrightSnippets.heatmapThresholdDays` (default: 7 days).
-- Hover over a highlighted test to see when it was last run.
-- Decorations update automatically after each test run.
-
----
-
-### Fixture Navigation — Go to Definition & Hover
-
-Playwright fixtures are first-class citizens:
-
-- **Ctrl+Click** (Go to Definition) on any fixture name in a test callback jumps to where it is defined in your fixture file.
-- **Hover** over a fixture name shows which file and line it is defined on.
-- The fixture index is built automatically by scanning workspace files that use `.extend(`.
-
----
-
-### Save Selection as Snippet
-
-Capture any code block as a personal snippet:
-
-1. Select code in the editor.
-2. Right-click → **Playwright Studio: Save Selection as Snippet**.
-3. Enter a prefix (the shortcut you'll type) and a name.
-4. The snippet is saved to `playwright-custom.code-snippets` in your VS Code user folder and is immediately available in all projects.
-
----
-
-### Trace Viewer & HTML Report
-
-- **Show Trace Viewer** — pick a `.zip` trace file via file dialog, or click the trace link from a failure diagnostic.
-- **Show HTML Report** — opens the Playwright HTML report, also clickable from the status bar summary.
-
-If your HTML reporter uses a non-default `outputFolder`, set
-`playwrightSnippets.reportPath` to the same directory so the shortcut opens it.
-
----
-
-### Code Generation
-
-- **Open Codegen** — launches `playwright codegen` with an optional start URL. Record browser interactions and paste generated selectors straight into your test.
-
----
-
-## Command Palette Reference
-
-| Command                                               | Description                                   |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `Playwright Studio: Run Test`                         | Run a single test (prompts if none selected)  |
-| `Playwright Studio: Run All Tests in File`            | Run every test in the active file             |
-| `Playwright Studio: Debug Test`                       | Run a test in debug mode                      |
-| `Playwright Studio: Debug All Tests in File`          | Debug all tests in the active file            |
-| `Playwright Studio: Inspect Test (PWDEBUG=1)`         | Open Playwright Inspector for a test          |
-| `Playwright Studio: Inspect All Tests in File`        | Inspect all tests in the active file          |
-| `Playwright Studio: Debug Test with Inspector`        | Combined debug + inspector                    |
-| `Playwright Studio: Run Test at Cursor`               | Run the test surrounding the cursor           |
-| `Playwright Studio: Run Tests with Tag / Grep Filter` | Filter by `@tag` or regex pattern             |
-| `Playwright Studio: Run Tests with Project Selection` | Pick Playwright browser projects              |
-| `Playwright Studio: Switch Environment Profile`       | Switch active env profile from the status bar |
-| `Playwright Studio: Open Codegen`                     | Launch `playwright codegen`                   |
-| `Playwright Studio: Show Trace Viewer`                | Open a trace `.zip` file                      |
-| `Playwright Studio: Show HTML Report`                 | Open the Playwright HTML report               |
-| `Playwright Studio: Save Selection as Snippet`        | Save selected code as a reusable snippet      |
-| `Playwright Studio: Set Up Result Capture (Add JSON Reporter)` | One-click patch to add `['json']` to your `playwright.config` reporter array |
-
-### Keyboard Shortcuts
-
-| Shortcut                        | Command                          |
-| ------------------------------- | -------------------------------- |
-| `Ctrl+Alt+R` (`Cmd+Alt+R` on macOS) | Run Test at Cursor               |
-| `Ctrl+Alt+T` (`Cmd+Alt+T` on macOS) | Run Tests with Tag / Grep Filter |
-
----
-
-## Right-Click Context Menu
-
-Right-click anywhere in a test file for quick access to:
-
-- Run Test at Cursor
-- Run Tests with Tag / Grep Filter
-- Run Tests with Project Selection
-- Open Codegen
-- Save Selection as Snippet *(only when code is selected)*
-
-Right-click a file in the **Explorer** sidebar for:
-
-- Run All Tests in File
-- Debug All Tests in File
-- Debug All Tests with Inspector
-- Run Tests with Project Selection
-
----
-
-## Quick Start
-
-1. Install the extension from the VS Code Marketplace.
-2. Install Playwright in your project: `npm i -D @playwright/test`.
-3. Open any `.spec.ts`, `.test.ts`, `.spec.js`, or `.test.js` file.
-4. Use the CodeLens above your first test to run it.
-
-Or install from the terminal:
-
-```bash
+```sh
 code --install-extension sumanthtps.playwright-test-code-snippets
 ```
 
-> **Note:** The extension writes its results JSON to per-workspace VS Code storage (`%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\` on Windows; `~/Library/Application Support/Code/User/workspaceStorage/<hash>/...` on macOS), so nothing lands in your repo and there's nothing to gitignore.
+**New to Playwright?** Set up your project using the [Playwright installation guide](https://playwright.dev/docs/intro), then open it in VS Code. **No tests showing?** Run **Playwright Studio: Run Configuration Health Check** from the Command Palette. [Custom commands, monorepos, and troubleshooting](docs/guide.md).
 
----
+## Start small, add tools when you need them
 
-## Configuration
+Start with **Tests**, **Results**, and snippets. Saved presets and history are available when you need repeatable runs. Coverage import and the advanced experiment workflows are optional; [browse their guides](docs/features.md) when they fit your work.
 
-All settings live under `playwrightSnippets.*`:
+- **Uses your project:** Studio runs your installed Playwright CLI and configuration.
+- **Local results:** Captured results and history live in VS Code extension storage. Studio does not add analytics telemetry; tests and explicitly invoked external tools may use the network.
+- **Clear coverage labels:** Test recency highlights show which tests ran recently. Application line coverage requires an Istanbul/V8 coverage import.
+- **Independent extension:** Playwright Studio is a community project, not affiliated with Microsoft. If another test extension is installed, both may contribute test trees and editor actions.
 
-| Setting                                   | Default                 | Description                                                                                                    |
-| ----------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `playwrightSnippets.workingDirectory`     | `""`                    | Working directory for test runs (relative or absolute)                                                         |
-| `playwrightSnippets.testCommand`          | `"npx playwright test"` | Executable and arguments used to run tests. Quotes are supported; shell operators and expansion are not executed |
-| `playwrightSnippets.toolCommand`          | `""`                    | Optional Playwright command prefix for Codegen, Trace Viewer, and reports; derived from `testCommand` when empty |
-| `playwrightSnippets.reportPath`            | `""`                    | Optional HTML report directory for **Show HTML Report**; relative paths resolve from `workingDirectory`         |
-| `playwrightSnippets.reporter`             | `""`                    | Optional comma-separated CLI reporters. Leave empty to use the config; `json` is appended when capture is enabled |
-| `playwrightSnippets.env`                  | `{}`                    | Extra environment variables passed to every test run                                                           |
-| `playwrightSnippets.captureResults`       | `true`                  | Sets `PLAYWRIGHT_JSON_OUTPUT_FILE` so the JSON reporter writes results that power gutter icons, the sidebar panel, status bar, and trace links. Requires `['json']` in your config when the reporter setting is empty |
-| `playwrightSnippets.envProfiles`          | `{}`                    | Named env profiles — each key is a profile name, value is a map of env vars                                    |
-| `playwrightSnippets.heatmapThresholdDays` | `7`                     | Days after which a test is highlighted as never/rarely run                                                     |
+[Security behavior and limits](docs/security-review.md) · [Validation guide](test/README.md) · [Release notes](CHANGELOG.md)
 
-### Example `settings.json`
+<!-- feature-catalog:start -->
+## Features
 
-```json
-{
-  "playwrightSnippets.workingDirectory": "e2e",
-  "playwrightSnippets.testCommand": "npx playwright test",
-  "playwrightSnippets.reportPath": "playwright-report",
-  "playwrightSnippets.reporter": "list",
-  "playwrightSnippets.captureResults": true,
-  "playwrightSnippets.heatmapThresholdDays": 7,
-  "playwrightSnippets.env": {
-    "CI": "false"
-  },
-  "playwrightSnippets.envProfiles": {
-    "staging": {
-      "BASE_URL": "https://staging.example.com",
-      "AUTH_TOKEN": "staging-token"
-    },
-    "production": {
-      "BASE_URL": "https://example.com"
-    }
-  }
-}
-```
+Each of the **98 entries** below has its own description. Open **Playwright Studio → Features** in the sidebar, or run **Playwright Studio: Open Feature Catalog**. Entries include all **76 commands** and editor integrations; all **338 snippets** are listed in the [snippet reference](#snippets-reference).
 
----
+<details>
+<summary>Explore all features and commands</summary>
 
-## Troubleshooting
+### Editor and sidebar features
 
-### Playwright Results panel stays empty
+| Feature | What it does |
+| --- | --- |
+| [338 JavaScript and TypeScript snippets](docs/features.md#snippets) | Type p- in JavaScript, TypeScript, JSX or TSX to browse test, locator, assertion, API, network, browser and other snippet families. |
+| [Native Test Explorer](docs/features.md#test-discovery) | Discover files, suites and tests in the Studio Tests view and VS Code Testing view; captured runtime cases extend static discovery. |
+| [Continuous test runs](docs/features.md#continuous-runs) | Enable continuous runs through the native Testing API to rerun selected tests when relevant files change. |
+| [Editor CodeLens actions](docs/features.md#codelens) | Use inline Run, Debug and Inspect actions above tests and suites, including tag actions. |
+| [Automatic result capture](docs/features.md#result-capture) | Studio adds its capture reporter at run time while preserving existing reporters; normal extension runs need no JSON reporter edit. |
+| [Results sidebar](docs/features.md#results-tree) | Browse captured passed, failed, flaky and skipped outcomes, project groups and source locations. |
+| [Test status in the editor gutter](docs/features.md#failure-gutter) | See pass, failure, flaky and skipped status beside test source lines. |
+| [Failure diagnostics in Problems](docs/features.md#failure-problems) | Navigate captured failures through the Problems panel with messages and available trace links. |
+| [Attempts, steps and output](docs/features.md#captured-evidence) | Inspect captured attempts, step summaries, stdout/stderr, attachments and source/runtime metadata through results and evidence reports. |
+| [Persistent run history](docs/features.md#persistent-history) | Retain workspace run summaries and outcomes between VS Code sessions and navigate back to their source. |
+| [Environment and run status bar](docs/features.md#status-bar) | See the selected environment and most recent run summary in the VS Code status bar. |
+| [Test recency highlights](docs/features.md#recency-heatmap) | Highlight test coverage recency from captured results; this is separate from measured application line coverage. |
+| [Go to fixture definition](docs/features.md#fixture-definition) | Jump from a custom fixture parameter to its workspace definition. |
+| [Fixture hover information](docs/features.md#fixture-hover) | Hover over a fixture parameter to inspect its definition and source link. |
+| [Locator diagnostics](docs/features.md#locator-diagnostics) | Highlight supported legacy selector patterns and suggest more maintainable locators. |
+| [Locator quick fixes](docs/features.md#locator-quick-fixes) | Apply supported semantic locator or legacy API replacements through editor quick fixes. |
+| [Components sidebar](docs/features.md#component-sidebar) | Discover component tests and stories and navigate to their source. |
+| [Tags and annotations sidebar](docs/features.md#annotations-sidebar) | Browse captured tags, test annotations and quarantine context with source navigation. |
+| [Automatic project detection](docs/features.md#config-detection) | Find the nearest supported Playwright configuration and resolve runs in the appropriate project or workspace root. |
+| [Studio and lab JSON validation](docs/features.md#json-config) | Get validation and completions for local Studio and Lab configuration in VS Code workspace storage. |
+| [Keyboard shortcuts](docs/features.md#keyboard-shortcuts) | Run the test at the cursor with Ctrl+Alt+R (Cmd+Alt+R on macOS) or open tag/grep selection with Ctrl+Alt+T (Cmd+Alt+T). |
+| [Getting started walkthrough](docs/features.md#getting-started) | Use VS Code Get Started to learn editor execution, Codegen and trace/report inspection. |
 
-The panel only populates when a Playwright run writes a JSON report to the extension's per-workspace storage directory. Walk this checklist top to bottom — each step depends on the previous one.
+### Run and debug
 
-1. **Enable result capture.** In your workspace `.vscode/settings.json` (or User settings):
-   ```json
-   { "playwrightSnippets.captureResults": true }
-   ```
-   This makes the extension export `PLAYWRIGHT_JSON_OUTPUT_FILE` into the processes it starts.
+| Feature | What it does |
+| --- | --- |
+| [Run Test](docs/features.md#runtest) | Run one test or suite selected from the active test file. |
+| [Run All Tests in File](docs/features.md#runfile) | Run every test in the active or selected test file. |
+| [Debug Test](docs/features.md#debugtest) | Run a selected test under the VS Code debugger with breakpoints. |
+| [Debug All Tests in File](docs/features.md#debugfile) | Debug every test in a file with the VS Code debugger. |
+| [Inspect Test](docs/features.md#inspecttest) | Run a selected test with Playwright Inspector. |
+| [Inspect All Tests in File](docs/features.md#inspectfile) | Run a file with Playwright Inspector. |
+| [Debug Test with Inspector](docs/features.md#debuginspecttest) | Use VS Code debugging and Playwright Inspector together for a selected test. |
+| [Debug All Tests with Inspector](docs/features.md#debuginspectfile) | Use VS Code debugging and Playwright Inspector together for a test file. |
+| [Run Test at Cursor](docs/features.md#runtestatcursor) | Run the test at the editor cursor using its source line. |
+| [Inspect Test at Cursor](docs/features.md#inspecttestatcursor) | Open Playwright Inspector for the test at the editor cursor. |
+| [Run Tests](docs/features.md#runexplorertests) | Run the selected test, suite or file from the Tests sidebar, or all discovered tests from its toolbar. |
+| [Debug Tests](docs/features.md#debugexplorertests) | Debug the selected sidebar tests, or all discovered tests from its toolbar. |
+| [Inspect Tests](docs/features.md#inspectexplorertests) | Open selected tests, suites or files in Playwright Inspector from the eye icon beside Run and Debug. |
+| [Refresh Tests](docs/features.md#refreshtests) | Refresh source discovery in the Studio sidebar and native Test Explorer. |
+| [Open Playwright UI Mode](docs/features.md#openuimode) | Launch Playwright UI Mode for interactive test execution and inspection. |
+| [Watch Current Test File in UI Mode](docs/features.md#watchfile) | Launch UI Mode scoped to the current test file for reruns while editing. |
+| [Cancel All Runs](docs/features.md#cancelruns) | Stop the extension's active test tasks and debug sessions, including the current experiment execution. |
 
-2. **Add the `json` reporter to `playwright.config.ts`.** When `playwrightSnippets.reporter` is empty, the JSON reporter must be present in your config:
-   ```ts
-   reporter: [
-     ['list'],
-     ['html', { open: 'never' }],
-     ['json'], // required for the results panel
-   ],
-   ```
-   Without this, no JSON file is ever written, no matter what env vars are set.
+### Run selection and configuration
 
-3. **Set `workingDirectory` if your `playwright.config.ts` is not at the workspace root.** Common in monorepos. Example for a config at `<workspace>/tests/playwright.config.ts`:
-   ```json
-   { "playwrightSnippets.workingDirectory": "tests" }
-   ```
+| Feature | What it does |
+| --- | --- |
+| [Run Tests with Tag / Grep Filter](docs/features.md#runwithtag) | Select a discovered tag or enter a grep expression to filter tests. |
+| [Run Tests with Project Selection](docs/features.md#runwithproject) | Choose one or more configured Playwright browser projects. |
+| [Run with Matrix Options](docs/features.md#runmatrix) | Choose scope, projects, grep, headed mode, workers, retries, repetitions, timeouts, trace/video policies, shards and snapshot options; optionally save a preset. |
+| [Run Saved Preset](docs/features.md#runpreset) | Run a saved combination of test scope, projects, options and environment profile. |
+| [Manage Saved Run Presets](docs/features.md#managerunpresets) | Rename, duplicate, edit, delete or run saved presets. |
+| [Run Failed Tests](docs/features.md#runfailed) | Rerun failed tests from the latest captured results. |
+| [Run Last Failed](docs/features.md#runlastfailed) | Use Playwright's last-failed selection for the project. |
+| [Repeat Until Failure](docs/features.md#repeatuntilfailure) | Repeat a selected test with an iteration limit and stop on failure. |
+| [Run a Shard](docs/features.md#runshard) | Run one numbered shard of the selected test suite. |
+| [Copy Sharded CI Command](docs/features.md#copycicommand) | Copy a Playwright command with sharding options for use in CI. |
 
-4. **Run tests via the extension, not a manual terminal.** Use CodeLens (`▶ Run Test`), the editor right-click menu (**Playwright Studio → Run Test at Cursor**), or the Command Palette (**Playwright Studio: Run Test**). Manual terminals do not receive the extension's result-capture environment.
+### Results and artifacts
 
-5. **Settings apply to the next run.** Each run receives a fresh working directory and environment, so no window reload or terminal cleanup is needed.
+| Feature | What it does |
+| --- | --- |
+| [Set Up Result Capture (Add JSON Reporter)](docs/features.md#setupcaptureresults) | Optionally add JSON reporting to the project config for runs outside Studio; extension-managed runs already capture results automatically. |
+| [Show Trace Viewer](docs/features.md#showtrace) | Open a captured or selected trace archive in Playwright Trace Viewer. |
+| [Show HTML Report](docs/features.md#showreport) | Open the project's Playwright HTML report. |
+| [Open Test Artifact](docs/features.md#openartifact) | Inspect captured screenshot, video, trace and other test attachments. |
+| [Review and Accept Snapshot Artifacts](docs/features.md#reviewsnapshots) | Review expected, actual and diff attachments and choose whether to accept a snapshot. |
+| [Update Screenshots and ARIA Snapshots](docs/features.md#updatesnapshots) | Rerun tests with screenshot and ARIA snapshot updates enabled. |
+| [Set Up Video Policy Override](docs/features.md#setupvideooverride) | Set up the optional config hook that allows Studio's video policy override to take effect. |
 
-6. **Verify the JSON file is being written.** It lives at:
-   - **Windows:** `%APPDATA%\Code\User\workspaceStorage\<hash>\sumanthtps.playwright-test-code-snippets\playwright-studio-results.json`
-   - **macOS:** `~/Library/Application Support/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
-   - **Linux:** `~/.config/Code/User/workspaceStorage/<hash>/sumanthtps.playwright-test-code-snippets/playwright-studio-results.json`
+### History and test health
 
-   If the file is **missing** after a run, the json reporter or env var isn't reaching the test process — go back to steps 1–4. If the file **exists** but the panel is still empty, it's a refresh issue — the panel polls mtime every 1.5s, so toggling focus or running the test once more will pick it up.
+| Feature | What it does |
+| --- | --- |
+| [Show Flaky and Duration Analytics](docs/features.md#showanalytics) | Review flaky tests, failure frequency and test durations from captured run history. |
+| [Compare Two Runs](docs/features.md#compareruns) | Compare outcomes and timing between two saved runs. |
+| [Open Run History as Markdown](docs/features.md#exporthistory) | Open the workspace's recorded run history as Markdown. |
+| [Clear Run History](docs/features.md#clearhistory) | Remove saved run history after confirmation. |
+| [Quarantine Test at Cursor](docs/features.md#quarantinetest) | Mark the test at the cursor as quarantined with a reason. |
+| [Remove Test Quarantine at Cursor](docs/features.md#unquarantinetest) | Remove the quarantine marker from the test at the cursor. |
 
-### Test run launches but reports "no tests found"
+### Writing and maintaining tests
 
-`playwrightSnippets.workingDirectory` is wrong. Playwright doesn't search up the directory tree for `playwright.config.ts` — set `workingDirectory` to the folder that actually contains it.
+| Feature | What it does |
+| --- | --- |
+| [Open Codegen](docs/features.md#codegen) | Launch Playwright Codegen to record interactions and generate tests. |
+| [Open Live Locator Picker](docs/features.md#openlocatorpicker) | Launch the live Playwright locator picker for a target page. |
+| [Save Selection as Snippet](docs/features.md#saveassnippet) | Save the selected editor text as a reusable snippet in the current VS Code profile. |
+| [Open Component Testing Gallery](docs/features.md#opencomponentgallery) | Browse component test files and Storybook stories discovered in the workspace. |
+| [Initialize Playwright Test Agents](docs/features.md#initializeagents) | Initialize Playwright's supported test-agent files in the project. |
+| [Create Test Plan with Planner Agent](docs/features.md#generatetestplan) | Hand a planning prompt to a supported installed agent workflow for review. |
+| [Generate Tests from Reviewed Plan](docs/features.md#generatetestsfromplan) | Hand a reviewed plan to the test-generation agent workflow. |
+| [Heal Captured Failures with Agent](docs/features.md#healfailures) | Prepare a healer-agent handoff using captured failing-test evidence. |
+| [Open Selector Intelligence](docs/features.md#openselectorintelligence) | Browse a website inside VS Code, inspect an element, and compare live-verified Playwright locators, CSS selectors and XPath with uniqueness counts. |
 
-### Reporter selection
+### Projects and environments
 
-Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the setting is non-empty, it is passed through `--reporter` and therefore overrides the config for that run; `json` is added automatically while result capture is enabled.
+| Feature | What it does |
+| --- | --- |
+| [Switch Environment Profile](docs/features.md#switchenvprofile) | Choose a named environment profile for subsequent runs. |
+| [Select .env File](docs/features.md#selectenvfile) | Choose an optional .env file whose values are loaded for execution. |
+| [Open Multi-Root Workspace Dashboard](docs/features.md#openworkspacedashboard) | Review detected Playwright roots across a multi-root workspace. |
+| [Show Project Dependency Graph](docs/features.md#showprojectgraph) | Display configured Playwright projects and their dependencies. |
+| [Run Configuration Health Check](docs/features.md#healthcheck) | Check project detection, configuration, execution settings and result/report paths. |
+| [Install Playwright Browsers](docs/features.md#installbrowsers) | Install Playwright browser binaries using the project's tool command. |
+| [Update Playwright Browsers](docs/features.md#updatebrowsers) | Refresh the browser binaries for the project's installed Playwright version. |
+
+### Coverage and sharing
+
+| Feature | What it does |
+| --- | --- |
+| [Import Istanbul/V8 Coverage](docs/features.md#importcoverage) | Import existing Istanbul or V8 coverage into VS Code's native test coverage UI. |
+| [Export Latest Results](docs/features.md#exportresults) | Export the latest captured results as Markdown, JSON or JUnit XML, or copy a summary. |
+| [Post Latest Results to GitHub](docs/features.md#postgithubcomment) | Review the destination and confirm before posting a captured result summary through GitHub CLI. |
+
+### Playwright Intelligence
+
+| Feature | What it does |
+| --- | --- |
+| [Open Intelligence Dashboard](docs/features.md#openintelligence) | Open the dashboard containing all 15 intelligence and advanced testing workflows. |
+| [Investigate Failures](docs/features.md#investigatefailures) | Failure Detective groups captured failures using signatures, traces and source evidence; explanations are investigation hypotheses. |
+| [Test the Tests with Mutations](docs/features.md#testthetests) | Challenge selected tests with isolated application mutations, comparing a passing baseline with each changed source. |
+| [Open Scenario Lab](docs/features.md#openscenariolab) | Save and run latency, HTTP error, offline and clock scenarios; compare against baseline and reduce failing recipes. |
+| [Show Living Behavior Map](docs/features.md#showbehaviormap) | Index literal routes, semantic UI roles, steps, assertions, imports and promise links into a Living Behavior Map. |
+| [Show Change Radar](docs/features.md#showchangeradar) | Select checks for changed files under a time budget using imports, coverage links, history, promises and recorded incidents. |
+| [Verify a Candidate Repair](docs/features.md#verifyrepair) | Reproduce the original failure, audit a candidate test repair and run it repeatedly in an isolated copy before review. |
+| [Benchmark Human and Agent Journeys](docs/features.md#benchmarkjourneys) | Compare scripted human-style interactions with user-supplied agent adapters against shared success criteria. |
+| [Manage Product Promises](docs/features.md#managepromises) | Record observable product promises, owners, priority and linked tests, then inspect evidence freshness for the current source. |
+
+### Advanced testing workflows
+
+| Feature | What it does |
+| --- | --- |
+| [Open Bug Capsules](docs/features.md#openbugcapsules) | Capture reviewed, checksummed source bundles that reproduce a failure; inspect or reproduce imported capsules in disposable copies. |
+| [Branch the Failure](docs/features.md#branchfailure) | Rerun a journey with checkpoint-triggered network, cookie, offline, clock or misleading-text conditions and compare observed outcomes. |
+| [Check Product Laws](docs/features.md#checkproductlaws) | Run seeded sequences against a user-defined business invariant, reduce reproduced failures and export regression tests. |
+| [Open Agent Wind Tunnel](docs/features.md#openagentwindtunnel) | Compare user-supplied agent adapters across model labels and branch conditions using measured completion, forbidden actions, recovery and cost. |
+| [Challenge a Candidate Repair](docs/features.md#challengerepair) | Challenge a candidate repair with known application defects as negative controls, alongside failure reproduction and repeated candidate runs. |
+| [Compare Runtime Behavior Across Revisions](docs/features.md#showbehaviordiff) | Run selected journeys against a Git revision and the saved workspace, comparing outcomes, ARIA snapshots, focus, URLs and response statuses. |
+| [Open Incident Memory](docs/features.md#openincidentmemory) | Record and exchange incident summaries, regression links and optional negative controls; validate them and feed affected files into Change Radar. |
+
+### Feature discovery
+
+| Feature | What it does |
+| --- | --- |
+| [Open Feature Catalog](docs/features.md#openfeaturecatalog) | Open this complete feature catalog; the Features sidebar lists each entry separately with a description. |
+
+</details>
+<!-- feature-catalog:end -->
+
+## Local workspace data
+
+Studio configs, generated helpers and run data stay in VS Code workspace storage outside your repository, without editing ignore files. Existing `.playwright-studio` data migrates with verified copies and conflict checks. Use **Edit configuration** or **Edit lab configuration** in the Intelligence dashboard to open local configs.
+
+## Selector Intelligence
+
+Run **Playwright Studio: Open Selector Intelligence**, enter an HTTP or HTTPS URL, then click an element in the website preview. Compare ranked Playwright role, test ID, label, text, CSS and XPath locators with live match counts. Switch to **Browse**, click a field and type directly; Enter, Tab, selection shortcuts and plain-text paste work through the preview. Return to **Inspect** to choose a locator.
+
+Use **Open Chrome DevTools** in the toolbar for full DevTools in a separate Chrome window attached to that same page. Close and reopen the Selector Intelligence tab to resume its live browser, mode and selector results within the same VS Code window. Reloading or exiting VS Code ends the session.
+
+Use a trusted project with Playwright installed. If Playwright's Chromium is missing, the default browser selection tries installed Chrome and Edge. The panel also offers **Install Chromium** and browser recovery actions. Each session uses a separate browser profile.
+
+The **eye icon beside Run and Debug** in the Tests view opens the selected test, suite or file in Playwright Inspector. [Selector setup and limitations](docs/selectors.md).
+
+## Playwright Intelligence
+
+Open **Playwright Studio: Open Intelligence Dashboard** for eight connected workflows: Failure Detective, Test the Tests, Scenario Lab, Living Behavior Map, Change Radar, Verified Repair, Human & Agent Journeys, and Product Promises.
+
+Investigate captured failures, challenge assertions with isolated mutations, reproduce faults, select checks for a time budget, verify candidate repairs, and track behavior requirements against revision-specific evidence. [Workflow guide, configuration, and execution boundaries](docs/intelligence.md).
+
+Seven additional workflows extend that evidence into portable **Bug Capsules**, checkpoint-based **Branch the Failure** experiments, seeded **Product Laws**, an **Agent Wind Tunnel**, negative-control **Repair Challenges**, runtime **Behavior Diff**, and **Incident Memory** connected to Change Radar. [Setup, adapter examples, and evidence limits](docs/lab.md).
+
+## Shortcuts
+
+| Action | Windows / Linux | macOS |
+| --- | --- | --- |
+| Run test at cursor | `Ctrl+Alt+R` | `Cmd+Alt+R` |
+| Run with tag / grep | `Ctrl+Alt+T` | `Cmd+Alt+T` |
+
+## Need a custom setup?
+
+Most settings are optional. Use `playwrightSnippets.workingDirectory` to override project detection, `testCommand` for a custom runner, or `reportPath` for a custom HTML report directory. Search **Playwright Snippets** in VS Code Settings for the full list.
+
+If a run fails to start or results are missing, run **Playwright Studio: Run Configuration Health Check**. The [setup and troubleshooting guide](docs/guide.md) covers monorepos, reporters, environments, and browser installation.
 
 ---
 
 ## Snippets Reference
+
+Type `p-` to browse snippets, or expand the full reference below.
+
+<details>
+<summary>Browse all 338 snippet prefixes</summary>
 
 ### Prefix Families
 
@@ -905,6 +826,12 @@ Leave `playwrightSnippets.reporter` empty to use `playwright.config.*`. When the
 | `p-config`           | Full `playwright.config.ts` template  |
 
 ---
+
+</details>
+
+## Feedback
+
+Found a rough edge? [Report a bug](https://github.com/sumanthtps/playwright-studio/issues/new?template=bug_report.yml) with your VS Code version, Playwright version, and steps to reproduce. If Studio helps your workflow, an [honest Marketplace review](https://marketplace.visualstudio.com/items?itemName=sumanthtps.playwright-test-code-snippets&ssr=false#review-details) helps other developers decide whether it fits theirs.
 
 ## Links
 

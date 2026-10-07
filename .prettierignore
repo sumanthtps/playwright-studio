@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.test-dist/
+.vscode-test/
+test-results/
+package-lock.json
+src/featureCatalog.json

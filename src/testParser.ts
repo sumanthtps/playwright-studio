@@ -4,6 +4,8 @@ export interface TestItem {
   name: string;
   line: number;
   endLine: number;
+  startOffset: number;
+  endOffset: number;
   kind: 'test' | 'describe';
   tags: string[];
 }
@@ -12,7 +14,8 @@ export function extractTags(testName: string): string[] {
   return testName.match(/@[\w-]+/g) ?? [];
 }
 
-const CALL_RE = /(?<![\w$.])((?:test\.describe|describe)(?:\.(?:only|skip|fixme|serial|parallel))*|(?:test|it)(?:\.(?:only|skip|fixme|fail))*)\s*\(/g;
+const CALL_RE =
+  /(?<![\w$.])((?:test\.describe|describe)(?:\.(?:only|skip|fixme|serial|parallel))*|(?:test|it)(?:\.(?:only|skip|fixme|fail))*)\s*\(/g;
 
 function regexCanStartAfter(previousCode: string): boolean {
   return /[=([{,:;!&|?+*%^~<>-]/.test(previousCode || '=');
@@ -23,7 +26,8 @@ function maskNonCode(source: string): string {
   // split('') preserves UTF-16 offsets used by VS Code; a code-point spread
   // would shift offsets after emoji and other astral characters.
   const output = source.split('');
-  let state: 'code' | 'single' | 'double' | 'template' | 'regex' | 'lineComment' | 'blockComment' = 'code';
+  let state: 'code' | 'single' | 'double' | 'template' | 'regex' | 'lineComment' | 'blockComment' =
+    'code';
   let escaped = false;
   let regexClass = false;
   let previousCode = '';
@@ -225,14 +229,15 @@ export function parseTests(document: vscode.TextDocument): TestItem[] {
     const endOffset = matchingCallEnd(masked, openParen);
     const line = lineAtOffset(starts, match.index!);
     const endLine = lineAtOffset(starts, endOffset);
-    const kind: TestItem['kind'] = callName.startsWith('test.describe') || callName.startsWith('describe')
-      ? 'describe'
-      : 'test';
+    const kind: TestItem['kind'] =
+      callName.startsWith('test.describe') || callName.startsWith('describe') ? 'describe' : 'test';
     const declaration = source.slice(match.index!, endOffset + 1);
     items.push({
       name: title.value,
       line,
       endLine,
+      startOffset: match.index!,
+      endOffset,
       kind,
       tags: [...new Set([...extractTags(title.value), ...extractDetailTags(declaration)])],
     });
@@ -253,7 +258,7 @@ export function isTestFile(document: vscode.TextDocument): boolean {
 }
 
 export function findTestAtLine(items: TestItem[], line: number): TestItem | undefined {
-  return [...items].reverse().find(
-    item => item.kind === 'test' && item.line <= line && item.endLine >= line
-  );
+  return [...items]
+    .reverse()
+    .find((item) => item.kind === 'test' && item.line <= line && item.endLine >= line);
 }

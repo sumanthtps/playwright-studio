@@ -11,10 +11,9 @@ export class GutterDecorationManager implements vscode.Disposable {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    store: ResultStore
+    store: ResultStore,
   ) {
-    const icon = (name: string) =>
-      vscode.Uri.file(context.asAbsolutePath(`images/${name}`));
+    const icon = (name: string) => vscode.Uri.file(context.asAbsolutePath(`images/${name}`));
 
     this.passType = vscode.window.createTextEditorDecorationType({
       gutterIconPath: icon('pass.svg'),
@@ -47,15 +46,13 @@ export class GutterDecorationManager implements vscode.Disposable {
 
     this.disposables.push(
       store.onDidChange(() => this.update(store)),
-      vscode.window.onDidChangeVisibleTextEditors(() => {
-        if (store.results) this.updateDecorations(store.results);
-      })
+      vscode.window.onDidChangeVisibleTextEditors(() => this.update(store)),
     );
   }
 
   private update(store: ResultStore): void {
-    const results = store.results;
-    if (!results) return;
+    const results = store.allResults;
+    if (!results.length) return;
     this.updateDiagnostics(results);
     this.updateDecorations(results);
   }
@@ -89,46 +86,56 @@ export class GutterDecorationManager implements vscode.Disposable {
 
   private failureDiagnostic(lineSpecs: SpecResult[], range: vscode.Range): vscode.Diagnostic {
     const failures = lineSpecs.filter(
-      item => item.status === 'failed' || item.status === 'timedOut'
+      (item) => item.status === 'failed' || item.status === 'timedOut',
     );
     const message = failures
-      .map(item => {
+      .map((item) => {
         const prefix = item.projectName ? `[${item.projectName}] ` : '';
         return `${prefix}${item.error?.split('\n')[0] ?? `Test "${item.title}" failed`}`;
       })
       .join('\n');
     const diagnostic = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
     diagnostic.source = 'Playwright Studio';
-    const traceFile = failures.find(item => item.traceFile)?.traceFile;
+    const traceFile = failures.find((item) => item.traceFile)?.traceFile;
     if (traceFile) {
       diagnostic.code = {
         value: 'Open Trace',
         target: vscode.Uri.parse(
-          `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([traceFile]))}`
+          `command:playwrightSnippets.showTrace?${encodeURIComponent(JSON.stringify([traceFile]))}`,
         ),
       };
     }
     return diagnostic;
   }
 
-  private updateDiagnostics(results: TestResults): void {
+  private updateDiagnostics(allResults: readonly TestResults[]): void {
     this.diagnostics.clear();
-    for (const [filePath, fileSpecs] of this.byFile(results)) {
+    const combined: TestResults = {
+      rootDir: '',
+      specs: allResults.flatMap((results) => results.specs),
+      summary: allResults[0].summary,
+    };
+    for (const [filePath, fileSpecs] of this.byFile(combined)) {
       const diagnostics: vscode.Diagnostic[] = [];
       for (const [line, lineSpecs] of this.byLine(fileSpecs)) {
-        if (lineSpecs.some(spec => spec.status === 'failed' || spec.status === 'timedOut')) {
-          diagnostics.push(this.failureDiagnostic(
-            lineSpecs,
-            new vscode.Range(Math.max(0, line), 0, Math.max(0, line), Number.MAX_SAFE_INTEGER)
-          ));
+        if (lineSpecs.some((spec) => spec.status === 'failed' || spec.status === 'timedOut')) {
+          diagnostics.push(
+            this.failureDiagnostic(
+              lineSpecs,
+              new vscode.Range(Math.max(0, line), 0, Math.max(0, line), Number.MAX_SAFE_INTEGER),
+            ),
+          );
         }
       }
       if (diagnostics.length > 0) this.diagnostics.set(vscode.Uri.file(filePath), diagnostics);
     }
   }
 
-  private updateDecorations(results: TestResults): void {
-    const byFile = this.byFile(results);
+  private updateDecorations(allResults: readonly TestResults[]): void {
+    const byFile = new Map<string, SpecResult[]>();
+    for (const results of allResults) {
+      for (const [file, specs] of this.byFile(results)) byFile.set(file, specs);
+    }
     for (const editor of vscode.window.visibleTextEditors) {
       const filePath = editor.document.uri.fsPath;
       const fileSpecs = byFile.get(filePath) ?? [];
@@ -140,7 +147,7 @@ export class GutterDecorationManager implements vscode.Disposable {
 
       for (const lineSpecs of this.byLine(fileSpecs).values()) {
         const spec = [...lineSpecs].sort(
-          (left, right) => this.severity(right) - this.severity(left)
+          (left, right) => this.severity(right) - this.severity(left),
         )[0];
         const lineIdx = Math.max(0, Math.min(spec.line, editor.document.lineCount - 1));
         const range = editor.document.lineAt(lineIdx).range;
@@ -168,6 +175,6 @@ export class GutterDecorationManager implements vscode.Disposable {
     this.failType.dispose();
     this.skipType.dispose();
     this.flakyType.dispose();
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach((d) => d.dispose());
   }
 }

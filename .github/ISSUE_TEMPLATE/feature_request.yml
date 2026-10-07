@@ -1,0 +1,16 @@
+name: Suggest an improvement
+description: Describe a workflow that could be easier.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: What are you trying to do?
+      description: Describe your workflow and the part that slows you down.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would help?
+      description: Describe the improvement and any workaround you use today.

@@ -3,16 +3,25 @@
 .gitignore
 .claude/**
 .vscode/**
+.vscode-test/**
 test/**
 scripts/**
 src/**
 out/**
 node_modules/**
 dist/**/*.map
-tsconfig.json
+tsconfig*.json
 esbuild.js
 *.vsix
-images/preview.gif
 playwright-studio-results.json
 test-results/**
 .test-dist/**
+# Repository/Marketplace demo media is linked remotely, never used at runtime.
+images/preview.gif
+images/demo/**
+
+.prettier*
+CONTRIBUTING.md
+docs/marketplace-plan.md
+.playwright-studio/**
+playwright-report/**

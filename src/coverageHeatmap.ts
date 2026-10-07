@@ -16,7 +16,7 @@ export class CoverageHeatmap implements vscode.Disposable {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    store: ResultStore
+    store: ResultStore,
   ) {
     this.coldType = vscode.window.createTextEditorDecorationType({
       isWholeLine: true,
@@ -31,7 +31,7 @@ export class CoverageHeatmap implements vscode.Disposable {
     });
 
     this.disposables.push(
-      store.onDidChange(results => {
+      store.onDidChange((results) => {
         const lastRun = this.context.workspaceState.get<LastRunMap>(STATE_KEY, {});
         const runAt = results.summary.startTime.getTime();
         if (runAt <= 0) return;
@@ -47,11 +47,11 @@ export class CoverageHeatmap implements vscode.Disposable {
       vscode.window.onDidChangeVisibleTextEditors(() => this.updateEditors()),
       vscode.workspace.onDidOpenTextDocument(() => this.updateEditors()),
       vscode.workspace.onDidChangeTextDocument(() => this.updateEditors()),
-      vscode.workspace.onDidChangeConfiguration(event => {
+      vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('playwrightSnippets.heatmapThresholdDays')) {
           this.updateEditors();
         }
-      })
+      }),
     );
 
     this.updateEditors();
@@ -73,7 +73,7 @@ export class CoverageHeatmap implements vscode.Disposable {
       const filePath = editor.document.uri.fsPath;
       const cold: vscode.DecorationOptions[] = [];
 
-      for (const test of parseTests(editor.document).filter(item => item.kind === 'test')) {
+      for (const test of parseTests(editor.document).filter((item) => item.kind === 'test')) {
         const key = testKey(filePath, test.line, test.name);
         const lastRunTime = lastRun[key];
         const isCold = !lastRunTime || now - lastRunTime > thresholdMs;
@@ -98,6 +98,6 @@ export class CoverageHeatmap implements vscode.Disposable {
 
   dispose(): void {
     this.coldType.dispose();
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach((d) => d.dispose());
   }
 }

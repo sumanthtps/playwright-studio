@@ -28,7 +28,7 @@ export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<v
   const prefix = await vscode.window.showInputBox({
     prompt: 'Snippet prefix — the shortcut you type to trigger it',
     placeHolder: 'e.g. p-my-login-flow',
-    validateInput: v => (v?.trim() ? undefined : 'Prefix is required'),
+    validateInput: (v) => (v?.trim() ? undefined : 'Prefix is required'),
   });
   if (!prefix) return;
 
@@ -36,7 +36,7 @@ export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<v
     prompt: 'Snippet name — a short human-readable description',
     placeHolder: 'e.g. My login flow snippet',
     value: prefix,
-    validateInput: value => (value?.trim() ? undefined : 'Name is required'),
+    validateInput: (value) => (value?.trim() ? undefined : 'Name is required'),
   });
   if (!name) return;
 
@@ -52,7 +52,7 @@ export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<v
     } catch (error) {
       await vscode.window.showErrorMessage(
         `Cannot save the snippet because ${path.basename(snippetsFile)} is not valid JSON. ` +
-        `Fix the file first; its existing contents were left unchanged. (${String(error)})`
+          `Fix the file first; its existing contents were left unchanged. (${String(error)})`,
       );
       return;
     }
@@ -63,13 +63,13 @@ export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<v
     const choice = await vscode.window.showWarningMessage(
       `A snippet named "${snippetName}" already exists. Replace it?`,
       { modal: true },
-      'Replace'
+      'Replace',
     );
     if (choice !== 'Replace') return;
   }
 
   // Split into lines and escape $ signs
-  const body = selectedText.split('\n').map(line => line.replace(/\$/g, '\\$'));
+  const body = selectedText.split('\n').map((line) => line.replace(/\$/g, '\\$'));
 
   const snippet = {
     prefix: prefix.trim(),
@@ -92,7 +92,7 @@ export async function saveAsSnippet(context: vscode.ExtensionContext): Promise<v
 
     const action = await vscode.window.showInformationMessage(
       `Snippet "${prefix}" saved to playwright-custom.code-snippets`,
-      'View File'
+      'View File',
     );
     if (action === 'View File') {
       await vscode.window.showTextDocument(vscode.Uri.file(snippetsFile));

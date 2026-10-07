@@ -1,0 +1,192 @@
+[
+  {
+    "file": "01-editor.jpg",
+    "title": "Run, debug, inspect",
+    "caption": "File, suite, test and tag actions directly above your code.",
+    "duration": 4
+  },
+  {
+    "file": "13-snippets.jpg",
+    "title": "338 Playwright snippets",
+    "caption": "Browse JavaScript and TypeScript completions with the p- prefix.",
+    "duration": 4
+  },
+  {
+    "file": "12-locator-fixes.jpg",
+    "title": "Locator diagnostics and quick fixes",
+    "caption": "Convert legacy selectors to semantic locators or open the live picker.",
+    "duration": 4
+  },
+  {
+    "file": "19-fixtures.jpg",
+    "title": "Navigate custom fixtures",
+    "caption": "Hover over a fixture parameter to find its definition and source link.",
+    "duration": 4
+  },
+  {
+    "file": "07-test-explorer.jpg",
+    "title": "Native Test Explorer",
+    "caption": "Discover files, suites and tests; access run, debug and continuous-run controls.",
+    "duration": 4
+  },
+  {
+    "file": "09-projects.jpg",
+    "title": "Choose browser projects",
+    "caption": "Select Chromium, Firefox, WebKit or your own configured projects.",
+    "duration": 4
+  },
+  {
+    "file": "08-environments.jpg",
+    "title": "Switch environment profiles",
+    "caption": "Choose a named environment without editing your test code.",
+    "duration": 4
+  },
+  {
+    "file": "10-matrix.jpg",
+    "title": "Build a run configuration",
+    "caption": "Workers, retries, repeat, trace, video, timeouts, shards and snapshot policies.",
+    "duration": 4
+  },
+  {
+    "file": "03-presets.jpg",
+    "title": "Reuse saved presets",
+    "caption": "Keep frequent project, scope and run-option combinations in a picker.",
+    "duration": 4
+  },
+  {
+    "file": "02-results.jpg",
+    "title": "Review captured results",
+    "caption": "Passing, failing and flaky sample outcomes with source navigation.",
+    "duration": 4
+  },
+  {
+    "file": "06-artifacts.jpg",
+    "title": "Compare snapshot artifacts",
+    "caption": "Expected and actual attachments; component stories and annotations in the sidebar.",
+    "duration": 4
+  },
+  {
+    "file": "04-history.jpg",
+    "title": "Revisit run history",
+    "caption": "Persisted sample runs, test outcomes and failure-first navigation.",
+    "duration": 4
+  },
+  {
+    "file": "05-analytics.jpg",
+    "title": "Track flaky and slow tests",
+    "caption": "Failure trends, unstable tests and durations from captured sample history.",
+    "duration": 4
+  },
+  {
+    "file": "18-coverage.jpg",
+    "title": "Import native code coverage",
+    "caption": "An Istanbul fixture rendered as covered and uncovered lines in VS Code.",
+    "duration": 4
+  },
+  {
+    "file": "11-exports.jpg",
+    "title": "Export and share results",
+    "caption": "Markdown, JSON, JUnit and GitHub summary actions. No external post is made.",
+    "duration": 4
+  },
+  {
+    "file": "14-command-catalog.jpg",
+    "title": "Available actions 1/4",
+    "caption": "Cancellation, history, CI commands, debug, Inspector, agents and coverage.",
+    "duration": 8,
+    "commands": [
+      "playwrightSnippets.cancelRuns",
+      "playwrightSnippets.clearHistory",
+      "playwrightSnippets.compareRuns",
+      "playwrightSnippets.copyCICommand",
+      "playwrightSnippets.generateTestPlan",
+      "playwrightSnippets.debugFile",
+      "playwrightSnippets.debugInspectFile",
+      "playwrightSnippets.debugTest",
+      "playwrightSnippets.debugInspectTest",
+      "playwrightSnippets.exportResults",
+      "playwrightSnippets.generateTestsFromPlan",
+      "playwrightSnippets.healFailures",
+      "playwrightSnippets.importCoverage",
+      "playwrightSnippets.initializeAgents",
+      "playwrightSnippets.inspectFile",
+      "playwrightSnippets.inspectTest",
+      "playwrightSnippets.inspectTestAtCursor"
+    ]
+  },
+  {
+    "file": "15-command-catalog.jpg",
+    "title": "Available actions 2/4",
+    "caption": "Browsers, presets, Codegen, live picker, UI Mode, components and quarantine.",
+    "duration": 8,
+    "commands": [
+      "playwrightSnippets.inspectTest",
+      "playwrightSnippets.inspectTestAtCursor",
+      "playwrightSnippets.installBrowsers",
+      "playwrightSnippets.manageRunPresets",
+      "playwrightSnippets.codeGen",
+      "playwrightSnippets.openComponentGallery",
+      "playwrightSnippets.openLocatorPicker",
+      "playwrightSnippets.openWorkspaceDashboard",
+      "playwrightSnippets.openUIMode",
+      "playwrightSnippets.exportHistory",
+      "playwrightSnippets.openArtifact",
+      "playwrightSnippets.postGitHubComment",
+      "playwrightSnippets.quarantineTest",
+      "playwrightSnippets.unquarantineTest",
+      "playwrightSnippets.repeatUntilFailure",
+      "playwrightSnippets.reviewSnapshots",
+      "playwrightSnippets.runShard"
+    ]
+  },
+  {
+    "file": "16-command-catalog.jpg",
+    "title": "Available actions 3/4",
+    "caption": "Shards, failed runs, health checks, tags, custom snippets and optional setup.",
+    "duration": 8,
+    "commands": [
+      "playwrightSnippets.reviewSnapshots",
+      "playwrightSnippets.runShard",
+      "playwrightSnippets.runFile",
+      "playwrightSnippets.healthCheck",
+      "playwrightSnippets.runFailed",
+      "playwrightSnippets.runLastFailed",
+      "playwrightSnippets.runPreset",
+      "playwrightSnippets.runTest",
+      "playwrightSnippets.runTestAtCursor",
+      "playwrightSnippets.runWithProject",
+      "playwrightSnippets.runWithTag",
+      "playwrightSnippets.runMatrix",
+      "playwrightSnippets.saveAsSnippet",
+      "playwrightSnippets.selectEnvFile",
+      "playwrightSnippets.setupCaptureResults",
+      "playwrightSnippets.setupVideoOverride",
+      "playwrightSnippets.showAnalytics"
+    ]
+  },
+  {
+    "file": "17-command-catalog.jpg",
+    "title": "Available actions 4/4",
+    "caption": "HTML reports, project graph, traces, environments, browser updates and watch.",
+    "duration": 8,
+    "commands": [
+      "playwrightSnippets.runTest",
+      "playwrightSnippets.runTestAtCursor",
+      "playwrightSnippets.runWithProject",
+      "playwrightSnippets.runWithTag",
+      "playwrightSnippets.runMatrix",
+      "playwrightSnippets.saveAsSnippet",
+      "playwrightSnippets.selectEnvFile",
+      "playwrightSnippets.setupCaptureResults",
+      "playwrightSnippets.setupVideoOverride",
+      "playwrightSnippets.showAnalytics",
+      "playwrightSnippets.showReport",
+      "playwrightSnippets.showProjectGraph",
+      "playwrightSnippets.showTrace",
+      "playwrightSnippets.switchEnvProfile",
+      "playwrightSnippets.updateBrowsers",
+      "playwrightSnippets.updateSnapshots",
+      "playwrightSnippets.watchFile"
+    ]
+  }
+]

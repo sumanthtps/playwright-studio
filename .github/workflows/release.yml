@@ -6,41 +6,50 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  validate:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/validation.yml
+
   release:
     name: Release to VS Marketplace
+    needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          node-version: 20
+          persist-credentials: false
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Download the validated extension
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: validated-vsix
 
-      - name: Type-check extension
-        run: npm run typecheck
-
-      - name: Package extension
-        run: npm run package
+      - name: Verify the validated package before publishing
+        run: node scripts/verify-vsix.js playwright-studio-ci.vsix
 
       - name: Publish to VS Marketplace
-        run: npx vsce publish
+        run: npx --no-install vsce publish --packagePath playwright-studio-ci.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: "*.vsix"
+          files: playwright-studio-ci.vsix
           generate_release_notes: true

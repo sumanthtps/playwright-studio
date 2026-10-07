@@ -1,13 +1,20 @@
 import * as vscode from 'vscode';
 import { buildToolCommand, getConfig } from '../config';
 import { runCommand } from '../terminal';
+import { artifactFile, requireWorkspaceTrust } from '../security';
 
 export async function showTrace(traceFilePath?: string): Promise<void> {
+  requireWorkspaceTrust();
   let tracePath: string;
   const resource = vscode.window.activeTextEditor?.document.uri;
 
   if (traceFilePath) {
-    tracePath = traceFilePath;
+    const allowed = artifactFile(traceFilePath);
+    if (!allowed)
+      throw new Error(
+        'Trace is unavailable or outside the workspace and Studio storage. Choose the trace with Open Trace instead.',
+      );
+    tracePath = allowed;
   } else {
     const { workingDirectory } = getConfig(resource);
     const uris = await vscode.window.showOpenDialog({

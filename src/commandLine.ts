@@ -70,11 +70,16 @@ export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** JSON report titles exclude the tags appended by Playwright's grep matcher. */
+export function capturedTestPattern(title: string, titlePath?: readonly string[]): string {
+  return `${escapeRegex(titlePath?.length ? titlePath.join(' ') : title)}(?: @\\S+)*$`;
+}
+
 export function buildPlaywrightToolInvocation(
   testCommand: string,
   configuredToolCommand: string,
-  tool: 'codegen' | 'show-report' | 'show-trace',
-  args: string[] = []
+  tool: string,
+  args: string[] = [],
 ): CommandInvocation {
   if (configuredToolCommand.trim()) {
     const command = parseCommandLine(configuredToolCommand);
@@ -89,7 +94,7 @@ export function buildPlaywrightToolInvocation(
     return command;
   }
 
-  const playwrightAt = command.args.findIndex(value => value === 'playwright');
+  const playwrightAt = command.args.findIndex((value) => value === 'playwright');
   if (playwrightAt >= 0) {
     command.args.splice(playwrightAt + 1, command.args.length, tool, ...args);
     return command;
@@ -97,6 +102,6 @@ export function buildPlaywrightToolInvocation(
 
   throw new Error(
     "Cannot derive the Playwright tool command from 'playwrightSnippets.testCommand'. " +
-    "Set 'playwrightSnippets.toolCommand' (for example, 'pnpm exec playwright')."
+      "Set 'playwrightSnippets.toolCommand' (for example, 'pnpm exec playwright').",
   );
 }

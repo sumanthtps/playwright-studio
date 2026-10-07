@@ -11,7 +11,7 @@ export class StatusBarManager implements vscode.Disposable {
     this.summaryItem = vscode.window.createStatusBarItem(
       'playwrightStudio.summary',
       vscode.StatusBarAlignment.Left,
-      100
+      100,
     );
     this.summaryItem.command = 'playwrightSnippets.showReport';
     this.summaryItem.tooltip = 'Playwright last run — click to open HTML report';
@@ -19,19 +19,17 @@ export class StatusBarManager implements vscode.Disposable {
     this.profileItem = vscode.window.createStatusBarItem(
       'playwrightStudio.profile',
       vscode.StatusBarAlignment.Left,
-      99
+      99,
     );
     this.profileItem.command = 'playwrightSnippets.switchEnvProfile';
     this.profileItem.tooltip = 'Active Playwright environment profile — click to switch';
 
     this.disposables.push(
-      store.onDidChange(results => {
+      store.onDidChange((results) => {
         const { passed, failed, flaky } = results.summary;
         if (failed > 0) {
           this.summaryItem.text = `$(error) ${passed} passed  ${failed} failed`;
-          this.summaryItem.backgroundColor = new vscode.ThemeColor(
-            'statusBarItem.errorBackground'
-          );
+          this.summaryItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
         } else {
           this.summaryItem.text = `$(pass) ${passed} passed`;
           this.summaryItem.backgroundColor = undefined;
@@ -39,7 +37,7 @@ export class StatusBarManager implements vscode.Disposable {
         if (flaky > 0) this.summaryItem.text += `  ${flaky} flaky`;
         this.summaryItem.show();
       }),
-      profiles.onDidChange(() => this.updateProfileItem(profiles))
+      profiles.onDidChange(() => this.updateProfileItem(profiles)),
     );
 
     this.updateProfileItem(profiles);
@@ -63,6 +61,6 @@ export class StatusBarManager implements vscode.Disposable {
   dispose(): void {
     this.summaryItem.dispose();
     this.profileItem.dispose();
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach((d) => d.dispose());
   }
 }

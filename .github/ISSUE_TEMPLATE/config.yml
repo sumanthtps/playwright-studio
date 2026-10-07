@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup and troubleshooting
+    url: https://github.com/sumanthtps/playwright-studio/blob/main/docs/guide.md
+    about: Check project configuration and common setup problems.

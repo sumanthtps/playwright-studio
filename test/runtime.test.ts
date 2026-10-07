@@ -1,16 +1,24 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPlaywrightToolInvocation, escapeRegex, parseCommandLine } from '../src/commandLine';
+import {
+  buildPlaywrightToolInvocation,
+  capturedTestPattern,
+  escapeRegex,
+  parseCommandLine,
+} from '../src/commandLine';
 import { extractFixtureDefinitions } from '../src/fixtureParser';
 import {
   extractProjectNames,
   extractProjectNamesFromListReport,
+  extractProjectGraphFromListReport,
   isProjectListStaticallyComplete,
 } from '../src/projectParser';
 import { hasJsonReporterText, injectJsonReporterText } from '../src/reporterConfig';
 import { parseReportJson, stripTerminalFormatting } from '../src/resultParser';
 import { parseSnippetFile, upsertSnippet } from '../src/snippetFile';
 import { findTestAtLine, parseTests } from '../src/testParser';
+import { getResultsFileName } from '../src/resultsPath';
+import { injectVideoEnvironmentBridge } from '../src/videoConfig';
 
 function document(text: string) {
   const lines = text.split('\n');
@@ -31,47 +39,106 @@ describe('structured command parsing', () => {
       executable: 'pnpm',
       args: ['exec', 'playwright', 'test', '--config', 'e2e config.ts'],
     });
-    assert.deepEqual(parseCommandLine('npx playwright test "$(touch /tmp/unsafe)"').args.at(-1),
-      '$(touch /tmp/unsafe)');
-    assert.equal(parseCommandLine('"C:\\Program Files\\nodejs\\npx.cmd" playwright test').executable,
-      'C:\\Program Files\\nodejs\\npx.cmd');
+    assert.deepEqual(
+      parseCommandLine('npx playwright test "$(touch /tmp/unsafe)"').args.at(-1),
+      '$(touch /tmp/unsafe)',
+    );
+    assert.equal(
+      parseCommandLine('"C:\\Program Files\\nodejs\\npx.cmd" playwright test').executable,
+      'C:\\Program Files\\nodejs\\npx.cmd',
+    );
   });
 
   it('escapes Playwright regex filters literally', () => {
-    assert.equal(escapeRegex('/repo/tests/total [draft].spec.ts'),
-      '/repo/tests/total \\[draft\\]\\.spec\\.ts');
+    assert.equal(
+      escapeRegex('/repo/tests/total [draft].spec.ts'),
+      '/repo/tests/total \\[draft\\]\\.spec\\.ts',
+    );
   });
 
   it('derives tool commands from npm, pnpm, direct, and explicit launchers', () => {
     assert.deepEqual(
-      buildPlaywrightToolInvocation('pnpm exec playwright test --config e2e.config.ts', '', 'show-report'),
-      { executable: 'pnpm', args: ['exec', 'playwright', 'show-report'] }
+      buildPlaywrightToolInvocation(
+        'pnpm exec playwright test --config e2e.config.ts',
+        '',
+        'show-report',
+      ),
+      { executable: 'pnpm', args: ['exec', 'playwright', 'show-report'] },
     );
     assert.deepEqual(
-      buildPlaywrightToolInvocation('./node_modules/.bin/playwright test', '', 'codegen', ['https://example.com']),
+      buildPlaywrightToolInvocation('./node_modules/.bin/playwright test', '', 'codegen', [
+        'https://example.com',
+      ]),
       {
         executable: './node_modules/.bin/playwright',
         args: ['codegen', 'https://example.com'],
-      }
+      },
     );
     assert.deepEqual(
       buildPlaywrightToolInvocation('npm run e2e', 'yarn playwright', 'show-trace', ['trace.zip']),
-      { executable: 'yarn', args: ['playwright', 'show-trace', 'trace.zip'] }
+      { executable: 'yarn', args: ['playwright', 'show-trace', 'trace.zip'] },
     );
     assert.deepEqual(
-      buildPlaywrightToolInvocation('npx playwright test', '', 'show-report', ['/tmp/custom-report']),
-      { executable: 'npx', args: ['playwright', 'show-report', '/tmp/custom-report'] }
+      buildPlaywrightToolInvocation('npx playwright test', '', 'show-report', [
+        '/tmp/custom-report',
+      ]),
+      { executable: 'npx', args: ['playwright', 'show-report', '/tmp/custom-report'] },
     );
     assert.throws(
       () => buildPlaywrightToolInvocation('npm run e2e', '', 'show-report'),
-      /toolCommand/
+      /toolCommand/,
     );
+  });
+});
+
+describe('workspace-isolated result paths', () => {
+  it('uses stable, distinct file names without exposing workspace paths', () => {
+    const first = getResultsFileName('/repo/one');
+    assert.equal(first, getResultsFileName('/repo/one'));
+    assert.notEqual(first, getResultsFileName('/repo/two'));
+    assert.match(first, /^playwright-studio-results-[a-f0-9]{16}\.json$/);
+    assert.doesNotMatch(first, /repo|one/);
+  });
+});
+
+describe('video run-matrix config bridge', () => {
+  it('preserves an existing TypeScript video policy as the fallback', () => {
+    const source = `export default defineConfig({ use: { video: 'retain-on-failure', trace: 'on' } });`;
+    const result = injectVideoEnvironmentBridge(source, true);
+    assert.equal(result.changed, true);
+    assert.match(result.text ?? '', /process\.env\.PLAYWRIGHT_STUDIO_VIDEO/);
+    assert.match(result.text ?? '', /\?\? \('retain-on-failure'\)/);
+    assert.match(result.text ?? '', /trace: 'on'/);
+  });
+
+  it('adds a JavaScript-compatible use block and refuses unsafe spread configs', () => {
+    const result = injectVideoEnvironmentBridge(`module.exports = { timeout: 30_000 };`, false);
+    assert.match(result.text ?? '', /use: \{ video: process\.env\.PLAYWRIGHT_STUDIO_VIDEO \}/);
+    const unsafe = injectVideoEnvironmentBridge(`export default { ...base };`, true);
+    assert.equal(unsafe.text, undefined);
+    assert.match(unsafe.reason ?? '', /spreads/);
+  });
+
+  it('updates quoted and static-computed use/video keys without adding duplicates', () => {
+    const quoted =
+      injectVideoEnvironmentBridge(`export default { "use": { "video": 'on' } };`, false).text ??
+      '';
+    assert.equal((quoted.match(/"use"/g) ?? []).length, 1);
+    assert.equal((quoted.match(/"video"/g) ?? []).length, 1);
+    assert.match(quoted, /PLAYWRIGHT_STUDIO_VIDEO/);
+    const computed =
+      injectVideoEnvironmentBridge(`export default { ['use']: { ['video']: 'off' } };`, true)
+        .text ?? '';
+    assert.equal((computed.match(/\['use'\]/g) ?? []).length, 1);
+    assert.equal((computed.match(/\['video'\]/g) ?? []).length, 1);
+    assert.match(computed, /PLAYWRIGHT_STUDIO_VIDEO/);
   });
 });
 
 describe('test parsing and cursor targeting', () => {
   it('reads title and details-object tags and records the complete call range', () => {
-    const items = parseTests(document(`
+    const items = parseTests(
+      document(`
 test('checkout @title', {
   tag: ['@smoke', '@fast'],
 }, async ({ page }) => {
@@ -79,7 +146,8 @@ test('checkout @title', {
 });
 
 const outside = true;
-`));
+`),
+    );
     assert.equal(items.length, 1);
     assert.deepEqual(items[0].tags, ['@title', '@smoke', '@fast']);
     assert.equal(items[0].line, 1);
@@ -95,7 +163,8 @@ const outside = true;
   });
 
   it('ignores examples in comments and template text while finding wrapped and inline calls', () => {
-    const items = parseTests(document(`
+    const items = parseTests(
+      document(`
 /*
 test('commented out', async () => {});
 */
@@ -108,25 +177,33 @@ test
   'wrapped',
   async () => {}
 );
-`));
-    assert.deepEqual(items.map(item => item.name), ['inline', 'wrapped']);
+`),
+    );
+    assert.deepEqual(
+      items.map((item) => item.name),
+      ['inline', 'wrapped'],
+    );
   });
 
   it('ignores tag-like text in comments and annotation strings', () => {
-    const items = parseTests(document(`
+    const items = parseTests(
+      document(`
 test('tagged', {
   // tag: '@commented',
   annotation: { type: 'issue', description: "tag: '@description'" },
   tag: ['@real', '@fast'],
 }, async () => {});
-`));
+`),
+    );
     assert.deepEqual(items[0]?.tags, ['@real', '@fast']);
   });
 
   it('preserves source lines and call ranges after astral characters', () => {
-    const items = parseTests(document(`const marker = '🚀'; test('unicode', async () => {
+    const items = parseTests(
+      document(`const marker = '🚀'; test('unicode', async () => {
   await Promise.resolve();
-});`));
+});`),
+    );
     assert.equal(items[0]?.line, 0);
     assert.equal(items[0]?.endLine, 2);
   });
@@ -144,7 +221,10 @@ describe('fixture parsing', () => {
         }, { scope: 'worker' }],
       });
     `;
-    assert.deepEqual(extractFixtureDefinitions(source).map(item => item.name), ['first', 'second']);
+    assert.deepEqual(
+      extractFixtureDefinitions(source).map((item) => item.name),
+      ['first', 'second'],
+    );
   });
 });
 
@@ -162,13 +242,31 @@ describe('project parsing', () => {
   it('handles quoted config properties and project names from CLI list reports', () => {
     assert.deepEqual(
       extractProjectNames(`export default defineConfig({ 'projects': [{ 'name': 'webkit' }] })`),
-      ['webkit']
+      ['webkit'],
     );
     assert.deepEqual(
-      extractProjectNamesFromListReport(`config log\n${JSON.stringify({
-        config: { projects: [{ name: 'chromium' }, { name: 'firefox' }] },
-      })}`),
-      ['chromium', 'firefox']
+      extractProjectNamesFromListReport(
+        `config log\n${JSON.stringify({
+          config: { projects: [{ name: 'chromium' }, { name: 'firefox' }] },
+        })}`,
+      ),
+      ['chromium', 'firefox'],
+    );
+    assert.deepEqual(
+      extractProjectGraphFromListReport(
+        JSON.stringify({
+          config: {
+            projects: [
+              { name: 'setup', dependencies: [] },
+              { name: 'chromium', dependencies: ['setup'] },
+            ],
+          },
+        }),
+      ),
+      [
+        { name: 'setup', dependencies: [] },
+        { name: 'chromium', dependencies: ['setup'] },
+      ],
     );
   });
 
@@ -187,10 +285,13 @@ describe('project parsing', () => {
 
 describe('reporter config editing', () => {
   it('does not mistake comments or reporter options for the JSON reporter', () => {
-    assert.equal(hasJsonReporterText(`export default {
+    assert.equal(
+      hasJsonReporterText(`export default {
       // reporter: [['json']],
       reporter: [['custom', { outputFile: 'json' }]],
-    }`), false);
+    }`),
+      false,
+    );
   });
 
   it('recognizes and updates quoted and static-computed reporter keys', () => {
@@ -198,23 +299,35 @@ describe('reporter config editing', () => {
     const singleQuotedJson = `export default defineConfig({ 'reporter': [['json']], use: {} })`;
     const computed = `export default defineConfig({ ['reporter']: 'list', use: {} })`;
 
-    assert.match(injectJsonReporterText(doubleQuoted) ?? '',
-      /"reporter": \[\["list"\], \['json'\]\]/);
+    assert.match(
+      injectJsonReporterText(doubleQuoted) ?? '',
+      /"reporter": \[\["list"\], \['json'\]\]/,
+    );
     assert.equal(hasJsonReporterText(singleQuotedJson), true);
     assert.equal(injectJsonReporterText(singleQuotedJson), singleQuotedJson);
-    assert.match(injectJsonReporterText(computed) ?? '',
-      /\['reporter'\]: \[\['list'\], \['json'\]\]/);
+    assert.match(
+      injectJsonReporterText(computed) ?? '',
+      /\['reporter'\]: \[\['list'\], \['json'\]\]/,
+    );
   });
 
   it('adds JSON to string, array, and missing reporter declarations', () => {
-    assert.match(injectJsonReporterText(`export default { reporter: 'list' }`) ?? '',
-      /reporter: \[\['list'\], \['json'\]\]/);
-    assert.match(injectJsonReporterText(`export default { reporter: [['html']] }`) ?? '',
-      /\['json'\]/);
-    assert.match(injectJsonReporterText(`export default defineConfig({ use: {} })`) ?? '',
-      /reporter: \[\['json'\]\]/);
-    assert.match(injectJsonReporterText(`module.exports = { use: {} }`) ?? '',
-      /reporter: \[\['json'\]\]/);
+    assert.match(
+      injectJsonReporterText(`export default { reporter: 'list' }`) ?? '',
+      /reporter: \[\['list'\], \['json'\]\]/,
+    );
+    assert.match(
+      injectJsonReporterText(`export default { reporter: [['html']] }`) ?? '',
+      /\['json'\]/,
+    );
+    assert.match(
+      injectJsonReporterText(`export default defineConfig({ use: {} })`) ?? '',
+      /reporter: \[\['json'\]\]/,
+    );
+    assert.match(
+      injectJsonReporterText(`module.exports = { use: {} }`) ?? '',
+      /reporter: \[\['json'\]\]/,
+    );
   });
 });
 
@@ -222,34 +335,54 @@ describe('Playwright JSON result parsing', () => {
   it('keeps every project and uses all retry attempts', () => {
     const report = {
       config: { rootDir: '/repo' },
-      suites: [{
-        specs: [{
-          title: 'works', file: 'tests/example.spec.ts', line: 5,
-          tests: [
+      suites: [
+        {
+          specs: [
             {
-              projectName: 'chromium', status: 'expected',
-              results: [{ status: 'passed', duration: 10, attachments: [] }],
-            },
-            {
-              projectName: 'firefox', status: 'unexpected',
-              results: [
-                { status: 'failed', duration: 20, error: { message: 'first' }, attachments: [] },
+              title: 'works',
+              file: 'tests/example.spec.ts',
+              line: 5,
+              tests: [
                 {
-                  status: 'timedOut', duration: 30, error: { message: 'final' },
-                  attachments: [{ name: 'trace', path: 'artifacts/trace.zip' }],
+                  projectName: 'chromium',
+                  status: 'expected',
+                  results: [{ status: 'passed', duration: 10, attachments: [] }],
+                },
+                {
+                  projectName: 'firefox',
+                  status: 'unexpected',
+                  results: [
+                    {
+                      status: 'failed',
+                      duration: 20,
+                      error: { message: 'first' },
+                      attachments: [],
+                    },
+                    {
+                      status: 'timedOut',
+                      duration: 30,
+                      error: { message: 'final' },
+                      attachments: [{ name: 'trace', path: 'artifacts/trace.zip' }],
+                    },
+                  ],
                 },
               ],
             },
           ],
-        }],
-      }],
+        },
+      ],
       stats: {
-        expected: 1, unexpected: 1, skipped: 0, flaky: 0,
-        duration: 60, startTime: '2026-01-02T03:04:05.000Z',
+        expected: 1,
+        unexpected: 1,
+        skipped: 0,
+        flaky: 0,
+        duration: 60,
+        startTime: '2026-01-02T03:04:05.000Z',
       },
     };
     const parsed = parseReportJson(JSON.stringify(report), '/fallback');
     assert.ok(parsed);
+    assert.equal(parsed.rootDir, '/repo');
     assert.equal(parsed.specs.length, 2);
     assert.equal(parsed.specs[1].status, 'timedOut');
     assert.equal(parsed.specs[1].duration, 50);
@@ -260,8 +393,52 @@ describe('Playwright JSON result parsing', () => {
   it('removes terminal formatting from errors before they reach VS Code diagnostics', () => {
     assert.equal(
       stripTerminalFormatting('\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m)'),
-      'expect(received)'
+      'expect(received)',
     );
+  });
+
+  it('retains attachments, annotations, tags, and captured output for artifact views', () => {
+    const parsed = parseReportJson(
+      JSON.stringify({
+        config: { rootDir: '/repo' },
+        suites: [
+          {
+            specs: [
+              {
+                title: 'visual',
+                file: 'visual.spec.ts',
+                line: 1,
+                tags: ['@visual'],
+                tests: [
+                  {
+                    projectName: 'chromium',
+                    status: 'unexpected',
+                    annotations: [{ type: 'issue', description: 'BUG-42' }],
+                    results: [
+                      {
+                        status: 'failed',
+                        duration: 5,
+                        stdout: [{ text: '\u001b[32mlog\u001b[39m\n' }],
+                        attachments: [
+                          { name: 'actual', contentType: 'image/png', path: 'actual.png' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        stats: {},
+      }),
+      '/fallback',
+    );
+    assert.ok(parsed);
+    assert.deepEqual(parsed.specs[0].tags, ['@visual']);
+    assert.deepEqual(parsed.specs[0].annotations, [{ type: 'issue', description: 'BUG-42' }]);
+    assert.equal(parsed.specs[0].attachments?.[0].path, '/repo/actual.png');
+    assert.equal(parsed.specs[0].output, 'log');
   });
 });
 
@@ -286,5 +463,61 @@ describe('custom snippet JSONC editing', () => {
       description: 'New snippet',
       scope: 'javascript,typescript',
     });
+  });
+});
+
+describe('report validation and terminal hyperlinks', () => {
+  it('preserves hyperlink labels terminated by ST', () => {
+    assert.equal(
+      stripTerminalFormatting(
+        '\u001b]8;;https://example.com\u001b\\visible label\u001b]8;;\u001b\\',
+      ),
+      'visible label',
+    );
+  });
+  it('rejects unrelated JSON without clearing previous captured results', () => {
+    assert.equal(parseReportJson('{}', '/repo'), null);
+    assert.equal(parseReportJson('{"suites": "invalid"}', '/repo'), null);
+    assert.ok(parseReportJson('{"suites": []}', '/repo'));
+  });
+});
+
+describe('captured case targeting', () => {
+  it('matches the captured suite and title with optional Playwright tags', () => {
+    const pattern = new RegExp(
+      capturedTestPattern('case [1]', ['file.spec.ts', 'suite', 'case [1]']),
+    );
+    assert.ok(pattern.test('webkit file.spec.ts suite case [1] @smoke @fast'));
+    assert.ok(pattern.test('webkit file.spec.ts suite case [1]'));
+    assert.ok(!pattern.test('webkit file.spec.ts suite case [2] @smoke'));
+    assert.ok(!pattern.test('webkit file.spec.ts suite other case [1] @smoke'));
+  });
+});
+
+describe('automatic Playwright project detection', () => {
+  it('finds nested config directories and respects workspace boundaries', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { detectWorkingDirectory } = await import('../src/workspaceDetection');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-detection-'));
+    try {
+      const e2e = path.join(root, 'e2e');
+      fs.mkdirSync(path.join(e2e, 'tests'), { recursive: true });
+      fs.writeFileSync(path.join(e2e, 'playwright.config.ts'), 'export default {};');
+      assert.equal(detectWorkingDirectory(root), e2e);
+      assert.equal(detectWorkingDirectory(root, path.join(e2e, 'tests', 'new.spec.ts')), e2e);
+      fs.mkdirSync(path.join(root, 'tests'));
+      fs.writeFileSync(path.join(root, 'tests', 'playwright.config.js'), 'module.exports = {};');
+      assert.equal(
+        detectWorkingDirectory(root),
+        root,
+        'ambiguous sibling projects must not be guessed',
+      );
+      fs.writeFileSync(path.join(root, 'playwright.config.ts'), 'export default {};');
+      assert.equal(detectWorkingDirectory(root, path.join(e2e, 'tests', 'new.spec.ts')), e2e);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
