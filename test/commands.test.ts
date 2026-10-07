@@ -6,7 +6,18 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { registerCommands } from '../src/commands';
 import { debugCommandAndWait, runCommandAndWait } from '../src/terminal';
-import { reset, state, window, commands, Uri, editor } from './vscodeMock';
+import {
+  reset,
+  state,
+  window,
+  commands,
+  Uri,
+  editor,
+  tasks,
+  EventEmitter,
+  CancellationTokenSource,
+  Task,
+} from './vscodeMock';
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-commands-'));
 const file = path.join(root, 'example.spec.ts');
 fs.writeFileSync(file, "test('example @smoke', async () => {});");
@@ -569,6 +580,56 @@ it('task end without a process event settles the waiter', async () => {
     undefined,
   );
 });
+for (const timing of ['during launch', 'before process startup', 'after process startup']) {
+  it(`task cancellation ${timing} terminates the started process and never reports success`, async (t) => {
+    const source = new CancellationTokenSource();
+    const start = new EventEmitter<any>();
+    const end = new EventEmitter<any>();
+    const taskEnd = new EventEmitter<any>();
+    t.mock.method(tasks, 'onDidStartTaskProcess', start.event);
+    t.mock.method(tasks, 'onDidEndTaskProcess', end.event);
+    t.mock.method(tasks, 'onDidEndTask', taskEnd.event);
+    let execution: any;
+    let terminations = 0;
+    t.mock.method(tasks, 'executeTask', async (task: Task) => {
+      execution = {
+        task,
+        terminate: () => {
+          terminations++;
+          // Some hosts report zero when a task is terminated. It is still cancelled.
+          end.fire({ execution, exitCode: 0 });
+          taskEnd.fire({ execution });
+        },
+      };
+      if (timing === 'during launch') {
+        source.cancel();
+        assert.equal(terminations, 0);
+        start.fire({ execution, processId: 1 });
+      }
+      return execution;
+    });
+    try {
+      const completed = runCommandAndWait(
+        { executable: 'node', args: [] },
+        { resource: file, token: source.token },
+      );
+      await Promise.resolve();
+      if (timing !== 'during launch') {
+        if (timing === 'before process startup') source.cancel();
+        assert.equal(terminations, 0, 'Do not terminate a task whose process is not ready.');
+        start.fire({ execution, processId: 1 });
+        if (timing === 'after process startup') source.cancel();
+      }
+      assert.equal(terminations, 1);
+      assert.equal(await completed, undefined);
+      source.cancel();
+      assert.equal(terminations, 1, 'Completion removes the cancellation listener.');
+      assert.equal(start.listeners.size + end.listeners.size + taskEnd.listeners.size, 0);
+    } finally {
+      source.dispose();
+    }
+  });
+}
 it('default capture adds JSON without overriding user reporters or editing config', async () => {
   state.settings.reporter = '';
   const before = fs.readFileSync(configFile, 'utf8');

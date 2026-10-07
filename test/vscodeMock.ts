@@ -181,6 +181,7 @@ export const state = {
   open: undefined as Uri[] | undefined,
 };
 const taskEnd = new EventEmitter<any>(),
+  processStart = new EventEmitter<any>(),
   processEnd = new EventEmitter<any>();
 const debugStart = new EventEmitter<any>(),
   debugEnd = new EventEmitter<any>();
@@ -334,12 +335,14 @@ export const env = {
   },
 };
 export const tasks = {
+  onDidStartTaskProcess: processStart.event,
   onDidEndTask: taskEnd.event,
   onDidEndTaskProcess: processEnd.event,
   executeTask: async (task: Task) => {
     state.tasks.push(task);
     const execution = { task, terminate: () => taskEnd.fire({ execution }) };
     // End before executeTask resolves to exercise event ordering.
+    processStart.fire({ execution, processId: 1 });
     if (state.processEvent) processEnd.fire({ execution, exitCode: state.exitCode });
     taskEnd.fire({ execution });
     return execution;

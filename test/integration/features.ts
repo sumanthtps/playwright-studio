@@ -442,16 +442,33 @@ export async function featureChecks(folder: vscode.WorkspaceFolder): Promise<voi
   });
   await check('running task cancellation settles the caller', async () => {
     const cancelled = new vscode.CancellationTokenSource();
-    const timer = setTimeout(() => cancelled.cancel(), 400);
+    const name = 'Studio cancellation integration check';
+    const completedFile = path.join(folder.uri.fsPath, 'cancelled-task-completed.txt');
+    fs.rmSync(completedFile, { force: true });
+    let started = false;
+    const start = vscode.tasks.onDidStartTaskProcess((event) => {
+      if (event.execution.task.name !== name) return;
+      started = true;
+      cancelled.cancel();
+    });
     try {
       const result = await runCommandAndWait(
-        { executable: 'node', args: ['-e', 'setTimeout(() => {}, 30000)'] },
-        { resource: first, token: cancelled.token },
+        {
+          executable: 'node',
+          args: [
+            '-e',
+            `setTimeout(() => require('fs').writeFileSync(${JSON.stringify(completedFile)}, 'completed'), 30000)`,
+          ],
+        },
+        { resource: first, token: cancelled.token, name },
       );
-      assert.notEqual(result, 0);
+      assert.equal(started, true, 'The check must cancel a started process.');
+      assert.equal(result, undefined, 'Cancellation must not report a successful exit.');
+      assert.equal(fs.existsSync(completedFile), false, 'The process must not run to completion.');
     } finally {
-      clearTimeout(timer);
+      start.dispose();
       cancelled.dispose();
+      fs.rmSync(completedFile, { force: true });
     }
   });
   await check('results sidebar initializes from existing results and exposes trace action', () => {

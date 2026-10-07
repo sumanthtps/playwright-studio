@@ -147,6 +147,8 @@ export async function runCommandAndWait(
   let taskExecution: vscode.TaskExecution | undefined;
   let ended = false;
   let cancellation: vscode.Disposable = new vscode.Disposable(() => undefined);
+  let runningExecution: vscode.TaskExecution | undefined;
+  let terminationRequested = false;
   let resolveEnd: (code: number | undefined) => void = () => undefined;
   const completed = new Promise<number | undefined>((resolve) => {
     resolveEnd = resolve;
@@ -154,29 +156,43 @@ export async function runCommandAndWait(
   const finish = (code: number | undefined) => {
     if (ended) return;
     ended = true;
+    start.dispose();
     end.dispose();
     taskEnd.dispose();
     cancellation.dispose();
     if (taskExecution) activeExecutions.delete(taskExecution);
-    resolveEnd(code);
+    resolveEnd(options.token?.isCancellationRequested ? undefined : code);
   };
+  const cancelRunningTask = () => {
+    if (ended || !runningExecution || terminationRequested) return;
+    terminationRequested = true;
+    runningExecution.terminate();
+  };
+  const start = vscode.tasks.onDidStartTaskProcess((event) => {
+    if (event.execution.task !== task) return;
+    runningExecution = event.execution;
+    // executeTask can resolve before the process exists. Terminating earlier
+    // can be ignored by VS Code, so retain cancellation until process startup.
+    if (options.token?.isCancellationRequested) cancelRunningTask();
+  });
   const end = vscode.tasks.onDidEndTaskProcess((event) => {
     if (event.execution.task === task) finish(event.exitCode);
   });
   const taskEnd = vscode.tasks.onDidEndTask((event) => {
     if (event.execution.task === task) finish(undefined);
   });
+  cancellation =
+    options.token?.onCancellationRequested(cancelRunningTask) ??
+    new vscode.Disposable(() => undefined);
   try {
     taskExecution = await vscode.tasks.executeTask(task);
     if (!ended) {
       activeExecutions.add(taskExecution);
-      cancellation =
-        options.token?.onCancellationRequested(() => taskExecution?.terminate()) ??
-        new vscode.Disposable(() => undefined);
-      if (options.token?.isCancellationRequested) taskExecution.terminate();
+      if (options.token?.isCancellationRequested) cancelRunningTask();
     }
     return await completed;
   } catch (error) {
+    start.dispose();
     end.dispose();
     taskEnd.dispose();
     cancellation.dispose();
