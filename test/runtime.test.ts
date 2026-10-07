@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import * as path from 'node:path';
 import {
   buildPlaywrightToolInvocation,
   capturedTestPattern,
@@ -387,7 +388,7 @@ describe('Playwright JSON result parsing', () => {
     assert.equal(parsed.specs[1].status, 'timedOut');
     assert.equal(parsed.specs[1].duration, 50);
     assert.equal(parsed.specs[1].error, 'final');
-    assert.equal(parsed.specs[1].traceFile, '/repo/artifacts/trace.zip');
+    assert.equal(parsed.specs[1].traceFile, path.resolve('/repo', 'artifacts/trace.zip'));
   });
 
   it('removes terminal formatting from errors before they reach VS Code diagnostics', () => {
@@ -437,7 +438,7 @@ describe('Playwright JSON result parsing', () => {
     assert.ok(parsed);
     assert.deepEqual(parsed.specs[0].tags, ['@visual']);
     assert.deepEqual(parsed.specs[0].annotations, [{ type: 'issue', description: 'BUG-42' }]);
-    assert.equal(parsed.specs[0].attachments?.[0].path, '/repo/actual.png');
+    assert.equal(parsed.specs[0].attachments?.[0].path, path.resolve('/repo', 'actual.png'));
     assert.equal(parsed.specs[0].output, 'log');
   });
 });
