@@ -360,7 +360,7 @@ it('selectEnvFile persists a path relative to workingDirectory', async () => {
   state.files = [Uri.file(path.join(root, '.env.stage'))];
   state.picks.push(1);
   await execute('selectEnvFile');
-  assert.equal(state.settings.envFile, '../.env.stage');
+  assert.equal(state.settings.envFile, path.join('..', '.env.stage'));
 });
 it('quarantine and unquarantine round-trip a test', async () => {
   await execute('quarantineTest');

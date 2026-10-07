@@ -26,7 +26,8 @@ const execute = (
     execFile(
       command.executable,
       command.args,
-      { cwd, env: { ...process.env, ...env }, timeout: 30000, maxBuffer: 4 * 1024 * 1024 },
+      // Allow the test timeout plus browser startup, server startup, and trace teardown.
+      { cwd, env: { ...process.env, ...env }, timeout: 90000, maxBuffer: 4 * 1024 * 1024 },
       (error, stdout, stderr) => {
         logs = stdout + stderr;
         if (!error) resolve(0);
@@ -58,7 +59,7 @@ it('real browser scenarios inject network faults, latency, clock, and offline st
   );
   fs.writeFileSync(
     path.join(app, 'playwright.config.ts'),
-    `export default {testDir:'./tests',timeout:10000,use:{baseURL:'http://127.0.0.1:${port}',browserName:${JSON.stringify(process.env.STUDIO_BROWSER || 'chromium')},channel:${JSON.stringify(process.env.STUDIO_BROWSER_CHANNEL)},trace:'on'},webServer:{command:'node server.cjs',url:'http://127.0.0.1:${port}',reuseExistingServer:true}};`,
+    `export default {testDir:'./tests',timeout:30000,use:{baseURL:'http://127.0.0.1:${port}',browserName:${JSON.stringify(process.env.STUDIO_BROWSER || 'chromium')},channel:${JSON.stringify(process.env.STUDIO_BROWSER_CHANNEL)},trace:'on'},webServer:{command:'node server.cjs',url:'http://127.0.0.1:${port}',reuseExistingServer:true}};`,
   );
   const source = `import {test,expect} from '@playwright/test';test('checkout',async({page})=>{await page.goto('/');const status=await page.evaluate(async()=> (await fetch('/api/checkout')).status);expect(status).toBe(200);const scenario=JSON.parse(process.env.PLAYWRIGHT_STUDIO_SCENARIO || '{}');if(scenario.clock) expect(await page.evaluate(()=>Date.now())).toBeGreaterThanOrEqual(Date.parse(scenario.clock));});`;
   fs.writeFileSync(path.join(app, 'tests/checkout.spec.ts'), source);
