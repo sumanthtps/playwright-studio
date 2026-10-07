@@ -18,7 +18,7 @@
   },
   "version": "2.0.0",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.140.0"
   },
   "categories": [
     "Testing",
@@ -1037,8 +1037,10 @@
     ]
   },
   "scripts": {
-    "compile": "node esbuild.js",
-    "compile:prod": "node esbuild.js --production",
+    "compile": "node scripts/build.js",
+    "demo:captures": "node scripts/capture-demo.js",
+    "demo:gif": "node scripts/build-demo-gif.js",
+    "compile:prod": "node scripts/build.js --production",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test:snippets": "node --test test/snippets.test.js",
     "test:runtime": "esbuild test/runtime.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/runtime.test.js && node --test .test-dist/runtime.test.js",
@@ -1058,24 +1060,25 @@
     "prepackage": "npm run check:features",
     "test:security": "esbuild test/security.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/security.test.js && node --test .test-dist/security.test.js",
     "test:production": "esbuild test/production.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outfile=.test-dist/production.test.js && node --test .test-dist/production.test.js",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\" esbuild.js",
-    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\" esbuild.js",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.js\"",
     "test:selectors": "esbuild test/selectors.test.ts test/selector-startup.test.ts test/selector-session.test.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscodeMock.ts --outdir=.test-dist && node --test .test-dist/selectors.test.js .test-dist/selector-startup.test.js .test-dist/selector-session.test.js",
     "test:selector-browser": "npm run compile:prod && esbuild test/selector-browser.test.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile=.test-dist/selector-browser.test.js && node --test .test-dist/selector-browser.test.js",
     "test:selector-devtools": "esbuild test/selector-devtools.test.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile=.test-dist/selector-devtools.test.js && node --test .test-dist/selector-devtools.test.js",
     "test:storage": "esbuild test/studio-storage.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/studio-storage.test.js && node --test .test-dist/studio-storage.test.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^22.0.0",
-    "@types/vscode": "^1.80.0",
-    "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.7.1",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@types/vscode": "^1.140.0",
+    "@typescript/typescript6": "^6.0.2",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
     "cross-spawn": "^7.0.6",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "jsonc-parser": "^3.3.1",
-    "prettier": "^3.9.6",
-    "typescript": "^5.7.0"
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2"
   },
   "capabilities": {
     "untrustedWorkspaces": {

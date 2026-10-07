@@ -85,10 +85,16 @@ it('preserves both copies on conflicts and resumes safely when identical copies 
 
 it('rejects symlinks, path traversal and storage inside the repository without deleting data', () => {
   const { root, storage, legacy } = fixture('boundaries');
-  const secret = path.join(sandbox, 'secret.txt');
+  const external = path.join(sandbox, 'external');
+  fs.mkdirSync(external);
+  const secret = path.join(external, 'secret.txt');
   fs.writeFileSync(secret, 'private');
   fs.mkdirSync(legacy);
-  fs.symlinkSync(secret, path.join(legacy, 'link'));
+  fs.symlinkSync(
+    external,
+    path.join(legacy, 'link'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
   assert.throws(() => studioDirectory(root, storage), /symlink/);
   assert.equal(fs.lstatSync(path.join(legacy, 'link')).isSymbolicLink(), true);
   assert.equal(fs.readFileSync(secret, 'utf8'), 'private');

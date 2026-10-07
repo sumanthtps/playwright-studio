@@ -1,4 +1,4 @@
-// Assemble genuine VS Code captures; requires FFmpeg and Swift/AppKit (macOS).
+// Assemble VS Code and real webview captures; requires FFmpeg and Swift/AppKit (macOS).
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -46,12 +46,12 @@ try {
       '-i',
       'frames.txt',
       '-filter_complex',
-      'fps=1/4,split[a][b];[a]palettegen[p];[b][p]paletteuse=dither=bayer:bayer_scale=3',
+      'fps=1/2,split[a][b];[a]palettegen[p];[b][p]paletteuse=dither=bayer:bayer_scale=3',
       '-t',
       String(scenes.reduce((sum, scene) => sum + scene.duration, 0)),
       '-loop',
       '0',
-      path.join(root, 'images', 'preview.gif'),
+      path.join(root, 'images', 'preview-v2.gif'),
     ],
     { cwd: temporary, stdio: 'inherit' },
   );
@@ -59,5 +59,5 @@ try {
   fs.rmSync(temporary, { recursive: true, force: true });
 }
 console.log(
-  `Built ${scenes.length} scenes; ${covered.size} of ${commands.length} contributed commands represented. The feature catalog documents every command.`,
+  `Built images/preview-v2.gif: ${scenes.length} scenes, ${scenes.reduce((sum, scene) => sum + scene.duration, 0)} seconds.`,
 );

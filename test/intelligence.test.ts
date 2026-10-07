@@ -322,7 +322,11 @@ it('snapshots preserve original sources and dependency links, and clean up when 
   } finally {
     fs.rmSync(snapshot, { recursive: true, force: true });
   }
-  fs.symlinkSync(os.tmpdir(), path.join(application, 'external'));
+  fs.symlinkSync(
+    os.tmpdir(),
+    path.join(application, 'external'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
   await assert.rejects(snapshotWorkspace(application), /symlink/);
   assert.throws(() => localFile(application, 'external/escape'), /outside/);
 });

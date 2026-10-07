@@ -52,7 +52,12 @@ const server = createServer((request, response) => {
         ? formHtml
         : request.url === '/form-frame'
           ? '<label>Embedded value<input id="frameField"></label>'
-          : html,
+          : process.env.STUDIO_DEMO
+            ? fs.readFileSync(
+                path.resolve(__dirname, '../test/fixtures/selector-demo.html'),
+                'utf8',
+              )
+            : html,
   );
 });
 before(async () => {

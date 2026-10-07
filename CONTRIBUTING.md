@@ -2,6 +2,8 @@
 
 Use Node.js 22 and `npm ci`. The extension uses the workspace's installed Playwright; development tests use the pinned lockfile dependencies.
 
+Type checks use TypeScript 7. Runtime source analysis imports Microsoft's `@typescript/typescript6` compatibility package because TypeScript 7 does not expose the stable compiler AST API. Upgrade both packages independently, and keep the VS Code engine minimum aligned with `@types/vscode`.
+
 ## Find the right code
 
 | Area | Files |

@@ -1,4 +1,5 @@
-import * as ts from 'typescript';
+// TypeScript 7 supplies the build compiler; the stable AST API lives in this package.
+import * as ts from '@typescript/typescript6';
 import * as path from 'path';
 import type { SpecResult, TestResults } from '../resultParser';
 import type { RunRecord } from '../resultStore';
