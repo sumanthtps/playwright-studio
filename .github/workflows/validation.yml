@@ -116,6 +116,7 @@ jobs:
         run: xvfb-run -a npm run test:selector-devtools
         env:
           STUDIO_DEVTOOLS_HEADED: '1'
+          DEBUG: pw:browser
       - name: Retain screenshots, traces, reports and process logs
         if: always()
         uses: actions/upload-artifact@v7.0.2

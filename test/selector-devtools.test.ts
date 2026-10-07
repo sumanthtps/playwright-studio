@@ -15,6 +15,7 @@ it('the DevTools window prefers Chrome and falls back only for a missing executa
     launch: async (options: Parameters<BrowserType['launch']>[0]) => {
       channels.push(options?.channel);
       assert.equal(options?.headless, false);
+      assert.equal(options?.timeout, 30000);
       assert.equal(options?.args, undefined, 'The frontend does not expose a debugging server.');
       if (options?.channel === 'chrome')
         throw new Error("Chromium distribution 'chrome' is not found");
@@ -60,7 +61,8 @@ it('DevTools accepts only bounded local endpoint components', () => {
 
 it(
   'full Chrome DevTools attaches to the existing page, follows popups, reopens and cleans up',
-  { timeout: 60000 },
+  // This lifecycle launches the frontend twice, then verifies popup attachment.
+  { timeout: 120000 },
   async () => {
     const server = createServer((req, res) => {
       res.setHeader('Content-Type', 'text/html');

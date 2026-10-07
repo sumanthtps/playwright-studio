@@ -70,7 +70,8 @@ export async function launchDevToolsBrowser(
     try {
       return await chromium.launch({
         headless,
-        timeout: 10000,
+        // A cold desktop Chrome launch can exceed the embedded browser's budget.
+        timeout: 30000,
         ...(channel ? { channel } : {}),
       });
     } catch (error) {
