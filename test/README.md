@@ -90,8 +90,9 @@ The reusable `.github/workflows/validation.yml` runs:
 | Extension host | Command registration and feature integration on VS Code Stable for all three operating systems, plus Insiders on Linux. |
 | Package | Build a VSIX only after all jobs pass; inspect its runtime, command contributions, feature catalog, schemas, 1,500,000-byte budget, and exclusion of development files and demo media. |
 
-CI calls this workflow on pull requests, main pushes, manual runs and a weekly
-schedule. The release workflow calls the same validation gate before publication.
+CI calls this workflow only on pull requests. Pushes, release tags, manual runs
+and schedules do not trigger GitHub Actions. Marketplace publishing and GitHub
+release creation are handled outside Actions.
 Browser/experiment jobs retain artifacts even after failure. No live provider
 credentials or repository write permissions are needed for validation.
 
@@ -110,8 +111,8 @@ documentation; runtime icons, walkthrough images, schemas and licenses stay in t
 dangling symlinks, snapshot races/hardlinks, bounded imports, capsule paths and
 credentials, process trust checks, URL schemes, and webview action authorization.
 See [the security review](../docs/security-review.md) for findings and behavior changes.
-CI also audits locked dependencies before packaging; release publication uses the
-same validated VSIX. GitHub Actions are pinned to immutable commits.
+CI also audits locked dependencies before packaging. Verify the release VSIX
+locally before publishing.
 
 ## September 12 cleanup regressions
 

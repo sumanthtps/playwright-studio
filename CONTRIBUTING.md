@@ -41,4 +41,4 @@ npm run package -- --out playwright-studio.vsix
 node scripts/verify-vsix.js playwright-studio.vsix
 ```
 
-Update the changelog and version before publishing. The release workflow validates the package before publication. Do not commit generated bundles, VSIX files, test output, dependencies, tokens, or local environment files.
+Update the changelog and version before publishing. Verify the built package before publishing; GitHub Actions run only for pull requests. Do not commit generated bundles, VSIX files, test output, dependencies, tokens, or local environment files.
