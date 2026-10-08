@@ -90,9 +90,9 @@ The reusable `.github/workflows/validation.yml` runs:
 | Extension host | Command registration and feature integration on VS Code Stable for all three operating systems, plus Insiders on Linux. |
 | Package | Build a VSIX only after all jobs pass; inspect its runtime, command contributions, feature catalog, schemas, 1,500,000-byte budget, and exclusion of development files and demo media. |
 
-CI calls this workflow only on pull requests. Pushes, release tags, manual runs
-and schedules do not trigger GitHub Actions. Marketplace publishing and GitHub
-release creation are handled outside Actions.
+CI calls this validation workflow only on pull requests. Release tags trigger a
+separate workflow that packages and publishes the extension without running tests.
+The release workflow can also be started manually for a release tag.
 Browser/experiment jobs retain artifacts even after failure. No live provider
 credentials or repository write permissions are needed for validation.
 

@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Release to VS Marketplace
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release tag matches the extension version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node -e "require('node:assert/strict').equal(process.env.RELEASE_TAG, 'v' + require('./package.json').version)"
+
+      - name: Package extension
+        run: npm run package -- --out playwright-studio-release.vsix
+
+      - name: Verify the package before publishing
+        run: node scripts/verify-vsix.js playwright-studio-release.vsix
+
+      - name: Publish to VS Marketplace
+        run: npx --no-install vsce publish --packagePath playwright-studio-release.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: playwright-studio-release.vsix
+          generate_release_notes: true
