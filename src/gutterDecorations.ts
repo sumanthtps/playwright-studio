@@ -46,13 +46,19 @@ export class GutterDecorationManager implements vscode.Disposable {
 
     this.disposables.push(
       store.onDidChange(() => this.update(store)),
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('playwrightSnippets.editorDiagnostics')) this.update(store);
+      }),
       vscode.window.onDidChangeVisibleTextEditors(() => this.update(store)),
     );
   }
 
   private update(store: ResultStore): void {
     const results = store.allResults;
-    if (!results.length) return;
+    if (!results.length) {
+      this.diagnostics.clear();
+      return;
+    }
     this.updateDiagnostics(results);
     this.updateDecorations(results);
   }
@@ -116,6 +122,12 @@ export class GutterDecorationManager implements vscode.Disposable {
       summary: allResults[0].summary,
     };
     for (const [filePath, fileSpecs] of this.byFile(combined)) {
+      if (
+        !vscode.workspace
+          .getConfiguration('playwrightSnippets', vscode.Uri.file(filePath))
+          .get<boolean>('editorDiagnostics', false)
+      )
+        continue;
       const diagnostics: vscode.Diagnostic[] = [];
       for (const [line, lineSpecs] of this.byLine(fileSpecs)) {
         if (lineSpecs.some((spec) => spec.status === 'failed' || spec.status === 'timedOut')) {

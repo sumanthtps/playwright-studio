@@ -681,9 +681,10 @@ export function registerFeatureCommands(
           requireWorkspaceTrust();
           return await fn(...args);
         } catch (error) {
-          return vscode.window.showErrorMessage(
+          void vscode.window.showErrorMessage(
             `Playwright Studio: ${error instanceof Error ? error.message : String(error)}`,
           );
+          return undefined;
         }
       }),
     );

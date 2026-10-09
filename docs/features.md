@@ -96,7 +96,7 @@ Hover over a fixture parameter to inspect its definition and source link.
 
 ### Locator diagnostics
 
-Highlight supported legacy selector patterns and suggest more maintainable locators.
+Optionally highlight supported legacy selector patterns and suggest more maintainable locators. Enable playwrightSnippets.editorDiagnostics to show editor diagnostics.
 
 <a id="locator-quick-fixes"></a>
 

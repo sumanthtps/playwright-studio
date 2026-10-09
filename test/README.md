@@ -165,3 +165,21 @@ restart.
 `npm run test:storage` verifies migration, clean Git status with unchanged ignore files, config persistence, project isolation, conflicts and unsafe paths. The Product Laws browser test also migrates an adapter with relative imports and executes its exported regression from local storage.
 
 `npm run test:selector-browser` covers direct Browse typing, rapid input, masked and controlled fields, Enter/Tab, selection/deletion, paste/composition, copy/cut/undo, password protection, native selects, hover menus, drag controls, scrolling, iframe/shadow inputs and panel restoration. `npm run test:selector-devtools` checks the full DevTools frontend against the same page, its Console connection, popup tracking, window lifecycle and rejected webpage origins.
+
+
+## Installed VSIX isolation
+
+Build with `npm run package -- --out /tmp/studio-isolated.vsix`, then run:
+
+```sh
+STUDIO_TEST_VSIX=/tmp/studio-isolated.vsix STUDIO_VSCODE_VERSION=stable npm run test:integration
+```
+
+This installs the VSIX into fresh extension and user-data directories under
+`.vscode-test/installed-*`. A separate minimal harness runs the checks; Studio
+loads from the installed package. No user-installed extensions or user settings
+are used. The tests verify activation, command registration, execution, reports,
+coverage where available, and opening Selector Intelligence, Analytics and
+Intelligence. Use `STUDIO_VSCODE_VERSION=1.70.0` to check the minimum version.
+
+Set `STUDIO_EMPTY_WORKSPACE=1` with installed-VSIX mode to check that every Studio sidebar view opens in an empty window. Editor integration also verifies diagnostics are off by default, work when enabled, and clear when disabled.

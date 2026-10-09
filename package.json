@@ -1,6 +1,6 @@
 {
   "name": "playwright-test-code-snippets",
-  "displayName": "Playwright Studio: Test Runner & Snippets",
+  "displayName": "Playwright Studio",
   "license": "MIT",
   "author": "Sumanth T P",
   "publisher": "sumanthtps",
@@ -170,28 +170,24 @@
           "id": "playwrightStudio.resultsView",
           "name": "Results",
           "icon": "images/playwright-studio-activity.svg",
-          "when": "workspaceFolderCount > 0",
           "contextualTitle": "Playwright Studio"
         },
         {
           "id": "playwrightStudio.historyView",
           "name": "History",
           "icon": "images/playwright-studio-activity.svg",
-          "when": "workspaceFolderCount > 0",
           "contextualTitle": "Playwright Studio"
         },
         {
           "id": "playwrightStudio.componentsView",
           "name": "Components",
           "icon": "images/playwright-studio-activity.svg",
-          "when": "workspaceFolderCount > 0",
           "contextualTitle": "Playwright Studio"
         },
         {
           "id": "playwrightStudio.annotationsView",
           "name": "Annotations",
           "icon": "images/playwright-studio-activity.svg",
-          "when": "workspaceFolderCount > 0",
           "contextualTitle": "Playwright Studio"
         },
         {
@@ -1018,6 +1014,12 @@
             "msedge"
           ],
           "description": "Browser for Selector Intelligence. Automatic tries Playwright Chromium, then installed Chrome and Edge if the browser executable is missing. Select a channel to use only that browser."
+        },
+        "playwrightSnippets.editorDiagnostics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show captured test failures and locator suggestions as editor diagnostics and Problems entries. Disabled by default; results remain available in Studio and Test Explorer.",
+          "scope": "resource"
         }
       }
     },
@@ -1121,7 +1123,7 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test:snippets": "node --test test/snippets.test.js",
     "test:runtime": "esbuild test/runtime.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/runtime.test.js && node --test .test-dist/runtime.test.js",
-    "test:integration": "npm run compile:prod && esbuild test/integration/index.ts --bundle --platform=node --format=cjs --external:vscode --outfile=.test-dist/integration/index.js && node test/run-integration.js",
+    "test:integration": "npm run compile:prod && esbuild test/integration/index.ts test/integration/empty.ts --bundle --platform=node --format=cjs --external:vscode --outdir=.test-dist/integration && node test/run-integration.js",
     "test": "npm run check:features && npm run test:snippets && npm run test:runtime && npm run test:commands && npm run test:intelligence && npm run test:lab && npm run test:security && npm run test:production && npm run test:selectors && npm run test:storage",
     "package": "npm run compile:prod && vsce package",
     "build": "npm run package",
