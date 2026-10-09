@@ -222,6 +222,7 @@ export function editor(file: string, content = "test('example', async () => {});
 }
 export const workspace = {
   isTrusted: true,
+  onDidChangeConfiguration: new EventEmitter<any>().event,
   textDocuments: [] as any[],
   get workspaceFolders() {
     return [{ uri: Uri.file(state.root), name: 'fixture', index: 0 }];

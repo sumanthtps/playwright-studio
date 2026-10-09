@@ -46,6 +46,13 @@ export async function run(): Promise<void> {
   const third = vscode.Uri.joinPath(secondFolder.uri, 'tests', 'third.spec.ts');
   const extension = vscode.extensions.getExtension('sumanthtps.playwright-test-code-snippets');
   assert.ok(extension, 'Extension should be discoverable.');
+  console.log(
+    `Extension under test: ${extension.extensionPath}, version ${extension.packageJSON.version}`,
+  );
+  if (process.env.STUDIO_TEST_VSIX) {
+    assert.ok(extension.extensionPath.includes('installed-'), 'Must load the installed VSIX.');
+    assert.equal(extension.extensionPath.includes('studio-installed-test-harness'), false);
+  }
   await extension.activate();
   assert.equal(extension.isActive, true);
 
@@ -86,6 +93,14 @@ export async function run(): Promise<void> {
   assert.doesNotMatch(invocation.argv[0], /:\d+$/, 'Cursor outside a test should run the file.');
 
   await vscode.window.showTextDocument(second, { viewColumn: vscode.ViewColumn.Two });
+  assert.equal(
+    vscode.languages.getDiagnostics(first).filter((d) => d.source === 'Playwright Studio').length,
+    0,
+    'Studio must not highlight failures in the editor by default.',
+  );
+  await vscode.workspace
+    .getConfiguration('playwrightSnippets', first)
+    .update('editorDiagnostics', true, vscode.ConfigurationTarget.Workspace);
   const firstDiagnostics = await waitForDiagnostics(first);
   const secondDiagnostics = await waitForDiagnostics(second);
   assert.equal(firstDiagnostics.length, 1);
@@ -157,5 +172,60 @@ export async function run(): Promise<void> {
     if (!artifactTab) await new Promise((resolve) => setTimeout(resolve, 100));
   }
   assert.ok(artifactTab instanceof vscode.TabInputWebview);
+  for (const [command, title] of [
+    ['openSelectorIntelligence', 'Selector Intelligence'],
+    ['showAnalytics', 'Playwright Analytics'],
+    ['openWorkspaceDashboard', 'Playwright Analytics'],
+    ['openIntelligence', 'Playwright Intelligence'],
+  ]) {
+    console.log(`Opening installed feature: ${command}`);
+    await Promise.race([
+      vscode.commands.executeCommand(`playwrightSnippets.${command}`),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`${command} did not finish opening`)), 5000),
+      ),
+    ]);
+    const panelDeadline = Date.now() + 3000;
+    while (
+      !vscode.window.tabGroups.all
+        .flatMap((group) => group.tabs)
+        .some((tab) => tab.label.includes(title)) &&
+      Date.now() < panelDeadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    console.log(
+      'Open tabs:',
+      vscode.window.tabGroups.all.flatMap((group) => group.tabs).map((tab) => tab.label),
+    );
+    assert.ok(
+      vscode.window.tabGroups.all
+        .flatMap((group) => group.tabs)
+        .some((tab) => tab.label.includes(title)),
+      `${command} should open ${title}`,
+    );
+  }
+  for (const view of [
+    'testsView',
+    'resultsView',
+    'historyView',
+    'componentsView',
+    'annotationsView',
+    'featuresView',
+  ]) {
+    await vscode.commands.executeCommand(`playwrightStudio.${view}.focus`);
+    console.log(`PASS registered sidebar view: ${view}`);
+  }
   await featureChecks(folder);
+  await vscode.workspace
+    .getConfiguration('playwrightSnippets', first)
+    .update('editorDiagnostics', false, vscode.ConfigurationTarget.Workspace);
+  assert.equal(
+    vscode.languages
+      .getDiagnostics()
+      .flatMap(([, diagnostics]) => diagnostics)
+      .filter((d) => d.source === 'Playwright Studio').length,
+    0,
+    'Turning editor diagnostics off must clear existing errors and suggestions.',
+  );
 }

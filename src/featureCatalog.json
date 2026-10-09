@@ -76,7 +76,7 @@
       {
         "id": "locator-diagnostics",
         "title": "Locator diagnostics",
-        "description": "Highlight supported legacy selector patterns and suggest more maintainable locators."
+        "description": "Optionally highlight supported legacy selector patterns and suggest more maintainable locators. Enable playwrightSnippets.editorDiagnostics to show editor diagnostics."
       },
       {
         "id": "locator-quick-fixes",

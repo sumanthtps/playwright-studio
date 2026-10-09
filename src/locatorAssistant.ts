@@ -98,6 +98,11 @@ export class LocatorAssistant implements vscode.CodeActionProvider, vscode.Dispo
 
   constructor() {
     this.disposables.push(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (!event.affectsConfiguration('playwrightSnippets.editorDiagnostics')) return;
+        this.diagnostics.clear();
+        for (const document of vscode.workspace.textDocuments) this.inspect(document);
+      }),
       vscode.workspace.onDidOpenTextDocument((document) => this.inspect(document)),
       vscode.workspace.onDidChangeTextDocument((event) => {
         if (!this.supported(event.document)) return;
@@ -128,6 +133,14 @@ export class LocatorAssistant implements vscode.CodeActionProvider, vscode.Dispo
 
   private inspect(document: vscode.TextDocument): void {
     if (!this.supported(document)) return;
+    if (
+      !vscode.workspace
+        .getConfiguration('playwrightSnippets', document.uri)
+        .get<boolean>('editorDiagnostics', false)
+    ) {
+      this.diagnostics.delete(document.uri);
+      return;
+    }
     const source = document.getText();
     if (source.length > 1024 * 1024) {
       this.diagnostics.delete(document.uri);

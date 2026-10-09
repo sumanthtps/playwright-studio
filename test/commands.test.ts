@@ -10,6 +10,7 @@ import {
   reset,
   state,
   window,
+  workspace,
   commands,
   Uri,
   editor,
@@ -643,4 +644,28 @@ it('capture can be disabled', async () => {
   state.settings.reporter = '';
   await execute('runFile', file);
   assert.equal(state.tasks[0].execution.options.env.PW_TEST_REPORTER, undefined);
+});
+
+it('failed commands finish while the error notification remains open', async () => {
+  const original = window.showErrorMessage;
+  workspace.isTrusted = false;
+  window.showErrorMessage = async (message: string) => {
+    state.errors.push(message);
+    return await new Promise<never>(() => {});
+  };
+  try {
+    for (const name of ['runFile', 'showAnalytics', 'openIntelligence']) {
+      await Promise.race([
+        commands.executeCommand(`playwrightSnippets.${name}`, file),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`${name} waits for notification dismissal`)), 250),
+        ),
+      ]);
+    }
+    assert.equal(state.errors.length, 3);
+    assert.ok(state.errors.every((message) => /Trust this workspace/.test(message)));
+  } finally {
+    workspace.isTrusted = true;
+    window.showErrorMessage = original;
+  }
 });

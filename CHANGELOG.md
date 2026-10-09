@@ -6,6 +6,9 @@ User-facing changes to Playwright Studio, newest first. Historical entries were 
 
 ### Fixed
 
+- Disable editor error highlights and locator diagnostics by default; opt in with `playwrightSnippets.editorDiagnostics`. Turning the setting off clears existing Studio diagnostics.
+- Keep Studio sidebar views available when no workspace folder is open.
+- Finish failed commands without waiting for error notifications to be dismissed.
 - Support VS Code 1.70.0 and newer instead of requiring VS Code 1.140.
 - Declare command and view activation events explicitly for older VS Code versions.
 - Enable native coverage and continuous runs only when supported by the VS Code host.

@@ -82,7 +82,7 @@ Each of the **98 entries** below has its own description. Open **Playwright Stud
 | [Test recency highlights](docs/features.md#recency-heatmap) | Highlight test coverage recency from captured results; this is separate from measured application line coverage. |
 | [Go to fixture definition](docs/features.md#fixture-definition) | Jump from a custom fixture parameter to its workspace definition. |
 | [Fixture hover information](docs/features.md#fixture-hover) | Hover over a fixture parameter to inspect its definition and source link. |
-| [Locator diagnostics](docs/features.md#locator-diagnostics) | Highlight supported legacy selector patterns and suggest more maintainable locators. |
+| [Locator diagnostics](docs/features.md#locator-diagnostics) | Optionally highlight supported legacy selector patterns and suggest more maintainable locators. Enable playwrightSnippets.editorDiagnostics to show editor diagnostics. |
 | [Locator quick fixes](docs/features.md#locator-quick-fixes) | Apply supported semantic locator or legacy API replacements through editor quick fixes. |
 | [Components sidebar](docs/features.md#component-sidebar) | Discover component tests and stories and navigate to their source. |
 | [Tags and annotations sidebar](docs/features.md#annotations-sidebar) | Browse captured tags, test annotations and quarantine context with source navigation. |
@@ -219,6 +219,8 @@ Each of the **98 entries** below has its own description. Open **Playwright Stud
 
 </details>
 <!-- feature-catalog:end -->
+
+Editor error highlights and locator suggestions are disabled by default. Enable `playwrightSnippets.editorDiagnostics` to show them in the editor and Problems panel. Test results remain available in Studio and Test Explorer.
 
 ## Local workspace data
 

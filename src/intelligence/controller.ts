@@ -1293,7 +1293,7 @@ export function registerIntelligenceCommands(
         try {
           await controller.handle(action);
         } catch (error) {
-          await vscode.window.showErrorMessage(
+          void vscode.window.showErrorMessage(
             `Playwright Studio: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
