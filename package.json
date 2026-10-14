@@ -1147,7 +1147,7 @@
     "test:storage": "esbuild test/studio-storage.test.ts --bundle --platform=node --format=cjs --outfile=.test-dist/studio-storage.test.js && node --test .test-dist/studio-storage.test.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.4",
     "@types/vscode": "1.70.0",
     "@typescript/typescript6": "^6.0.2",
