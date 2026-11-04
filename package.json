@@ -1152,7 +1152,7 @@
     "@types/vscode": "1.70.0",
     "@typescript/typescript6": "^6.0.2",
     "@vscode/test-electron": "^3.1.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.0",
     "cross-spawn": "^7.0.6",
     "esbuild": "^0.28.2",
     "jsonc-parser": "^3.3.1",
