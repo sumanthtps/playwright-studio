@@ -1149,7 +1149,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
-    "@types/vscode": "1.70.0",
+    "@types/vscode": "1.144.0",
     "@typescript/typescript6": "^6.0.2",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
